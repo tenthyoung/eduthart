@@ -1,0 +1,254 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Gradient Backgrounds */
+.bg-gradient-green {
+  background: linear-gradient(135deg, #d8c3a5 0%, #c7ad8b 50%, #a98963 100%);
+}
+
+.bg-gradient-green-dark {
+  background: linear-gradient(135deg, #cbb08a 0%, #a98963 50%, #86684a 100%);
+}
+
+.bg-gradient-green-radial {
+  background: radial-gradient(
+    circle at center,
+    #d8c3a5 0%,
+    #c7ad8b 50%,
+    #a98963 100%
+  );
+}
+
+.bg-gradient-green-animated {
+  background: linear-gradient(-45deg, #e6d6c4, #d8c3a5, #b99b78, #8d6e52);
+  background-size: 400% 400%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    var(--font-plus-jakarta-sans),
+    "Avenir Next",
+    "Segoe UI",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono),
+    "SF Mono",
+    "JetBrains Mono",
+    "Cascadia Code",
+    ui-monospace,
+    SFMono-Regular,
+    monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --font-plus-jakarta-sans:
+    "Avenir Next",
+    "Segoe UI",
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  --font-jetbrains-mono:
+    "SF Mono",
+    "JetBrains Mono",
+    "Cascadia Code",
+    ui-monospace,
+    SFMono-Regular,
+    monospace;
+  --radius: 0.625rem;
+  --background: #f6efe5;
+  --foreground: #2f241c;
+  --card: #fbf7f1;
+  --card-foreground: #2f241c;
+  --popover: #fbf7f1;
+  --popover-foreground: #2f241c;
+  --primary: #6f533b;
+  --primary-foreground: #ffffff;
+  --primary-light: #9a7858;
+  --secondary: #e9dece;
+  --secondary-foreground: #3c2f24;
+  --muted: #efe6da;
+  --muted-foreground: #766557;
+  --accent: #e3d5c2;
+  --accent-foreground: #34271f;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #d9c8b5;
+  --input: #dcccbc;
+  --ring: #a98963;
+  --chart-1: #8d6e52;
+  --chart-2: #b99b78;
+  --chart-3: #6f533b;
+  --chart-4: #d2b48c;
+  --chart-5: #8a7a67;
+  --sidebar: #f8f1e8;
+  --sidebar-foreground: #2f241c;
+  --sidebar-primary: #6f533b;
+  --sidebar-primary-foreground: #fdf9f4;
+  --sidebar-accent: #e9dece;
+  --sidebar-accent-foreground: #34271f;
+  --sidebar-border: #d9c8b5;
+  --sidebar-ring: #a98963;
+}
+
+.dark {
+  --background: #18120d;
+  --foreground: #efe4d6;
+  --card: #231a13;
+  --card-foreground: #efe4d6;
+  --popover: #231a13;
+  --popover-foreground: #efe4d6;
+  --primary: #c8a67f;
+  --primary-foreground: #ffffff;
+  --primary-light: #ddc0a0;
+  --secondary: #2a2017;
+  --secondary-foreground: #efe4d6;
+  --muted: #2c2219;
+  --muted-foreground: #baa792;
+  --accent: #34271e;
+  --accent-foreground: #f3e8db;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgb(239 228 214 / 0.12);
+  --input: rgb(239 228 214 / 0.18);
+  --ring: #c8a67f;
+  --chart-1: #c8a67f;
+  --chart-2: #a98963;
+  --chart-3: #ddc0a0;
+  --chart-4: #86684a;
+  --chart-5: #efe4d6;
+  --sidebar: #221912;
+  --sidebar-foreground: #efe4d6;
+  --sidebar-primary: #c8a67f;
+  --sidebar-primary-foreground: #18120d;
+  --sidebar-accent: #34271e;
+  --sidebar-accent-foreground: #f3e8db;
+  --sidebar-border: rgb(239 228 214 / 0.12);
+  --sidebar-ring: #c8a67f;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-image:
+      radial-gradient(circle at top, rgb(216 195 165 / 0.22), transparent 36%),
+      linear-gradient(180deg, #fbf7f1 0%, #f6efe5 46%, #efe4d6 100%);
+    font-size: 16px;
+    line-height: 1.55;
+    letter-spacing: 0;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1,
+      "calt" 1;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at top, rgb(200 166 127 / 0.12), transparent 32%),
+      linear-gradient(180deg, #211811 0%, #18120d 55%, #120d09 100%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  h5,
+  h6 {
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    line-height: 1.65;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    @apply font-mono;
+    font-size: 0.925em;
+    letter-spacing: -0.01em;
+  }
+
+  /* Ensure cursor pointer for interactive elements */
+  button,
+  [role="button"],
+  a,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    @apply cursor-pointer;
+  }
+
+  /* Restore default cursor for disabled elements */
+  button:disabled,
+  [role="button"]:disabled,
+  a[aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
+}
