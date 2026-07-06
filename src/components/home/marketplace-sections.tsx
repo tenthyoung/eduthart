@@ -54,10 +54,7 @@ const assurancePoints = [
 export function MarketplaceSections() {
   return (
     <div className="bg-white">
-      <section
-        id="collections"
-        className="border-y border-border/50 bg-[#f6ede3] py-18 lg:py-24"
-      >
+      <section id="collections" className="border-y border-border/40 bg-white py-18 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-[#8e6f56]">
@@ -76,7 +73,7 @@ export function MarketplaceSections() {
             {collections.map((collection) => (
               <article
                 key={collection.title}
-                className="rounded-[1.75rem] border border-[#e6d7c7] bg-white p-6 shadow-[0_26px_60px_-42px_rgba(65,45,30,0.28)]"
+                className="rounded-[1.75rem] border border-border/70 bg-white p-6 shadow-[0_20px_40px_-34px_rgba(65,45,30,0.12)]"
               >
                 <div className="mb-6 h-44 rounded-[1.25rem] bg-[linear-gradient(160deg,#f5ecdf_0%,#d2ad86_52%,#8a6242_100%)]" />
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
@@ -115,7 +112,7 @@ export function MarketplaceSections() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-border/60 bg-[#fbf6f0] p-8 lg:p-10">
+          <div className="rounded-[2rem] border border-border/60 bg-white p-8 shadow-[0_24px_60px_-42px_rgba(60,44,28,0.12)] lg:p-10">
             <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
               Mocked buyer journey
             </p>
@@ -152,10 +149,7 @@ export function MarketplaceSections() {
         </div>
       </section>
 
-      <section
-        id="advisory"
-        className="border-y border-border/50 bg-[#f3e7da] py-18 lg:py-24"
-      >
+      <section id="advisory" className="border-y border-border/40 bg-white py-18 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-[#8e6f56]">
@@ -181,7 +175,7 @@ export function MarketplaceSections() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[#e2d1be] bg-white p-8 shadow-[0_28px_70px_-48px_rgba(60,44,28,0.3)] lg:p-10">
+          <div className="rounded-[2rem] border border-border/60 bg-white p-8 shadow-[0_24px_50px_-40px_rgba(60,44,28,0.14)] lg:p-10">
             <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
               <Star className="h-4 w-4" />
               Suggested service language
