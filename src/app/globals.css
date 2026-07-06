@@ -108,31 +108,31 @@
     SFMono-Regular,
     monospace;
   --radius: 0.625rem;
-  --background: #f6efe5;
+  --background: #fffdfa;
   --foreground: #2f241c;
-  --card: #fbf7f1;
+  --card: #ffffff;
   --card-foreground: #2f241c;
-  --popover: #fbf7f1;
+  --popover: #ffffff;
   --popover-foreground: #2f241c;
   --primary: #6f533b;
   --primary-foreground: #ffffff;
   --primary-light: #9a7858;
-  --secondary: #e9dece;
+  --secondary: #f2e6d8;
   --secondary-foreground: #3c2f24;
-  --muted: #efe6da;
+  --muted: #f7efe5;
   --muted-foreground: #766557;
-  --accent: #e3d5c2;
+  --accent: #f1e5d8;
   --accent-foreground: #34271f;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #d9c8b5;
-  --input: #dcccbc;
-  --ring: #a98963;
+  --border: #e3d4c3;
+  --input: #e7dbcd;
+  --ring: #b08b68;
   --chart-1: #8d6e52;
   --chart-2: #b99b78;
   --chart-3: #6f533b;
   --chart-4: #d2b48c;
   --chart-5: #8a7a67;
-  --sidebar: #f8f1e8;
+  --sidebar: #f9f4ed;
   --sidebar-foreground: #2f241c;
   --sidebar-primary: #6f533b;
   --sidebar-primary-foreground: #fdf9f4;
@@ -184,8 +184,8 @@
   body {
     @apply bg-background text-foreground font-sans;
     background-image:
-      radial-gradient(circle at top, rgb(216 195 165 / 0.22), transparent 36%),
-      linear-gradient(180deg, #fbf7f1 0%, #f6efe5 46%, #efe4d6 100%);
+      radial-gradient(circle at top, rgb(222 205 186 / 0.2), transparent 32%),
+      linear-gradient(180deg, #ffffff 0%, #fffdfa 58%, #fbf6f0 100%);
     font-size: 16px;
     line-height: 1.55;
     letter-spacing: 0;

@@ -17,8 +17,9 @@ export function Navbar() {
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
   const navItems = [
-    { name: "Exhibitions", href: "/#features" },
-    { name: "Membership", href: "/pricing" },
+    { name: "Browse Art", href: "/#browse" },
+    { name: "Collections", href: "/#collections" },
+    { name: "Advisory", href: "/#advisory" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
@@ -137,7 +138,7 @@ export function Navbar() {
           {/* Right - Theme Toggle & Hamburger Menu */}
           <div className="flex items-center gap-2">
             <Button asChild variant="gradient" size="lg">
-              <Link href="/#visit">Plan a Visit</Link>
+              <Link href="/#collections">Shop the Mock</Link>
             </Button>
             <Button
               ref={mobileMenuToggleRef}

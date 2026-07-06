@@ -20,8 +20,9 @@ interface NewsletterFormData {
 
 const navigationLinks = [
   { name: "About", href: "/about" },
-  { name: "Exhibitions", href: "/#features" },
-  { name: "Membership", href: "/pricing" },
+  { name: "Browse Art", href: "/#browse" },
+  { name: "Collections", href: "/#collections" },
+  { name: "Advisory", href: "/#advisory" },
   { name: "Contact", href: "/contact" },
 ];
 
@@ -83,9 +84,9 @@ export function Footer() {
 
       if (response.ok) {
         setAlertType("success");
-        setAlertMessage("You have been added to the gallery mailing list.");
+        setAlertMessage("You have been added to the collector mailing list.");
         setIsSubscribed(true);
-        toast.success("You have been added to the gallery mailing list.");
+        toast.success("You have been added to the collector mailing list.");
         reset();
       } else {
         setAlertType("error");
@@ -201,9 +202,11 @@ export function Footer() {
               <div className="space-y-3">
                 <div className="text-muted-foreground">
                   <p className="mb-2 font-semibold text-foreground">
-                    EDUTHART GALLERY
+                    EDUTHART
                   </p>
-                  <p className="mb-2">For visit requests, collecting inquiries, and press.</p>
+                  <p className="mb-2">
+                    For collecting inquiries, artist questions, and brand partnerships.
+                  </p>
                   <Link
                     href="mailto:support@eduthart.com"
                     className="mb-3 block text-foreground transition-colors duration-200 hover:text-primary"
@@ -212,17 +215,17 @@ export function Footer() {
                   </Link>
                 </div>
                 <div className="text-muted-foreground">
-                  <p className="mb-2">Follow exhibition announcements and new works</p>
-                  <p className="mb-3">Based in Orange County, CA</p>
-                  <p>Welcoming visitors, collectors, and design professionals</p>
+                  <p className="mb-2">Follow new collections, fresh arrivals, and advisory updates</p>
+                  <p className="mb-3">Online-first art marketplace with a curated point of view</p>
+                  <p>Designed for collectors, first-time buyers, and interior-led sourcing</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <h3 className="text-2xl font-bold">Join the Gallery List</h3>
+              <h3 className="text-2xl font-bold">Join the Collector List</h3>
               <p className="text-muted-foreground">
-                Receive exhibition announcements, private-view invitations, and selected highlights from the collection.
+                Receive new collection drops, artist highlights, and practical collecting guidance.
               </p>
 
               {isSubscribed ? (
@@ -231,7 +234,7 @@ export function Footer() {
                     Thank you for subscribing.
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    You&apos;ll receive upcoming exhibition news and gallery updates.
+                    You&apos;ll receive collection updates and collector notes.
                   </p>
                 </div>
               ) : (
@@ -286,7 +289,7 @@ export function Footer() {
                         htmlFor="subscribe"
                         className="cursor-pointer text-sm text-muted-foreground"
                       >
-                        Yes, send me exhibition news and gallery updates.
+                        Yes, send me collection updates and collector emails.
                       </label>
                     </div>
                   </div>
