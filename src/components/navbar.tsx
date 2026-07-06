@@ -119,7 +119,9 @@ export function Navbar() {
               height={48}
               priority
             /> */}
-            <span className="text-2xl font-bold text-foreground">EduthArt</span>
+            <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
+              EduthArt
+            </span>
           </Link>
 
           {/* Center - Desktop Navigation */}

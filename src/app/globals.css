@@ -43,12 +43,21 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-plus-jakarta-sans),
+    var(--font-manrope),
     "Avenir Next",
     "Segoe UI",
     ui-sans-serif,
     system-ui,
     sans-serif;
+  --font-serif:
+    var(--font-cormorant-garamond),
+    "Avenir Next",
+    "Segoe UI",
+    ui-serif,
+    Georgia,
+    Cambria,
+    "Times New Roman",
+    serif;
   --font-mono:
     var(--font-jetbrains-mono),
     "SF Mono",
@@ -94,12 +103,18 @@
 }
 
 :root {
-  --font-plus-jakarta-sans:
+  --font-manrope:
     "Avenir Next",
     "Segoe UI",
     ui-sans-serif,
     system-ui,
     sans-serif;
+  --font-cormorant-garamond:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
   --font-jetbrains-mono:
     "SF Mono",
     "JetBrains Mono",
@@ -204,6 +219,7 @@
   h2,
   h3,
   h4 {
+    @apply font-serif;
     font-weight: 600;
     line-height: 1.08;
     letter-spacing: -0.035em;
@@ -212,6 +228,7 @@
 
   h5,
   h6 {
+    @apply font-serif;
     font-weight: 600;
     line-height: 1.18;
     letter-spacing: -0.02em;

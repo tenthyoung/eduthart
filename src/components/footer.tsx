@@ -201,7 +201,7 @@ export function Footer() {
 
               <div className="space-y-3">
                 <div className="text-muted-foreground">
-                  <p className="mb-2 font-semibold text-foreground">
+                  <p className="mb-2 font-serif text-xl font-semibold tracking-[-0.03em] text-foreground">
                     EDUTHART
                   </p>
                   <p className="mb-2">
@@ -223,7 +223,9 @@ export function Footer() {
             </div>
 
             <div className="space-y-6">
-              <h3 className="text-2xl font-bold">Join the Collector List</h3>
+              <h3 className="font-serif text-2xl font-bold tracking-[-0.03em]">
+                Join the Collector List
+              </h3>
               <p className="text-muted-foreground">
                 Receive new collection drops, artist highlights, and practical collecting guidance.
               </p>
