@@ -13,12 +13,6 @@ import {
   type User,
 } from "firebase/auth";
 import {
-  arrayUnion,
-  doc,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
-import {
   createContext,
   useCallback,
   useContext,
@@ -30,7 +24,6 @@ import {
 
 import {
   getFirebaseAuth,
-  getFirebaseFirestore,
 } from "@/lib/firebase/client";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -43,8 +36,9 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   sendResetLink: (email: string) => Promise<void>;
   signUpWithEmail: (args: {
-    displayName: string;
     email: string;
+    firstName: string;
+    lastName: string;
     password: string;
   }) => Promise<void>;
   status: AuthStatus;
@@ -57,47 +51,49 @@ const LEGAL_VERSION = "2026-07-07";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function buildDisplayName(firstName: string, lastName: string) {
+  return `${firstName.trim()} ${lastName.trim()}`.trim();
+}
+
 async function persistUserRecord(
   user: User,
   options?: {
     acceptedLegal?: boolean;
+    firstName?: string;
+    lastName?: string;
     method?: "email_password" | "google";
-    displayName?: string;
   },
 ) {
-  const db = getFirebaseFirestore();
-  const userRef = doc(db, "users", user.uid);
-  const providerIds = user.providerData
-    .map((provider) => provider.providerId)
-    .filter(Boolean);
-
-  const baseRecord: Record<string, unknown> = {
-    uid: user.uid,
-    email: user.email?.trim().toLowerCase() ?? null,
-    displayName: options?.displayName?.trim() || user.displayName || null,
-    photoURL: user.photoURL ?? null,
-    lastLoginAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-
-  if (providerIds.length > 0) {
-    baseRecord.authProviders = arrayUnion(...providerIds);
-  }
-
-  if (options?.acceptedLegal) {
-    baseRecord.createdAt = serverTimestamp();
-    baseRecord.legal = {
-      acceptedAt: serverTimestamp(),
-      acceptedVersion: LEGAL_VERSION,
-      acceptedVia: options.method ?? null,
+  const idToken = await user.getIdToken(true);
+  const response = await fetch("/api/auth/profile", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      acceptedLegal: options?.acceptedLegal ?? false,
+      idToken,
+      legalVersion: LEGAL_VERSION,
+      method: options?.method ?? null,
       privacyPolicyPath: PRIVACY_PATH,
-      privacyPolicyAcceptedAt: serverTimestamp(),
       termsOfServicePath: TERMS_PATH,
-      termsOfServiceAcceptedAt: serverTimestamp(),
-    };
-  }
+      ...(options?.firstName?.trim()
+        ? { firstName: options.firstName.trim() }
+        : {}),
+      ...(options?.lastName?.trim()
+        ? { lastName: options.lastName.trim() }
+        : {}),
+    }),
+  });
 
-  await setDoc(userRef, baseRecord, { merge: true });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: { message?: string } }
+      | null;
+    throw new Error(
+      payload?.error?.message ?? "Unable to sync your account profile.",
+    );
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -141,12 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = useCallback(
     async ({
-      displayName,
       email,
+      firstName,
+      lastName,
       password,
     }: {
-      displayName: string;
       email: string;
+      firstName: string;
+      lastName: string;
       password: string;
     }) => {
       const auth = await getFirebaseAuth();
@@ -156,15 +154,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       );
 
-      if (displayName.trim()) {
+      const displayName = buildDisplayName(firstName, lastName);
+
+      if (displayName) {
         await updateProfile(credential.user, {
-          displayName: displayName.trim(),
+          displayName,
         });
       }
 
       await persistUserRecord(credential.user, {
         acceptedLegal: true,
-        displayName,
+        firstName,
+        lastName,
         method: "email_password",
       });
     },

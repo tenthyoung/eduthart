@@ -18,7 +18,8 @@ import { Label } from "@/components/ui/label";
 export default function SignupPage() {
   const router = useRouter();
   const { signInWithGoogle, signUpWithEmail, status } = useAuth();
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [legalAccepted, setLegalAccepted] = useState(false);
@@ -55,15 +56,18 @@ export default function SignupPage() {
 
     try {
       await signUpWithEmail({
-        displayName,
         email,
+        firstName,
+        lastName,
         password,
       });
       toast.success("Your account is ready.");
       router.replace("/");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to create your account.";
+        error instanceof Error
+          ? error.message
+          : "Unable to create your account.";
       setError(message);
       toast.error(message);
     } finally {
@@ -103,10 +107,13 @@ export default function SignupPage() {
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <h2 className="text-2xl text-foreground">Start collecting smarter</h2>
+          <h2 className="text-2xl text-foreground">Sign up</h2>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link className="font-medium text-primary hover:underline" href="/login">
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/login"
+            >
               Log in
             </Link>
             .
@@ -114,16 +121,29 @@ export default function SignupPage() {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="display-name">Full name</Label>
-            <Input
-              id="display-name"
-              autoComplete="name"
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Your name"
-              required
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="first-name">First name</Label>
+              <Input
+                id="first-name"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                placeholder="First name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="last-name">Last name</Label>
+              <Input
+                id="last-name"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                placeholder="Last name"
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -158,7 +178,9 @@ export default function SignupPage() {
               <Checkbox
                 checked={legalAccepted}
                 id="legal"
-                onCheckedChange={(checked) => setLegalAccepted(checked === true)}
+                onCheckedChange={(checked) =>
+                  setLegalAccepted(checked === true)
+                }
               />
               <Label className="block leading-6 font-normal" htmlFor="legal">
                 I agree to the{" "}
