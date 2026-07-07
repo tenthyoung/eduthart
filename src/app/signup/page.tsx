@@ -154,13 +154,13 @@ export default function SignupPage() {
           </div>
 
           <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <Checkbox
                 checked={legalAccepted}
                 id="legal"
                 onCheckedChange={(checked) => setLegalAccepted(checked === true)}
               />
-              <Label className="leading-6" htmlFor="legal">
+              <Label className="block leading-6 font-normal" htmlFor="legal">
                 I agree to the{" "}
                 <Link
                   className="font-medium text-primary hover:underline"
