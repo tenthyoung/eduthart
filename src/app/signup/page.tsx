@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { GoogleIcon } from "@/components/auth/google-icon";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -139,9 +140,8 @@ export default function SignupPage() {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               value={password}
