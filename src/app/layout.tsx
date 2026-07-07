@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
@@ -40,11 +41,13 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${cormorantGaramond.variable} antialiased`}
       >
-        <ThemeProvider defaultTheme="light">
-          <LocomotiveScrollProvider>
-            <SiteShell>{children}</SiteShell>
-          </LocomotiveScrollProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="light">
+            <LocomotiveScrollProvider>
+              <SiteShell>{children}</SiteShell>
+            </LocomotiveScrollProvider>
+          </ThemeProvider>
+        </AuthProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>
