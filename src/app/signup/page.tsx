@@ -238,6 +238,22 @@ export default function SignupPage() {
           <GoogleIcon />
           Sign up with Google
         </Button>
+
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white to-secondary/45 p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+            For Artists
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Are you an artist interested in exhibiting your work?{" "}
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/for-artists"
+            >
+              Apply here
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     </AuthShell>
   );
