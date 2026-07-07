@@ -56,7 +56,7 @@ browser-to-Cloud-Functions callables. The Next app needs Firebase Admin
 credentials in its runtime environment:
 
 ```bash
-FIREBASE_ADMIN_PROJECT_ID=eduthart-d62de
+FIREBASE_ADMIN_PROJECT_ID=eduthart-5dd68
 FIREBASE_ADMIN_CLIENT_EMAIL=...
 FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```

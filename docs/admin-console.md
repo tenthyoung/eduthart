@@ -111,7 +111,7 @@ Files:
 Required for the Next.js runtime:
 
 ```bash
-FIREBASE_ADMIN_PROJECT_ID=eduthart-d62de
+FIREBASE_ADMIN_PROJECT_ID=eduthart-5dd68
 FIREBASE_ADMIN_CLIENT_EMAIL=...
 FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
