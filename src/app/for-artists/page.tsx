@@ -170,7 +170,7 @@ export default function ForArtistsPage() {
                 and understood the application requirements above.
               </p>
               <div className="rounded-2xl border border-border/70 bg-muted/45 p-4">
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <Checkbox checked id="artist-acknowledgement" />
                   <Label
                     className="block leading-6 font-normal"
