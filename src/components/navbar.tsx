@@ -1,9 +1,10 @@
 "use client";
 
+import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
-import { Linkedin, Menu, X } from "lucide-react";
+import { CircleUserRound, Linkedin, Loader2, LogOut, Menu, X } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -11,8 +12,10 @@ import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
+  const { signOut, status, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
@@ -94,6 +97,17 @@ export function Navbar() {
     };
   }, []);
 
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      setIsMobileMenuOpen(false);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   return (
     <nav
       className={cn(
@@ -139,7 +153,39 @@ export function Navbar() {
 
           {/* Right - Theme Toggle & Hamburger Menu */}
           <div className="flex items-center gap-2">
-            <Button asChild variant="gradient" size="lg">
+            {status === "authenticated" ? (
+              <div className="hidden items-center gap-2 lg:flex">
+                <div className="rounded-full border border-border/70 bg-white/70 px-4 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm">
+                  <span className="inline-flex items-center gap-2">
+                    <CircleUserRound className="size-4 text-primary" />
+                    {user?.displayName || user?.email || "Signed in"}
+                  </span>
+                </div>
+                <Button
+                  disabled={isSigningOut}
+                  onClick={handleSignOut}
+                  size="lg"
+                  variant="outline"
+                >
+                  {isSigningOut ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <LogOut />
+                  )}
+                  Log out
+                </Button>
+              </div>
+            ) : (
+              <div className="hidden items-center gap-2 lg:flex">
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button asChild size="lg" variant="gradient">
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+              </div>
+            )}
+            <Button asChild variant="gradient" size="lg" className="hidden xl:inline-flex">
               <Link href="/#collections">Shop the Mock</Link>
             </Button>
             <Button
@@ -190,6 +236,47 @@ export function Navbar() {
             </div>
 
             <div className="mt-6 space-y-4 border-t border-border/60 px-4 pt-6">
+              <div className="grid gap-3">
+                {status === "authenticated" ? (
+                  <>
+                    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm text-foreground">
+                      Signed in as {user?.displayName || user?.email || "collector"}
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={isSigningOut}
+                      onClick={handleSignOut}
+                      variant="outline"
+                    >
+                      {isSigningOut ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <LogOut />
+                      )}
+                      Log out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full" variant="gradient">
+                      <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        Sign up
+                      </Link>
+                    </Button>
+                  </>
+                )}
+                <Button asChild className="w-full" variant="gradient">
+                  <Link href="/#collections" onClick={() => setIsMobileMenuOpen(false)}>
+                    Shop the Mock
+                  </Link>
+                </Button>
+              </div>
+
               {/* Mobile Social Icons */}
               <div className="flex items-center justify-center space-x-6">
                 {socialIcons.map((socialIcon) => {
