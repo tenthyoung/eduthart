@@ -65,7 +65,7 @@ export default function ForArtistsPage() {
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Button asChild size="xl">
-                  <Link href="#application">Start Your Application</Link>
+                  <Link href="/apply-to-be-an-artist">Start Your Application</Link>
                 </Button>
                 <Button asChild size="xl" variant="outline">
                   <Link href="/contact">Ask a Question</Link>
@@ -163,11 +163,12 @@ export default function ForArtistsPage() {
           <MotionFade delay={0.45}>
             <div className="rounded-[2rem] border border-primary/15 bg-white p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
               <Heading variant="h3" className="mb-3 text-foreground">
-                Start Your Application
+                What you should have prepared
               </Heading>
               <p className="mb-6 text-sm leading-6 text-muted-foreground">
-                By checking the box below, you acknowledge that you have read
-                and understood the application requirements above.
+                Before you continue to the application, make sure you have your
+                images, statement, details, and payment method ready so you can
+                finish in one sitting.
               </p>
               <div className="rounded-2xl border border-border/70 bg-muted/45 p-4">
                 <div className="flex items-center gap-3">
@@ -183,7 +184,7 @@ export default function ForArtistsPage() {
               </div>
               <div className="mt-6">
                 <Button asChild className="w-full" size="lg">
-                  <Link href="/contact">Apply</Link>
+                  <Link href="/apply-to-be-an-artist">Continue to Application</Link>
                 </Button>
               </div>
             </div>
