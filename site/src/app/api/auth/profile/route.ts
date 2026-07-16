@@ -140,12 +140,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ profile });
   } catch (error) {
     console.error(error);
+    const fallbackMessage =
+      error instanceof Error && error.message
+        ? error.message
+        : "Unable to sync your account profile.";
+
     return NextResponse.json(
       {
         error: {
           code: "internal",
-          message:
-            "We created the account, but could not finish setting up the profile.",
+          message: fallbackMessage,
         },
       },
       { status: 500 },

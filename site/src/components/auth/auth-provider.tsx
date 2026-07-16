@@ -253,12 +253,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     const auth = await getFirebaseAuth();
-    const credential = await signInWithEmailAndPassword(
+    await signInWithEmailAndPassword(
       auth,
       email.trim(),
       password,
     );
-    await persistUserRecord(credential.user);
   }, []);
 
   const signUpWithEmail = useCallback(
@@ -316,10 +315,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    await persistUserRecord(credential.user, {
-      acceptedLegal: mode === "signup",
-      method: "google",
-    });
+    if (mode === "signup") {
+      await persistUserRecord(credential.user, {
+        acceptedLegal: true,
+        method: "google",
+      });
+    }
   }, []);
 
   const sendResetLink = useCallback(async (email: string) => {
