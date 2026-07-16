@@ -11,7 +11,8 @@
     "dev:turbo": "npm run check:node && next dev --turbopack",
     "build": "npm run check:node && next build",
     "start": "npm run check:node && next start",
-    "lint": "npm run check:node && eslint"
+    "lint": "npm run check:node && eslint",
+    "test:e2e": "npm run check:node && playwright test"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -53,6 +54,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
