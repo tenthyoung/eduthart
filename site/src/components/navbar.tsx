@@ -186,7 +186,7 @@ export function Navbar() {
               </div>
             )}
             <Button asChild variant="gradient" size="lg" className="hidden xl:inline-flex">
-              <Link href="/#collections">Shop the Mock</Link>
+              <Link href="/#collections">Shop</Link>
             </Button>
             <Button
               ref={mobileMenuToggleRef}
@@ -272,7 +272,7 @@ export function Navbar() {
                 )}
                 <Button asChild className="w-full" variant="gradient">
                   <Link href="/#collections" onClick={() => setIsMobileMenuOpen(false)}>
-                    Shop the Mock
+                    Shop
                   </Link>
                 </Button>
               </div>
