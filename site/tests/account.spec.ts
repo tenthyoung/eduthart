@@ -122,15 +122,17 @@ test("updates the account email from account settings and persists it across rel
   await seedAccount(page, { uid: "email-user", email: "old.address@example.com" });
 
   await page.goto("/account");
-  await page.getByLabel("New email address").fill("new.address@example.com");
   await page.getByRole("button", { name: "Change email address" }).click();
+  await page.getByLabel("New email address").fill("new.address@example.com");
+  await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(page.getByText("Your email address has been updated.")).toBeVisible();
-  await expect(page.getByLabel("New email address")).toHaveValue("new.address@example.com");
+  await expect(page.getByLabel("New email address")).toHaveCount(0);
   await expect(page.getByText("new.address@example.com")).toHaveCount(2);
 
   await page.reload();
 
+  await page.getByRole("button", { name: "Change email address" }).click();
   await expect(page.getByText("new.address@example.com")).toHaveCount(2);
   await expect(page.getByLabel("New email address")).toHaveValue("new.address@example.com");
 });

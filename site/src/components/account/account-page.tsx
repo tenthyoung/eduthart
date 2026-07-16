@@ -8,6 +8,15 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
@@ -51,6 +60,7 @@ export function AccountPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [nextEmail, setNextEmail] = useState("");
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
@@ -225,10 +235,12 @@ export function AccountPage() {
       const result = await requestEmailChange(nextEmail);
 
       if (result.requiresVerification) {
+        setIsEmailDialogOpen(false);
         toast.success(`We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`);
       } else {
         setProfile((current) => (current ? { ...current, email: result.email } : current));
         setNextEmail(result.email);
+        setIsEmailDialogOpen(false);
         toast.success("Your email address has been updated.");
       }
     } catch (error) {
@@ -459,46 +471,59 @@ export function AccountPage() {
                 </p>
                 <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
               </div>
-              <form
-                className="space-y-3 rounded-2xl border border-border/80 bg-muted/45 p-4"
-                onSubmit={handleEmailChange}
-              >
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Change email
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Enter your new email address. We&apos;ll send a confirmation link before the change takes effect.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account-next-email">New email address</Label>
-                  <Input
-                    id="account-next-email"
-                    type="email"
-                    autoComplete="email"
-                    onChange={(event) => setNextEmail(event.target.value)}
-                    value={nextEmail}
-                  />
-                </div>
-                <Button
-                  disabled={changingEmail || nextEmail.trim().toLowerCase() === (currentEmail ?? "").trim().toLowerCase()}
-                  type="submit"
-                  variant="outline"
-                >
-                  {changingEmail ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Updating email...
-                    </>
-                  ) : (
-                    <>
+              <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Change email
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Open the email update flow in a focused modal instead of keeping another form in this panel.
+                    </p>
+                  </div>
+                  <DialogTrigger asChild>
+                    <Button className="mt-4" type="button" variant="outline">
                       <Mail />
                       Change email address
-                    </>
-                  )}
-                </Button>
-              </form>
+                    </Button>
+                  </DialogTrigger>
+                </div>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Change email address</DialogTitle>
+                    <DialogDescription>
+                      Enter your new email address. We&apos;ll send a confirmation link before the change takes effect.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form className="space-y-4" onSubmit={handleEmailChange}>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-next-email">New email address</Label>
+                      <Input
+                        id="account-next-email"
+                        type="email"
+                        autoComplete="email"
+                        onChange={(event) => setNextEmail(event.target.value)}
+                        value={nextEmail}
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        disabled={changingEmail || nextEmail.trim().toLowerCase() === (currentEmail ?? "").trim().toLowerCase()}
+                        type="submit"
+                      >
+                        {changingEmail ? (
+                          <>
+                            <Loader2 className="animate-spin" />
+                            Updating email...
+                          </>
+                        ) : (
+                          "Continue"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
               <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Connected sign-in providers
