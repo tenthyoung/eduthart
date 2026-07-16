@@ -23,6 +23,7 @@ type AuthProfileBody = {
 };
 
 type AccountProfileUpdateBody = {
+  email?: string | null;
   firstName?: string | null;
   lastName?: string | null;
 };
@@ -211,6 +212,7 @@ export async function PATCH(request: Request) {
   try {
     const body = (await request.json()) as AccountProfileUpdateBody;
     const session = await getAuthenticatedSession(request);
+    const email = normalizeString(body.email)?.toLowerCase();
     const firstName = normalizeString(body.firstName);
     const lastName = normalizeString(body.lastName);
     const displayName =
@@ -230,6 +232,7 @@ export async function PATCH(request: Request) {
 
       const profile = await updateE2EAccountProfile(existingProfile.uid, {
         displayName,
+        email: email ?? undefined,
         firstName: firstName ?? null,
         lastName: lastName ?? null,
         updatedAt,

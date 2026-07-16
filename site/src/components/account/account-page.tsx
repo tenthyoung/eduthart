@@ -46,12 +46,14 @@ async function parseApiError(response: Response, fallbackMessage: string) {
 
 export function AccountPage() {
   const router = useRouter();
-  const { refreshUser, sendResetLink, sendVerificationEmail, signOut, status, user } = useAuth();
+  const { refreshUser, requestEmailChange, sendResetLink, sendVerificationEmail, signOut, status, user } = useAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [nextEmail, setNextEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [refreshingVerification, setRefreshingVerification] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -64,6 +66,7 @@ export function AccountPage() {
   const hasPasswordProvider = user?.providerIds.includes("password") ?? false;
   const isEmailVerified = user?.emailVerified ?? false;
   const displayNamePreview = buildDisplayName(firstName, lastName) || profile?.displayName || user?.displayName || "EduthArt Collector";
+  const currentEmail = user?.email ?? profile?.email ?? null;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -104,6 +107,7 @@ export function AccountPage() {
         setProfile(payload.profile);
         setFirstName(payload.profile.firstName ?? "");
         setLastName(payload.profile.lastName ?? "");
+        setNextEmail(payload.profile.email ?? user.email ?? "");
       } catch (error) {
         if (!cancelled) {
           const message =
@@ -190,7 +194,7 @@ export function AccountPage() {
   };
 
   const handlePasswordReset = async () => {
-    const email = profile?.email ?? user?.email;
+    const email = currentEmail;
 
     if (!email) {
       return;
@@ -208,6 +212,32 @@ export function AccountPage() {
       toast.error(message);
     } finally {
       setResettingPassword(false);
+    }
+  };
+
+  const handleEmailChange = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setChangingEmail(true);
+    setError(null);
+
+    try {
+      const result = await requestEmailChange(nextEmail);
+
+      if (result.requiresVerification) {
+        toast.success(`We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`);
+      } else {
+        setProfile((current) => (current ? { ...current, email: result.email } : current));
+        setNextEmail(result.email);
+        toast.success("Your email address has been updated.");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to change your email address.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setChangingEmail(false);
     }
   };
 
@@ -345,7 +375,7 @@ export function AccountPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Account email
                 </p>
-                <p className="mt-2 text-sm text-foreground">{profile?.email ?? user?.email ?? "Not available"}</p>
+                <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
               </div>
               <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
@@ -427,8 +457,48 @@ export function AccountPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Email
                 </p>
-                <p className="mt-2 text-sm text-foreground">{profile?.email ?? user?.email ?? "Not available"}</p>
+                <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
               </div>
+              <form
+                className="space-y-3 rounded-2xl border border-border/80 bg-muted/45 p-4"
+                onSubmit={handleEmailChange}
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Change email
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your new email address. We&apos;ll send a confirmation link before the change takes effect.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="account-next-email">New email address</Label>
+                  <Input
+                    id="account-next-email"
+                    type="email"
+                    autoComplete="email"
+                    onChange={(event) => setNextEmail(event.target.value)}
+                    value={nextEmail}
+                  />
+                </div>
+                <Button
+                  disabled={changingEmail || nextEmail.trim().toLowerCase() === (currentEmail ?? "").trim().toLowerCase()}
+                  type="submit"
+                  variant="outline"
+                >
+                  {changingEmail ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Updating email...
+                    </>
+                  ) : (
+                    <>
+                      <Mail />
+                      Change email address
+                    </>
+                  )}
+                </Button>
+              </form>
               <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Connected sign-in providers

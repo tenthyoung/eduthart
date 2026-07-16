@@ -12,6 +12,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
   updateProfile,
+  verifyBeforeUpdateEmail,
   type User as FirebaseUser,
 } from "firebase/auth";
 import {
@@ -44,6 +45,10 @@ export type AuthUser = {
 };
 
 type AuthContextValue = {
+  requestEmailChange: (nextEmail: string) => Promise<{
+    email: string;
+    requiresVerification: boolean;
+  }>;
   refreshUser: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -129,6 +134,34 @@ function notifyE2EAuthChanged() {
   }
 
   window.dispatchEvent(new Event(E2E_AUTH_EVENT));
+}
+
+function formatAuthError(error: unknown, fallbackMessage: string) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : null;
+
+  if (code === "auth/email-already-in-use") {
+    return "That email address is already in use by another account.";
+  }
+
+  if (code === "auth/invalid-email") {
+    return "Please enter a valid email address.";
+  }
+
+  if (code === "auth/requires-recent-login") {
+    return "For security, please sign out and sign back in before changing your email address.";
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallbackMessage;
 }
 
 async function persistUserRecord(
@@ -312,6 +345,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendEmailVerification(auth.currentUser);
   }, []);
 
+  const requestEmailChange = useCallback(async (nextEmail: string) => {
+    const normalizedEmail = nextEmail.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      throw new Error("Please enter a valid email address.");
+    }
+
+    if (E2E_AUTH_ENABLED) {
+      const nextUser = readE2EUser();
+
+      if (!nextUser) {
+        throw new Error("You need to be signed in to change your email address.");
+      }
+
+      const response = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer e2e:${nextUser.uid}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: { message?: string } }
+          | null;
+        throw new Error(
+          payload?.error?.message ?? "Unable to change your email address.",
+        );
+      }
+
+      const updatedUser = {
+        ...nextUser,
+        email: normalizedEmail,
+      };
+      window.localStorage.setItem(E2E_STORAGE_KEY, JSON.stringify(updatedUser));
+      notifyE2EAuthChanged();
+      setUser(updatedUser);
+      setStatus("authenticated");
+
+      return {
+        email: normalizedEmail,
+        requiresVerification: false,
+      };
+    }
+
+    const auth = await getFirebaseAuth();
+
+    if (!auth.currentUser) {
+      throw new Error("You need to be signed in to change your email address.");
+    }
+
+    if (auth.currentUser.email?.trim().toLowerCase() === normalizedEmail) {
+      throw new Error("Use a different email address to make a change.");
+    }
+
+    try {
+      await verifyBeforeUpdateEmail(auth.currentUser, normalizedEmail);
+    } catch (error) {
+      throw new Error(formatAuthError(error, "Unable to start your email change."));
+    }
+
+    return {
+      email: normalizedEmail,
+      requiresVerification: true,
+    };
+  }, []);
+
   const refreshUser = useCallback(async () => {
     if (E2E_AUTH_ENABLED) {
       const nextUser = readE2EUser();
@@ -329,6 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await reload(auth.currentUser);
+    await persistUserRecord(auth.currentUser);
     setUser(mapFirebaseUser(auth.currentUser));
     setStatus("authenticated");
   }, []);
@@ -348,6 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
+      requestEmailChange,
       sendResetLink,
       sendVerificationEmail,
       refreshUser,
@@ -358,7 +464,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
     }),
-    [refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail, status, user],
+    [requestEmailChange, refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

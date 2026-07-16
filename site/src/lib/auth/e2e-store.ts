@@ -91,7 +91,7 @@ export async function getE2EAccountProfile(uid: string) {
 
 export async function updateE2EAccountProfile(
   uid: string,
-  updates: Partial<Pick<AccountProfile, "displayName" | "firstName" | "lastName" | "updatedAt">>,
+  updates: Partial<Pick<AccountProfile, "displayName" | "email" | "firstName" | "lastName" | "updatedAt">>,
 ) {
   const current = await getE2EAccountProfile(uid);
 
