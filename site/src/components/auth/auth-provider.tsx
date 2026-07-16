@@ -253,11 +253,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     const auth = await getFirebaseAuth();
-    await signInWithEmailAndPassword(
+    const credential = await signInWithEmailAndPassword(
       auth,
       email.trim(),
       password,
     );
+    setUser(mapFirebaseUser(credential.user));
+    setStatus("authenticated");
   }, []);
 
   const signUpWithEmail = useCallback(
@@ -295,6 +297,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       await sendEmailVerification(credential.user);
+      setUser(mapFirebaseUser(credential.user));
+      setStatus("authenticated");
     },
     [],
   );
@@ -321,6 +325,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "google",
       });
     }
+
+    setUser(mapFirebaseUser(credential.user));
+    setStatus("authenticated");
   }, []);
 
   const sendResetLink = useCallback(async (email: string) => {
@@ -450,6 +457,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const auth = await getFirebaseAuth();
     await firebaseSignOut(auth);
+    setUser(null);
+    setStatus("unauthenticated");
   }, []);
 
   const value = useMemo<AuthContextValue>(
