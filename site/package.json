@@ -12,6 +12,8 @@
     "build": "npm run check:node && next build",
     "start": "npm run check:node && next start",
     "lint": "npm run check:node && eslint",
+    "format": "npm run check:node && prettier --write .",
+    "format:check": "npm run check:node && prettier --check .",
     "test:e2e": "npm run check:node && playwright test",
     "test:e2e:headed": "npm run test:e2e -- --headed",
     "test:e2e:debug": "npm run test:e2e -- --debug",
@@ -58,14 +60,15 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
+    "prettier": "^3.9.5",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5"
