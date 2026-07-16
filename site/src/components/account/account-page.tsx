@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2, LogOut, Mail, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Loader2, LogOut, Mail, RefreshCw, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -46,13 +46,15 @@ async function parseApiError(response: Response, fallbackMessage: string) {
 
 export function AccountPage() {
   const router = useRouter();
-  const { sendResetLink, signOut, status, user } = useAuth();
+  const { refreshUser, sendResetLink, sendVerificationEmail, signOut, status, user } = useAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [refreshingVerification, setRefreshingVerification] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [suppressAuthRedirect, setSuppressAuthRedirect] = useState(false);
@@ -60,6 +62,7 @@ export function AccountPage() {
   const [error, setError] = useState<string | null>(null);
 
   const hasPasswordProvider = user?.providerIds.includes("password") ?? false;
+  const isEmailVerified = user?.emailVerified ?? false;
   const displayNamePreview = buildDisplayName(firstName, lastName) || profile?.displayName || user?.displayName || "EduthArt Collector";
 
   useEffect(() => {
@@ -205,6 +208,42 @@ export function AccountPage() {
       toast.error(message);
     } finally {
       setResettingPassword(false);
+    }
+  };
+
+  const handleSendVerificationEmail = async () => {
+    if (!user?.email) {
+      return;
+    }
+
+    setSendingVerification(true);
+
+    try {
+      await sendVerificationEmail();
+      toast.success(`A verification email has been sent to ${user.email}.`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to send a verification email.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  const handleRefreshVerification = async () => {
+    setRefreshingVerification(true);
+
+    try {
+      await refreshUser();
+      toast.success("Email verification status refreshed.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to refresh verification status.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setRefreshingVerification(false);
     }
   };
 
@@ -395,6 +434,74 @@ export function AccountPage() {
                   Connected sign-in providers
                 </p>
                 <p className="mt-2 text-sm text-foreground">{providerLabel}</p>
+              </div>
+              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Email verification
+                </p>
+                <div className="mt-2 flex items-start gap-3 text-sm text-foreground">
+                  {isEmailVerified ? (
+                    <>
+                      <BadgeCheck className="mt-0.5 size-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Your email is verified.</p>
+                        <p className="text-muted-foreground">
+                          This address has already been confirmed for your EduthArt account.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert className="mt-0.5 size-4 text-destructive" />
+                      <div>
+                        <p className="font-medium">Your email still needs verification.</p>
+                        <p className="text-muted-foreground">
+                          Verify your inbox link, then refresh the status here.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {!isEmailVerified ? (
+                  <Button
+                    disabled={sendingVerification}
+                    onClick={handleSendVerificationEmail}
+                    type="button"
+                    variant="outline"
+                  >
+                    {sendingVerification ? (
+                      <>
+                        <Loader2 className="animate-spin" />
+                        Sending verification email...
+                      </>
+                    ) : (
+                      <>
+                        <Mail />
+                        Send verification email
+                      </>
+                    )}
+                  </Button>
+                ) : null}
+                <Button
+                  disabled={refreshingVerification}
+                  onClick={handleRefreshVerification}
+                  type="button"
+                  variant="outline"
+                >
+                  {refreshingVerification ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Refreshing verification status...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw />
+                      Refresh verification status
+                    </>
+                  )}
+                </Button>
               </div>
               {hasPasswordProvider ? (
                 <Button

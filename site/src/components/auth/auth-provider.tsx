@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -34,6 +36,7 @@ type GoogleAuthMode = "login" | "signup";
 export type AuthUser = {
   displayName: string | null;
   email: string | null;
+  emailVerified: boolean;
   getIdToken: (forceRefresh?: boolean) => Promise<string>;
   photoURL: string | null;
   providerIds: string[];
@@ -41,6 +44,8 @@ export type AuthUser = {
 };
 
 type AuthContextValue = {
+  refreshUser: () => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (mode: GoogleAuthMode) => Promise<void>;
   signOut: () => Promise<void>;
@@ -68,6 +73,7 @@ function mapFirebaseUser(user: FirebaseUser): AuthUser {
   return {
     displayName: user.displayName,
     email: user.email,
+    emailVerified: user.emailVerified,
     getIdToken: (forceRefresh?: boolean) => user.getIdToken(forceRefresh),
     photoURL: user.photoURL,
     providerIds: user.providerData
@@ -92,6 +98,7 @@ function readE2EUser(): AuthUser | null {
     const parsed = JSON.parse(raw) as {
       displayName?: string | null;
       email?: string | null;
+      emailVerified?: boolean;
       photoURL?: string | null;
       providerIds?: string[];
       uid?: string;
@@ -104,6 +111,8 @@ function readE2EUser(): AuthUser | null {
     return {
       displayName: parsed.displayName ?? null,
       email: parsed.email ?? null,
+      emailVerified:
+        parsed.emailVerified ?? parsed.providerIds?.includes("google.com") ?? false,
       getIdToken: async () => `e2e:${parsed.uid}`,
       photoURL: parsed.photoURL ?? null,
       providerIds: parsed.providerIds?.length ? parsed.providerIds : ["password"],
@@ -252,6 +261,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName,
         method: "email_password",
       });
+
+      await sendEmailVerification(credential.user);
     },
     [],
   );
@@ -287,6 +298,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email.trim());
   }, []);
 
+  const sendVerificationEmail = useCallback(async () => {
+    if (E2E_AUTH_ENABLED) {
+      return;
+    }
+
+    const auth = await getFirebaseAuth();
+
+    if (!auth.currentUser) {
+      throw new Error("You need to be signed in to verify your email.");
+    }
+
+    await sendEmailVerification(auth.currentUser);
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    if (E2E_AUTH_ENABLED) {
+      const nextUser = readE2EUser();
+      setUser(nextUser);
+      setStatus(nextUser ? "authenticated" : "unauthenticated");
+      return;
+    }
+
+    const auth = await getFirebaseAuth();
+
+    if (!auth.currentUser) {
+      setUser(null);
+      setStatus("unauthenticated");
+      return;
+    }
+
+    await reload(auth.currentUser);
+    setUser(mapFirebaseUser(auth.currentUser));
+    setStatus("authenticated");
+  }, []);
+
   const signOut = useCallback(async () => {
     if (E2E_AUTH_ENABLED) {
       window.localStorage.removeItem(E2E_STORAGE_KEY);
@@ -303,6 +349,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       sendResetLink,
+      sendVerificationEmail,
+      refreshUser,
       signInWithEmail,
       signInWithGoogle,
       signOut,
@@ -310,7 +358,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
     }),
-    [sendResetLink, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail, status, user],
+    [refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
