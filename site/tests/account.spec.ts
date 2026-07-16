@@ -84,14 +84,16 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await seedAccount(page, { uid: "edit-user" });
 
   await page.goto("/account");
+  await page.getByRole("button", { name: "Edit profile" }).click();
   await page.getByLabel("First name").fill("Avery");
   await page.getByLabel("Last name").fill("Curator");
   await page.getByRole("button", { name: "Save profile" }).click();
 
-  await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible();
+  await expect(page.getByLabel("First name")).toHaveCount(0);
   await page.reload();
 
   await expect(page.getByRole("heading", { name: "Avery Curator" })).toBeVisible();
+  await page.getByRole("button", { name: "Edit profile" }).click();
   await expect(page.getByLabel("First name")).toHaveValue("Avery");
   await expect(page.getByLabel("Last name")).toHaveValue("Curator");
 });

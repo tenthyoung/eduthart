@@ -60,6 +60,7 @@ export function AccountPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [nextEmail, setNextEmail] = useState("");
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -192,6 +193,7 @@ export function AccountPage() {
       setProfile(payload.profile);
       setFirstName(payload.profile.firstName ?? "");
       setLastName(payload.profile.lastName ?? "");
+      setIsProfileDialogOpen(false);
       toast.success("Your account profile has been updated.");
     } catch (error) {
       const message =
@@ -407,10 +409,7 @@ export function AccountPage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <form
-            className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl"
-            onSubmit={handleSave}
-          >
+          <section className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <UserRound className="size-5 text-primary" />
@@ -422,21 +421,17 @@ export function AccountPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="account-first-name">First name</Label>
-                <Input
-                  id="account-first-name"
-                  value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
-                />
+              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  First name
+                </p>
+                <p className="mt-2 text-sm text-foreground">{firstName || "Not set"}</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-last-name">Last name</Label>
-                <Input
-                  id="account-last-name"
-                  value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
-                />
+              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Last name
+                </p>
+                <p className="mt-2 text-sm text-foreground">{lastName || "Not set"}</p>
               </div>
             </div>
 
@@ -447,17 +442,61 @@ export function AccountPage() {
               <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
             </div>
 
-            <Button disabled={saving} size="lg" type="submit">
-              {saving ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Saving profile...
-                </>
-              ) : (
-                "Save profile"
-              )}
-            </Button>
-          </form>
+            <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" type="button" variant="outline">
+                  <UserRound />
+                  Edit profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit profile</DialogTitle>
+                  <DialogDescription>
+                    Update your first and last name without keeping the full form visible on the account page.
+                  </DialogDescription>
+                </DialogHeader>
+                <form className="space-y-4" onSubmit={handleSave}>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="account-first-name">First name</Label>
+                      <Input
+                        id="account-first-name"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-last-name">Last name</Label>
+                      <Input
+                        id="account-last-name"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Display name preview
+                    </p>
+                    <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
+                  </div>
+                  <DialogFooter>
+                    <Button disabled={saving} type="submit">
+                      {saving ? (
+                        <>
+                          <Loader2 className="animate-spin" />
+                          Saving profile...
+                        </>
+                      ) : (
+                        "Save profile"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </section>
 
           <div className="space-y-6">
             <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
