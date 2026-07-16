@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
-import { CircleUserRound, Linkedin, Loader2, LogOut, Menu, X } from "lucide-react";
+import { ChevronRight, CircleUserRound, Linkedin, Loader2, LogOut, Menu, Settings, X } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -156,11 +156,17 @@ export function Navbar() {
             {status === "authenticated" ? (
               <div className="hidden items-center gap-2 lg:flex">
                 <div className="rounded-full border border-border/70 bg-white/70 px-4 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm">
-                  <span className="inline-flex items-center gap-2">
+                  <Link className="inline-flex items-center gap-2" href="/account">
                     <CircleUserRound className="size-4 text-primary" />
                     {user?.displayName || user?.email || "Signed in"}
-                  </span>
+                  </Link>
                 </div>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/account">
+                    <Settings />
+                    Account
+                  </Link>
+                </Button>
                 <Button
                   disabled={isSigningOut}
                   onClick={handleSignOut}
@@ -242,6 +248,13 @@ export function Navbar() {
                     <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm text-foreground">
                       Signed in as {user?.displayName || user?.email || "collector"}
                     </div>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href="/account" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Settings />
+                        Account settings
+                        <ChevronRight />
+                      </Link>
+                    </Button>
                     <Button
                       className="w-full"
                       disabled={isSigningOut}

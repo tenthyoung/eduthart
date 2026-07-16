@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
   updateProfile,
-  type User,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import {
   createContext,
@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { buildDisplayName } from "@/lib/auth/account-profile";
 import {
   getFirebaseAuth,
 } from "@/lib/firebase/client";
@@ -29,6 +30,15 @@ import {
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type GoogleAuthMode = "login" | "signup";
+
+export type AuthUser = {
+  displayName: string | null;
+  email: string | null;
+  getIdToken: (forceRefresh?: boolean) => Promise<string>;
+  photoURL: string | null;
+  providerIds: string[];
+  uid: string;
+};
 
 type AuthContextValue = {
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -42,21 +52,78 @@ type AuthContextValue = {
     password: string;
   }) => Promise<void>;
   status: AuthStatus;
-  user: User | null;
+  user: AuthUser | null;
 };
 
 const TERMS_PATH = "/legal/terms-of-service";
 const PRIVACY_PATH = "/legal/privacy-policy";
 const LEGAL_VERSION = "2026-07-07";
+const E2E_STORAGE_KEY = "eduthart:e2e-user";
+const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
+const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function buildDisplayName(firstName: string, lastName: string) {
-  return `${firstName.trim()} ${lastName.trim()}`.trim();
+function mapFirebaseUser(user: FirebaseUser): AuthUser {
+  return {
+    displayName: user.displayName,
+    email: user.email,
+    getIdToken: (forceRefresh?: boolean) => user.getIdToken(forceRefresh),
+    photoURL: user.photoURL,
+    providerIds: user.providerData
+      .map((provider) => provider.providerId)
+      .filter(Boolean),
+    uid: user.uid,
+  };
+}
+
+function readE2EUser(): AuthUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(E2E_STORAGE_KEY);
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      displayName?: string | null;
+      email?: string | null;
+      photoURL?: string | null;
+      providerIds?: string[];
+      uid?: string;
+    };
+
+    if (!parsed.uid) {
+      return null;
+    }
+
+    return {
+      displayName: parsed.displayName ?? null,
+      email: parsed.email ?? null,
+      getIdToken: async () => `e2e:${parsed.uid}`,
+      photoURL: parsed.photoURL ?? null,
+      providerIds: parsed.providerIds?.length ? parsed.providerIds : ["password"],
+      uid: parsed.uid,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function notifyE2EAuthChanged() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event(E2E_AUTH_EVENT));
 }
 
 async function persistUserRecord(
-  user: User,
+  user: FirebaseUser,
   options?: {
     acceptedLegal?: boolean;
     firstName?: string;
@@ -97,10 +164,27 @@ async function persistUserRecord(
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   useEffect(() => {
+    if (E2E_AUTH_ENABLED) {
+      const syncUser = () => {
+        const nextUser = readE2EUser();
+        setUser(nextUser);
+        setStatus(nextUser ? "authenticated" : "unauthenticated");
+      };
+
+      syncUser();
+      window.addEventListener("storage", syncUser);
+      window.addEventListener(E2E_AUTH_EVENT, syncUser);
+
+      return () => {
+        window.removeEventListener("storage", syncUser);
+        window.removeEventListener(E2E_AUTH_EVENT, syncUser);
+      };
+    }
+
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
 
@@ -114,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setUser(nextUser);
+        setUser(nextUser ? mapFirebaseUser(nextUser) : null);
         setStatus(nextUser ? "authenticated" : "unauthenticated");
       });
     });
@@ -195,11 +279,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const sendResetLink = useCallback(async (email: string) => {
+    if (E2E_AUTH_ENABLED) {
+      return;
+    }
+
     const auth = await getFirebaseAuth();
     await sendPasswordResetEmail(auth, email.trim());
   }, []);
 
   const signOut = useCallback(async () => {
+    if (E2E_AUTH_ENABLED) {
+      window.localStorage.removeItem(E2E_STORAGE_KEY);
+      notifyE2EAuthChanged();
+      setUser(null);
+      setStatus("unauthenticated");
+      return;
+    }
+
     const auth = await getFirebaseAuth();
     await firebaseSignOut(auth);
   }, []);
