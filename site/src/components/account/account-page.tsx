@@ -484,13 +484,14 @@ export function AccountPage() {
                     )}
                   </Button>
                 ) : null}
-                <Button
+                {!isEmailVerified ? (
+<Button
                   disabled={refreshingVerification}
                   onClick={handleRefreshVerification}
                   type="button"
                   variant="outline"
                 >
-                  {refreshingVerification ? (
+                  {refreshingVerification  ? (
                     <>
                       <Loader2 className="animate-spin" />
                       Refreshing verification status...
@@ -502,6 +503,7 @@ export function AccountPage() {
                     </>
                   )}
                 </Button>
+                ) : null}
               </div>
               {hasPasswordProvider ? (
                 <Button
