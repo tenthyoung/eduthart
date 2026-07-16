@@ -50,7 +50,7 @@ export function HomeHero() {
           </div>
 
           <h1 className="mt-6 text-5xl font-semibold leading-[0.96] tracking-[-0.05em] text-foreground sm:text-6xl lg:text-7xl">
-            Find the right piece faster.
+            Discover and collect original art from emerging artists
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
