@@ -118,6 +118,23 @@ test("shows provider-aware security messaging for google-only users", async ({ p
   await expect(page.getByRole("button", { name: "Send password reset email" })).toHaveCount(0);
 });
 
+test("updates the account email from account settings and persists it across reload", async ({ page }) => {
+  await seedAccount(page, { uid: "email-user", email: "old.address@example.com" });
+
+  await page.goto("/account");
+  await page.getByLabel("New email address").fill("new.address@example.com");
+  await page.getByRole("button", { name: "Change email address" }).click();
+
+  await expect(page.getByText("Your email address has been updated.")).toBeVisible();
+  await expect(page.getByLabel("New email address")).toHaveValue("new.address@example.com");
+  await expect(page.getByText("new.address@example.com")).toHaveCount(2);
+
+  await page.reload();
+
+  await expect(page.getByText("new.address@example.com")).toHaveCount(2);
+  await expect(page.getByLabel("New email address")).toHaveValue("new.address@example.com");
+});
+
 test("deletes the account after explicit confirmation and blocks account access afterward", async ({ page }) => {
   await seedAccount(page, { uid: "delete-user", displayName: "Delete Me" });
 
