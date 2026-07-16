@@ -257,7 +257,7 @@ export function AccountPage() {
 
   if (status === "loading" || loading) {
     return (
-      <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(216,195,165,0.38),_transparent_36%),linear-gradient(180deg,_#fcf8f3_0%,_#f5ede2_100%)] px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+      <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-4xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
@@ -273,7 +273,7 @@ export function AccountPage() {
   }
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(216,195,165,0.38),_transparent_36%),linear-gradient(180deg,_#fcf8f3_0%,_#f5ede2_100%)] px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
         <div className="space-y-4">
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">

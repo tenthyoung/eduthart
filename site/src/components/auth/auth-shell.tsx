@@ -19,12 +19,7 @@ export function AuthShell({
   title,
 }: AuthShellProps) {
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(216,195,165,0.42),_transparent_42%),linear-gradient(180deg,_#fcf8f3_0%,_#f5ede2_100%)] px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[8%] top-28 h-28 w-28 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-12 right-[12%] h-44 w-44 rounded-full bg-primary-light/12 blur-3xl" />
-      </div>
-
+    <section className="relative overflow-hidden bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div className="max-w-2xl space-y-6">
           <div className="inline-flex rounded-full border border-primary/15 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">

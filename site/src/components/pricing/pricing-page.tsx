@@ -13,8 +13,7 @@ export function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(185,155,120,0.22),_transparent_42%),linear-gradient(180deg,rgba(251,247,241,0.98),rgba(246,239,229,1))] dark:bg-[radial-gradient(circle_at_top,_rgba(200,166,127,0.18),_transparent_38%),linear-gradient(180deg,rgba(24,18,13,0.98),rgba(24,18,13,1))]" />
+      <section className="relative overflow-hidden bg-white">
         <div className="relative container mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-4 py-2 text-sm font-medium text-primary">

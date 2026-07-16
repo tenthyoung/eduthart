@@ -48,7 +48,7 @@ const acceptedBenefits = [
 export default function ForArtistsPage() {
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="relative overflow-hidden border-b border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(216,195,165,0.34),_transparent_34%),linear-gradient(180deg,_#f9f4ed_0%,_#ffffff_100%)]">
+      <section className="relative overflow-hidden border-b border-border/70 bg-white">
         <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <MotionStaggerFade className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>

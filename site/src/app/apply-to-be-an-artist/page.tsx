@@ -58,7 +58,7 @@ const progressPercentage = 20;
 export default function ApplyToBeAnArtistPage() {
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="border-b border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(216,195,165,0.28),_transparent_34%),linear-gradient(180deg,_#faf5ee_0%,_#ffffff_100%)]">
+      <section className="border-b border-border/70 bg-white">
         <div className="container mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
           <MotionFade>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
