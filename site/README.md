@@ -74,6 +74,24 @@ variable names.
 For a fuller walkthrough of the admin sign-in flow, session model, route map,
 and security rationale, see [docs/admin-console.md](./docs/admin-console.md).
 
+## Custom password reset page
+
+The site now includes a custom Firebase password reset handler at
+[`/auth/action`](./src/app/auth/action/page.tsx), styled to match the rest of
+EduthArt instead of using the default Firebase-hosted form.
+
+To route password reset emails to this page, update the Firebase Authentication
+email template:
+
+1. Open Firebase Console -> Authentication -> Templates.
+2. Edit the password reset template.
+3. Enable the custom action URL and set it to
+   `https://www.eduthart.com/auth/action` in production, or your local/dev
+   domain while testing.
+
+The handler expects Firebase's standard `mode`, `oobCode`, `apiKey`, `lang`,
+and optional `continueUrl` query parameters.
+
 ## How do we get the animations?
 
 1. GSAP
