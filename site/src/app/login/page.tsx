@@ -143,7 +143,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-border/80" />
           </div>
           <div className="relative flex justify-center text-xs uppercase tracking-[0.28em] text-muted-foreground">
-            <span className="bg-white px-3">or</span>
+            <span className="bg-background px-3">or</span>
           </div>
         </div>
 

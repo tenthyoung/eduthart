@@ -41,10 +41,10 @@ export function HomeHero() {
   const [budget, setBudget] = useState("");
 
   return (
-    <section className="relative overflow-hidden bg-white pt-28 pb-18 sm:pt-32 lg:pt-36 lg:pb-24">
+    <section className="relative overflow-hidden bg-background pt-28 pb-18 sm:pt-32 lg:pt-36 lg:pb-24">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white px-4 py-2 text-sm font-medium text-primary shadow-[0_16px_40px_-30px_rgba(56,40,25,0.28)]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-4 py-2 text-sm font-medium text-primary shadow-[0_16px_40px_-30px_rgba(56,40,25,0.28)]">
             <Sparkles className="h-4 w-4" />
             Search original art by medium, mood, room, or budget
           </div>
@@ -59,7 +59,7 @@ export function HomeHero() {
           </p>
         </div>
 
-        <form className="mx-auto w-full max-w-5xl rounded-[2rem] border border-border/70 bg-white p-3 shadow-[0_24px_70px_-40px_rgba(56,40,25,0.22)]">
+        <form className="mx-auto w-full max-w-5xl rounded-[2rem] border border-border/70 bg-card p-3 shadow-[0_24px_70px_-40px_rgba(56,40,25,0.22)]">
           <div className="grid gap-2 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
             <label className="rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
               <p className="text-sm font-semibold text-foreground">What</p>
@@ -121,7 +121,7 @@ export function HomeHero() {
                 key={link}
                 type="button"
                 onClick={() => setQuery(link)}
-                className="rounded-full border border-border/70 bg-white px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                className="rounded-full border border-border/70 bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
               >
                 {link}
               </button>
