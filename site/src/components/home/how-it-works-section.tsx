@@ -16,35 +16,35 @@ const features = [
     title: "Curated Exhibitions",
     description:
       "Thoughtfully assembled shows bring contemporary painting, sculpture, and mixed media into a clear curatorial conversation.",
-    gradient: "from-[#7f6147] to-[#b99b78]",
+    gradient: "from-[#111111] to-[#52525b]",
   },
   {
     icon: MessageSquare,
     title: "Private Viewings",
     description:
       "Schedule a quieter appointment for collectors, designers, and advisors who want time with the work beyond opening night.",
-    gradient: "from-[#8d6e52] to-[#c7ad8b]",
+    gradient: "from-[#18181b] to-[#71717a]",
   },
   {
     icon: CheckCircle,
     title: "Collection Advisory",
     description:
       "We help place works with confidence, offering practical guidance around scale, finish, provenance, and long-term fit.",
-    gradient: "from-[#6f533b] to-[#a98963]",
+    gradient: "from-[#27272a] to-[#52525b]",
   },
   {
     icon: Clock,
     title: "Rotating Installations",
     description:
       "The gallery evolves throughout the year with focused presentations, seasonal rehangs, and new artist introductions.",
-    gradient: "from-[#9a7858] to-[#d2b48c]",
+    gradient: "from-[#3f3f46] to-[#a1a1aa]",
   },
   {
     icon: Smartphone,
     title: "Online Viewing Room",
     description:
       "Browse selected works remotely before you visit, then continue the conversation with the gallery when something resonates.",
-    gradient: "from-[#86684a] to-[#c8a67f]",
+    gradient: "from-[#09090b] to-[#71717a]",
   },
 ];
 

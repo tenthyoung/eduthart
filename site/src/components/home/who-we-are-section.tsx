@@ -16,7 +16,7 @@ export const WhoWeAreSection = () => {
         <div className="mb-16 grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Image */}
           <div className="relative order-2 lg:order-1">
-            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#f7efe3] via-[#e8d7c0] to-[#c7ad8b] p-12 shadow-2xl shadow-primary/10 dark:from-[#2a2017] dark:via-[#3a2c20] dark:to-[#5a4330]">
+            <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#fafafa] via-[#e4e4e7] to-[#a1a1aa] p-12 shadow-2xl shadow-primary/10 dark:from-[#18181b] dark:via-[#27272a] dark:to-[#3f3f46]">
               <div className="flex items-center justify-center">
                 <Image
                   src="/logo/eduthart-logo.png"

@@ -57,7 +57,7 @@ export function MarketplaceSections() {
       <section id="collections" className="border-y border-border/40 bg-white py-18 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-[#8e6f56]">
+            <p className="text-sm font-medium uppercase tracking-[0.22em] text-primary/70">
               Curated collections
             </p>
             <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
@@ -75,8 +75,8 @@ export function MarketplaceSections() {
                 key={collection.title}
                 className="rounded-[1.75rem] border border-border/70 bg-white p-6 shadow-[0_20px_40px_-34px_rgba(65,45,30,0.12)]"
               >
-                <div className="mb-6 h-44 rounded-[1.25rem] bg-[linear-gradient(160deg,#f5ecdf_0%,#d2ad86_52%,#8a6242_100%)]" />
-                <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
+                <div className="mb-6 h-44 rounded-[1.25rem] bg-[linear-gradient(160deg,#fafafa_0%,#d4d4d8_52%,#3f3f46_100%)]" />
+                <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary/70">
                   {collection.eyebrow}
                 </p>
                 <h3 className="mt-3 text-2xl font-semibold text-foreground">
@@ -92,7 +92,7 @@ export function MarketplaceSections() {
       <section id="browse" className="py-18 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
           <div className="rounded-[2rem] border border-border/60 bg-white p-8 shadow-[0_24px_60px_-42px_rgba(60,44,28,0.22)] lg:p-10">
-            <div className="flex items-center gap-3 text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
+            <div className="flex items-center gap-3 text-sm font-medium uppercase tracking-[0.18em] text-primary/70">
               <LayoutGrid className="h-4 w-4" />
               Discovery model
             </div>
@@ -103,7 +103,7 @@ export function MarketplaceSections() {
               {discoveryWays.map((item) => (
                 <div
                   key={item}
-                  className="flex items-start gap-3 rounded-2xl border border-border/60 bg-[#fcfaf8] p-4"
+                  className="flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/60 p-4"
                 >
                   <Check className="mt-0.5 h-5 w-5 text-primary" />
                   <p className="text-muted-foreground">{item}</p>
@@ -113,12 +113,12 @@ export function MarketplaceSections() {
           </div>
 
           <div className="rounded-[2rem] border border-border/60 bg-white p-8 shadow-[0_24px_60px_-42px_rgba(60,44,28,0.12)] lg:p-10">
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary/70">
               Mocked buyer journey
             </p>
             <div className="mt-6 space-y-4">
               <div className="rounded-2xl border border-white/80 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.16em] text-[#8e6f56]">
+                <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   01
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold">Land on a clear value proposition</h3>
@@ -127,7 +127,7 @@ export function MarketplaceSections() {
                 </p>
               </div>
               <div className="rounded-2xl border border-white/80 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.16em] text-[#8e6f56]">
+                <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   02
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold">Choose a browse path</h3>
@@ -136,7 +136,7 @@ export function MarketplaceSections() {
                 </p>
               </div>
               <div className="rounded-2xl border border-white/80 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.16em] text-[#8e6f56]">
+                <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   03
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold">Get reassurance before purchase</h3>
@@ -152,7 +152,7 @@ export function MarketplaceSections() {
       <section id="advisory" className="border-y border-border/40 bg-white py-18 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-[#8e6f56]">
+            <p className="text-sm font-medium uppercase tracking-[0.22em] text-primary/70">
               Advisory layer
             </p>
             <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
@@ -176,7 +176,7 @@ export function MarketplaceSections() {
           </div>
 
           <div className="rounded-[2rem] border border-border/60 bg-white p-8 shadow-[0_24px_50px_-40px_rgba(60,44,28,0.14)] lg:p-10">
-            <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em] text-[#8e6f56]">
+            <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em] text-primary/70">
               <Star className="h-4 w-4" />
               Suggested service language
             </div>
@@ -184,7 +184,7 @@ export function MarketplaceSections() {
               {advisoryPoints.map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-border/60 bg-[#fcfaf8] px-5 py-4 text-muted-foreground"
+                  className="rounded-2xl border border-border/60 bg-muted/60 px-5 py-4 text-muted-foreground"
                 >
                   {item}
                 </div>
@@ -205,7 +205,7 @@ export function MarketplaceSections() {
                   key={point.title}
                   className="rounded-[1.75rem] border border-border/70 bg-white p-6 shadow-[0_18px_50px_-38px_rgba(56,40,25,0.24)]"
                 >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4e8dc] text-primary">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="mt-5 text-2xl font-semibold text-foreground">

@@ -44,7 +44,7 @@ export const ContactFormSection = () => {
           {/* Image */}
           <div className="order-2 lg:order-2">
             <MotionFade delay={0.4}>
-              <div className="relative flex h-96 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#f7efe3] via-[#e8d7c0] to-[#c7ad8b] shadow-lg shadow-primary/10 dark:from-[#2a2017] dark:via-[#3a2c20] dark:to-[#5a4330] lg:h-[500px]">
+              <div className="relative flex h-96 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#fafafa] via-[#e4e4e7] to-[#a1a1aa] shadow-lg shadow-primary/10 dark:from-[#18181b] dark:via-[#27272a] dark:to-[#3f3f46] lg:h-[500px]">
                 <Image
                   src="/logo/eduthart-logo.png"
                   alt="EduthArt Gallery"

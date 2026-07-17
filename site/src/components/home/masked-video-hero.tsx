@@ -145,7 +145,7 @@ export function MaskedVideoHero({ muxPlaybackId }: MaskedVideoHeroProps) {
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
         <button
           onClick={scrollToContent}
-          className="animate-bounce text-[#efe4d6] transition-colors duration-200 hover:text-primary-light"
+          className="animate-bounce text-white transition-colors duration-200 hover:text-primary-light"
           aria-label="Scroll to content"
         >
           <ChevronDown size={32} />
