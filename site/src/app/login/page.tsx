@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -16,11 +16,13 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signInWithEmail, signInWithGoogle, status } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordResetSucceeded = searchParams.get("reset") === "success";
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -84,6 +86,15 @@ export default function LoginPage() {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {passwordResetSucceeded ? (
+            <Alert>
+              <AlertTitle>Password updated</AlertTitle>
+              <AlertDescription>
+                Your password has been reset. Sign in with your new password below.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

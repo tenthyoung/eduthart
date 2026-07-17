@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type ActionCodeSettings,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
@@ -71,6 +72,7 @@ const LEGAL_VERSION = "2026-07-07";
 const E2E_STORAGE_KEY = "eduthart:e2e-user";
 const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
 const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
+const RESET_PASSWORD_RETURN_PATH = "/login?reset=success";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -336,7 +338,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const auth = await getFirebaseAuth();
-    await sendPasswordResetEmail(auth, email.trim());
+    const origin =
+      typeof window === "undefined" ? null : window.location.origin;
+    const actionCodeSettings: ActionCodeSettings | undefined = origin
+      ? {
+          url: `${origin}${RESET_PASSWORD_RETURN_PATH}`,
+        }
+      : undefined;
+
+    await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
   }, []);
 
   const sendVerificationEmail = useCallback(async () => {
