@@ -3395,7 +3395,7 @@ export function ListingFlowPage({
             </div>
           </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
             <div className="rounded-[2rem] border border-white/70 bg-white/94 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
                 Listing status
