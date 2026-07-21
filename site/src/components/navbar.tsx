@@ -1,11 +1,14 @@
 "use client";
 
+import type { AccountProfile } from "@/lib/auth/account-profile";
+import { buildArtistPageHref } from "@/lib/auth/account-profile";
+import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
-import { ChevronRight, CircleUserRound, Linkedin, Loader2, LogOut, Menu, Settings, X } from "lucide-react";
+import { Bell, ChevronRight, CircleUserRound, Linkedin, Loader2, LogOut, Menu, Settings, X } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +20,7 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
@@ -27,6 +31,10 @@ export function Navbar() {
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
+  const desktopNavItems =
+    status === "authenticated" && username
+      ? [...navItems, { name: "My Gallery", href: buildArtistPageHref(username) }]
+      : navItems;
 
   const socialIcons = [
     {
@@ -86,6 +94,52 @@ export function Navbar() {
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
+    if (status !== "authenticated" || !user) {
+      setUsername(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/auth/profile", {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { profile: AccountProfile };
+
+        if (!cancelled) {
+          setUsername(payload.profile.username ?? null);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsername(null);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, user]);
+
+  useEffect(() => {
+    return subscribeToUsernameUpdates((nextUsername) => {
+      setUsername(nextUsername);
+    });
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 12);
     };
@@ -141,7 +195,7 @@ export function Navbar() {
 
           {/* Center - Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {desktopNavItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -157,16 +211,18 @@ export function Navbar() {
             <ThemeToggle />
             {status === "authenticated" ? (
               <div className="hidden items-center gap-2 lg:flex">
-                <div className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm">
-                  <Link className="inline-flex items-center gap-2" href="/account">
-                    <CircleUserRound className="size-4 text-primary" />
-                    {user?.displayName || user?.email || "Signed in"}
+                <Button asChild className="relative" size="icon" variant="outline">
+                  <Link aria-label="Notifications" href="/notifications">
+                    <Bell />
+                    {!username ? (
+                      <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-500" />
+                    ) : null}
                   </Link>
-                </div>
+                </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link href="/account">
-                    <Settings />
-                    Account
+                    <CircleUserRound />
+                    {user?.displayName || user?.email || "Account"}
                   </Link>
                 </Button>
                 <Button
@@ -220,7 +276,7 @@ export function Navbar() {
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="space-y-2">
-              {navItems.map((item, index) => (
+              {desktopNavItems.map((item, index) => (
                 <motion.div
                   key={item.name}
                   className={cn(index === 0 && "mt-2")}
@@ -255,12 +311,31 @@ export function Navbar() {
                       Signed in as {user?.displayName || user?.email || "collector"}
                     </div>
                     <Button asChild className="w-full" variant="outline">
+                      <Link href="/notifications" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Bell />
+                        Notifications
+                        {!username ? (
+                          <span className="ml-auto inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                            1
+                          </span>
+                        ) : null}
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full" variant="outline">
                       <Link href="/account" onClick={() => setIsMobileMenuOpen(false)}>
                         <Settings />
                         Account settings
                         <ChevronRight />
                       </Link>
                     </Button>
+                    {username ? (
+                      <Button asChild className="w-full" variant="gradient">
+                        <Link href={buildArtistPageHref(username)} onClick={() => setIsMobileMenuOpen(false)}>
+                          <CircleUserRound />
+                          My Gallery
+                        </Link>
+                      </Button>
+                    ) : null}
                     <Button
                       className="w-full"
                       disabled={isSigningOut}

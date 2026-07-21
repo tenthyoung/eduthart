@@ -1,9 +1,11 @@
+import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
 import { NextResponse } from "next/server";
 
 import { clearE2EAccountProfiles, isE2EAuthEnabled, seedE2EAccountProfile } from "@/lib/auth/e2e-store";
 
 type SeedBody = {
   authProviders?: string[];
+  bannerURL?: string | null;
   createdAt?: string | null;
   displayName?: string | null;
   email?: string | null;
@@ -11,7 +13,9 @@ type SeedBody = {
   lastLoginAt?: string | null;
   lastName?: string | null;
   photoURL?: string | null;
+  shippingOriginAddress?: ShippingOriginAddress | null;
   uid?: string;
+  username?: string | null;
 };
 
 function ensureE2EEnabled() {
@@ -53,6 +57,7 @@ export async function POST(request: Request) {
 
   const profile = await seedE2EAccountProfile({
     authProviders: body.authProviders,
+    bannerURL: body.bannerURL,
     createdAt: body.createdAt,
     displayName: body.displayName,
     email: body.email,
@@ -60,7 +65,9 @@ export async function POST(request: Request) {
     lastLoginAt: body.lastLoginAt,
     lastName: body.lastName,
     photoURL: body.photoURL,
+    shippingOriginAddress: body.shippingOriginAddress,
     uid: body.uid.trim(),
+    username: body.username,
   });
 
   return NextResponse.json({ profile });

@@ -1,10 +1,12 @@
 "use client";
 
-import { AlertTriangle, BadgeCheck, Loader2, LogOut, Mail, RefreshCw, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { AlertTriangle, BadgeCheck, ImagePlus, Loader2, LogOut, Mail, RefreshCw, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 
+import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
+import { buildArtistPageHref, buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
+import { notifyUsernameUpdated } from "@/lib/auth/username-events";
+import { getFirebaseStorage } from "@/lib/firebase/client";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+
+const MAX_BANNER_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_BANNER_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
 
 function formatAccountDate(value: string | null) {
   if (!value) {
@@ -53,18 +62,44 @@ async function parseApiError(response: Response, fallbackMessage: string) {
   return payload?.error?.message ?? fallbackMessage;
 }
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Unable to read the selected image."));
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Unable to read the selected image."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 export function AccountPage() {
   const router = useRouter();
   const { refreshUser, requestEmailChange, sendResetLink, sendVerificationEmail, signOut, status, user } = useAuth();
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [usernameDraft, setUsernameDraft] = useState("");
   const [nextEmail, setNextEmail] = useState("");
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingUsername, setSavingUsername] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [refreshingVerification, setRefreshingVerification] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -118,6 +153,7 @@ export function AccountPage() {
         setProfile(payload.profile);
         setFirstName(payload.profile.firstName ?? "");
         setLastName(payload.profile.lastName ?? "");
+        setUsernameDraft(payload.profile.username ?? "");
         setNextEmail(payload.profile.email ?? user.email ?? "");
       } catch (error) {
         if (!cancelled) {
@@ -161,14 +197,38 @@ export function AccountPage() {
       .join(", ");
   }, [profile?.authProviders, user?.providerIds]);
 
-  const handleSave = async (event: FormEvent<HTMLFormElement>) => {
+  const updateProfileBanner = async (bannerURL: string | null, successMessage: string) => {
+    if (!user) {
+      return;
+    }
+
+    const token = await user.getIdToken();
+    const response = await fetch("/api/auth/profile", {
+      body: JSON.stringify({ bannerURL }),
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      method: "PATCH",
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseApiError(response, "Unable to update your profile banner."));
+    }
+
+    const payload = (await response.json()) as { profile: AccountProfile };
+    setProfile(payload.profile);
+    toast.success(successMessage);
+  };
+
+  const handleSaveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!user) {
       return;
     }
 
-    setSaving(true);
+    setSavingProfile(true);
     setError(null);
 
     try {
@@ -201,7 +261,123 @@ export function AccountPage() {
       setError(message);
       toast.error(message);
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSaveUsername = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!user) {
+      return;
+    }
+
+    setSavingUsername(true);
+    setError(null);
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/auth/profile", {
+        body: JSON.stringify({
+          username: usernameDraft,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        method: "PATCH",
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseApiError(response, "Unable to save your username."));
+      }
+
+      const payload = (await response.json()) as { profile: AccountProfile };
+      setProfile(payload.profile);
+      setUsernameDraft(payload.profile.username ?? "");
+      notifyUsernameUpdated(payload.profile.username ?? null);
+      setIsUsernameDialogOpen(false);
+      toast.success("Your username has been updated.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to save your username.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSavingUsername(false);
+    }
+  };
+
+  const handleBannerFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file || !user) {
+      return;
+    }
+
+    if (!ACCEPTED_BANNER_TYPES.has(file.type)) {
+      const message = "Please upload a JPG, PNG, or WebP image for your banner.";
+      setError(message);
+      toast.error(message);
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_BANNER_FILE_SIZE) {
+      const message = "Please choose an image smaller than 5 MB.";
+      setError(message);
+      toast.error(message);
+      event.target.value = "";
+      return;
+    }
+
+    setUploadingBanner(true);
+    setError(null);
+
+    try {
+      let bannerURL: string;
+
+      if (E2E_AUTH_ENABLED) {
+        bannerURL = await readFileAsDataUrl(file);
+      } else {
+        const storage = getFirebaseStorage();
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+        const bannerRef = ref(storage, `profile-banners/${user.uid}/${Date.now()}-${safeName}`);
+        await uploadBytes(bannerRef, file, {
+          cacheControl: "public,max-age=31536000,immutable",
+          contentType: file.type,
+        });
+        bannerURL = await getDownloadURL(bannerRef);
+      }
+
+      await updateProfileBanner(bannerURL, "Your profile banner has been updated.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to upload your profile banner.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUploadingBanner(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    setUploadingBanner(true);
+    setError(null);
+
+    try {
+      await updateProfileBanner(null, "Your profile banner has been removed.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to remove your profile banner.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUploadingBanner(false);
+      if (bannerInputRef.current) {
+        bannerInputRef.current.value = "";
+      }
     }
   };
 
@@ -362,40 +538,54 @@ export function AccountPage() {
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
           </div>
-          <div className="flex flex-col gap-6 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl md:flex-row md:items-center md:justify-between md:p-8">
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-lg font-semibold text-primary">
-                {profile?.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={displayNamePreview}
-                    className="h-full w-full object-cover"
-                    src={profile.photoURL}
-                  />
-                ) : (
-                  initialsForProfile(profile, user?.email)
-                )}
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-4xl text-foreground sm:text-5xl">{displayNamePreview}</h1>
-                <p className="text-sm text-muted-foreground">
-                  Review your profile, security settings, and account status.
-                </p>
-              </div>
+          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+            <div className="relative h-44 w-full bg-gradient-to-r from-primary/25 via-amber-100 to-primary-light/20">
+              {profile?.bannerURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt={`${displayNamePreview} banner`}
+                  className="h-full w-full object-cover"
+                  src={profile.bannerURL}
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/10 to-transparent" />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Account email
-                </p>
-                <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
+            <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+              <div className="flex items-center gap-4">
+                <div className="-mt-16 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg">
+                  {profile?.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt={displayNamePreview}
+                      className="h-full w-full object-cover"
+                      src={profile.photoURL}
+                    />
+                  ) : (
+                    initialsForProfile(profile, user?.email)
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h1 className="text-4xl text-foreground sm:text-5xl">{displayNamePreview}</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Review your profile, security settings, and account status.
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Sign-in method
-                </p>
-                <p className="mt-2 text-sm text-foreground">{providerLabel}</p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Account email
+                  </p>
+                  <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
+                </div>
+                <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    Sign-in method
+                  </p>
+                  <p className="mt-2 text-sm text-foreground">{providerLabel}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -437,9 +627,114 @@ export function AccountPage() {
 
             <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Username tag
+              </p>
+              {profile?.username ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-base text-foreground">@{profile.username}</p>
+                  <Link className="text-sm text-primary underline decoration-primary/30 underline-offset-4" href={buildArtistPageHref(profile.username)}>
+                    View your personal art page
+                  </Link>
+                  <Button
+                    className="mt-3"
+                    onClick={() => setIsUsernameDialogOpen(true)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Change username
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-2 space-y-3">
+                  <p className="text-sm text-muted-foreground">Choose a username to create your personal art page link.</p>
+                  <Button onClick={() => setIsUsernameDialogOpen(true)} size="sm" type="button" variant="outline">
+                    Choose username
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 Display name preview
               </p>
               <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
+            </div>
+
+            <div className="space-y-4 rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Profile banner
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Add a wide image for the personal page where people can view your art.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-dashed border-primary/20 bg-white/70">
+                {profile?.bannerURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={`${displayNamePreview} banner preview`}
+                    className="h-40 w-full object-cover"
+                    src={profile.bannerURL}
+                  />
+                ) : (
+                  <div className="flex h-40 flex-col items-center justify-center gap-3 bg-gradient-to-r from-primary/8 via-amber-50 to-primary-light/10 px-6 text-center">
+                    <ImagePlus className="size-6 text-primary" />
+                    <p className="text-sm text-muted-foreground">No banner uploaded yet.</p>
+                  </div>
+                )}
+              </div>
+
+              <Label className="sr-only" htmlFor="profile-banner-upload">
+                Upload profile banner
+              </Label>
+              <input
+                ref={bannerInputRef}
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                id="profile-banner-upload"
+                onChange={handleBannerFileChange}
+                type="file"
+              />
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  disabled={uploadingBanner}
+                  onClick={() => bannerInputRef.current?.click()}
+                  type="button"
+                  variant="outline"
+                >
+                  {uploadingBanner ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Uploading banner...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus />
+                      Upload profile banner
+                    </>
+                  )}
+                </Button>
+                {profile?.bannerURL ? (
+                  <Button
+                    disabled={uploadingBanner}
+                    onClick={handleRemoveBanner}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 />
+                    Remove banner
+                  </Button>
+                ) : null}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Use a JPG, PNG, or WebP image up to 5 MB. Wider images work best here.
+              </p>
             </div>
 
             <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
@@ -456,7 +751,7 @@ export function AccountPage() {
                     Update your first and last name without keeping the full form visible on the account page.
                   </DialogDescription>
                 </DialogHeader>
-                <form className="space-y-4" onSubmit={handleSave}>
+                <form className="space-y-4" onSubmit={handleSaveProfile}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="account-first-name">First name</Label>
@@ -482,8 +777,8 @@ export function AccountPage() {
                     <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
                   </div>
                   <DialogFooter>
-                    <Button disabled={saving} type="submit">
-                      {saving ? (
+                    <Button disabled={savingProfile} type="submit">
+                      {savingProfile ? (
                         <>
                           <Loader2 className="animate-spin" />
                           Saving profile...
@@ -496,6 +791,16 @@ export function AccountPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            <UsernameDialog
+              description="Pick the tag that will be used for your public gallery page and artist link."
+              onOpenChange={setIsUsernameDialogOpen}
+              onSubmit={handleSaveUsername}
+              open={isUsernameDialogOpen}
+              onUsernameChange={setUsernameDraft}
+              saving={savingUsername}
+              title={profile?.username ? "Change your username" : "Choose your username"}
+              username={usernameDraft}
+            />
           </section>
 
           <div className="space-y-6">

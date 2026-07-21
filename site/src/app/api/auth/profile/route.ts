@@ -1,7 +1,14 @@
+import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
 import { NextResponse } from "next/server";
 
-import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
 import {
+  buildDisplayName,
+  isValidUsername,
+  normalizeUsername,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
+import {
+  findE2EAccountProfileByUsername,
   getE2EAccountProfile,
   seedE2EAccountProfile,
   updateE2EAccountProfile,
@@ -13,6 +20,7 @@ import {
 
 type AuthProfileBody = {
   acceptedLegal?: boolean;
+  bannerURL?: string | null;
   firstName?: string | null;
   idToken?: string;
   lastName?: string | null;
@@ -20,16 +28,102 @@ type AuthProfileBody = {
   method?: "email_password" | "google" | null;
   privacyPolicyPath?: string | null;
   termsOfServicePath?: string | null;
+  username?: string | null;
 };
 
 type AccountProfileUpdateBody = {
+  bannerURL?: string | null;
   email?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  username?: string | null;
 };
 
 function normalizeString(value?: string | null) {
   return typeof value === "string" ? value.trim() : undefined;
+}
+
+function normalizeOptionalUrl(value?: string | null) {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function normalizeShippingOriginAddress(
+  value: unknown,
+): ShippingOriginAddress | null | undefined {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  return {
+    city: typeof record.city === "string" ? record.city.trim() : "",
+    country: typeof record.country === "string" ? record.country.trim() : "",
+    line1: typeof record.line1 === "string" ? record.line1.trim() : "",
+    line2: typeof record.line2 === "string" && record.line2.trim() ? record.line2.trim() : null,
+    postalCode: typeof record.postalCode === "string" ? record.postalCode.trim() : "",
+    region: typeof record.region === "string" ? record.region.trim() : "",
+  };
+}
+
+async function isUsernameTaken(username: string, currentUid: string, isE2E: boolean) {
+  if (isE2E) {
+    const existing = await findE2EAccountProfileByUsername(username);
+    return existing !== null && existing.uid !== currentUid;
+  }
+
+  const db = getFirebaseAdminDb();
+  const snapshot = await db
+    .collection("users")
+    .where("usernameLower", "==", username)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  return snapshot.docs[0]?.id !== currentUid;
+}
+
+async function resolveUsername(
+  usernameInput: string | null | undefined,
+  currentUid: string,
+  isE2E: boolean,
+) {
+  const username = normalizeUsername(usernameInput);
+
+  if (username === undefined) {
+    return undefined;
+  }
+
+  if (username === null) {
+    return null;
+  }
+
+  if (!isValidUsername(username)) {
+    throw new Error("Usernames must be 3-24 characters and use letters, numbers, hyphens, or underscores.");
+  }
+
+  const taken = await isUsernameTaken(username, currentUid, isE2E);
+
+  if (taken) {
+    throw new Error("That username is already taken.");
+  }
+
+  return username;
 }
 
 function toAccountProfile(data: Record<string, unknown>): AccountProfile {
@@ -39,6 +133,7 @@ function toAccountProfile(data: Record<string, unknown>): AccountProfile {
     authProviders: Array.isArray(data.authProviders)
       ? data.authProviders.filter((value): value is string => typeof value === "string")
       : [],
+    bannerURL: typeof data.bannerURL === "string" ? data.bannerURL : null,
     createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
     displayName: typeof data.displayName === "string" ? data.displayName : null,
     email: typeof data.email === "string" ? data.email : null,
@@ -47,8 +142,10 @@ function toAccountProfile(data: Record<string, unknown>): AccountProfile {
     lastName: typeof data.lastName === "string" ? data.lastName : null,
     legal: legal ?? null,
     photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
+    shippingOriginAddress: normalizeShippingOriginAddress(data.shippingOriginAddress) ?? null,
     uid: typeof data.uid === "string" ? data.uid : "",
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : null,
+    username: typeof data.username === "string" ? data.username : null,
   };
 }
 
@@ -77,6 +174,8 @@ export async function POST(request: Request) {
     const session = await getAuthenticatedSession(request, body.idToken ?? null);
     const firstName = normalizeString(body.firstName);
     const lastName = normalizeString(body.lastName);
+    const bannerURL = normalizeOptionalUrl(body.bannerURL);
+    const username = await resolveUsername(body.username, session.uid, session.authType === "e2e");
     const displayName =
       buildDisplayName(firstName, lastName) || session.user.displayName || null;
     const now = new Date().toISOString();
@@ -89,8 +188,11 @@ export async function POST(request: Request) {
       authProviders: session.user.providerData
         .map((provider) => provider.providerId)
         .filter(Boolean),
+      bannerURL: bannerURL ?? null,
       lastLoginAt: now,
       updatedAt: now,
+      username: username ?? null,
+      usernameLower: username ?? null,
     };
 
     if (firstName !== undefined) {
@@ -120,12 +222,15 @@ export async function POST(request: Request) {
         ...(existingProfile ??
           (await seedE2EAccountProfile({
             authProviders: payload.authProviders as string[],
+            bannerURL: payload.bannerURL as string | null,
             displayName,
             email: payload.email as string | null,
             firstName: payload.firstName as string | null | undefined,
             lastName: payload.lastName as string | null | undefined,
             photoURL: payload.photoURL as string | null,
+            shippingOriginAddress: null,
             uid: session.uid,
+            username: payload.username as string | null,
           }))),
         ...payload,
       };
@@ -166,10 +271,13 @@ export async function GET(request: Request) {
         (await getE2EAccountProfile(session.uid)) ??
         (await seedE2EAccountProfile({
           authProviders: session.user.providerData.map((provider) => provider.providerId),
+          bannerURL: null,
           displayName: session.user.displayName,
           email: session.user.email,
           photoURL: session.user.photoURL,
+          shippingOriginAddress: null,
           uid: session.uid,
+          username: null,
         }));
 
       return NextResponse.json({ profile });
@@ -183,6 +291,7 @@ export async function GET(request: Request) {
 
     const profile = {
       authProviders: session.user.providerData.map((provider) => provider.providerId).filter(Boolean),
+      bannerURL: null,
       createdAt: null,
       displayName: session.user.displayName ?? null,
       email: session.user.email?.trim().toLowerCase() ?? null,
@@ -191,8 +300,10 @@ export async function GET(request: Request) {
       lastName: null,
       legal: null,
       photoURL: session.user.photoURL ?? null,
+      shippingOriginAddress: null,
       uid: session.uid,
       updatedAt: null,
+      username: null,
     } satisfies AccountProfile;
 
     return NextResponse.json({ profile });
@@ -217,38 +328,62 @@ export async function PATCH(request: Request) {
     const body = (await request.json()) as AccountProfileUpdateBody;
     const session = await getAuthenticatedSession(request);
     const email = normalizeString(body.email)?.toLowerCase();
-    const firstName = normalizeString(body.firstName);
-    const lastName = normalizeString(body.lastName);
+    const existingProfile =
+      (session.authType === "e2e"
+        ? await getE2EAccountProfile(session.uid)
+        : await loadProfile(session.uid)) ??
+      {
+        authProviders: session.user.providerData.map((provider) => provider.providerId),
+        bannerURL: null,
+        createdAt: null,
+        displayName: session.user.displayName ?? session.user.email ?? null,
+        email: session.user.email?.trim().toLowerCase() ?? null,
+        firstName: null,
+        lastLoginAt: null,
+        lastName: null,
+        legal: null,
+        photoURL: session.user.photoURL ?? null,
+        shippingOriginAddress: null,
+        uid: session.uid,
+        updatedAt: null,
+        username: null,
+      } satisfies AccountProfile;
+    const firstName = body.firstName !== undefined ? normalizeString(body.firstName) ?? null : existingProfile.firstName;
+    const lastName = body.lastName !== undefined ? normalizeString(body.lastName) ?? null : existingProfile.lastName;
+    const bannerURL = body.bannerURL !== undefined ? normalizeOptionalUrl(body.bannerURL) ?? null : existingProfile.bannerURL;
+    const username =
+      body.username !== undefined
+        ? await resolveUsername(body.username, session.uid, session.authType === "e2e")
+        : existingProfile.username;
     const displayName =
       buildDisplayName(firstName, lastName) || session.user.displayName || session.user.email || null;
     const updatedAt = new Date().toISOString();
 
     if (session.authType === "e2e") {
-      const existingProfile =
-        (await getE2EAccountProfile(session.uid)) ??
-        (await seedE2EAccountProfile({
-          authProviders: session.user.providerData.map((provider) => provider.providerId),
-          displayName: session.user.displayName,
-          email: session.user.email,
-          photoURL: session.user.photoURL,
-          uid: session.uid,
-        }));
-
       const profile = await updateE2EAccountProfile(existingProfile.uid, {
+        bannerURL,
         displayName,
         email: email ?? undefined,
-        firstName: firstName ?? null,
-        lastName: lastName ?? null,
+        firstName,
+        lastName,
         updatedAt,
+        username: username ?? null,
       });
 
       return NextResponse.json({ profile });
     }
 
     await saveFirebaseProfile(session.uid, {
+      ...(body.bannerURL !== undefined ? { bannerURL } : {}),
       displayName,
-      firstName: firstName ?? null,
-      lastName: lastName ?? null,
+      ...(body.firstName !== undefined ? { firstName } : {}),
+      ...(body.lastName !== undefined ? { lastName } : {}),
+      ...(body.username !== undefined
+        ? {
+            username: username ?? null,
+            usernameLower: username ?? null,
+          }
+        : {}),
       updatedAt,
     });
 

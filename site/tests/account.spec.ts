@@ -1,15 +1,20 @@
+import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
 import { expect, test, type Page } from "@playwright/test";
 
 const E2E_STORAGE_KEY = "eduthart:e2e-user";
+const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
 
 type TestAccountOptions = {
   authProviders?: string[];
+  bannerURL?: string | null;
   displayName?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
   photoURL?: string | null;
+  shippingOriginAddress?: ShippingOriginAddress | null;
   uid: string;
+  username?: string | null;
 };
 
 async function seedAccount(page: Page, options: TestAccountOptions) {
@@ -19,12 +24,15 @@ async function seedAccount(page: Page, options: TestAccountOptions) {
   const defaultLastName = defaultNameParts.slice(1).join(" ") || "Collector";
   const profilePayload = {
     authProviders: options.authProviders ?? ["password"],
+    bannerURL: options.bannerURL ?? null,
     displayName,
     email: options.email ?? `${options.uid}@example.com`,
     firstName: options.firstName ?? defaultFirstName,
     lastName: options.lastName ?? defaultLastName,
     photoURL: options.photoURL ?? null,
+    shippingOriginAddress: options.shippingOriginAddress ?? null,
     uid: options.uid,
+    username: options.username ?? null,
   };
 
   const response = await page.request.post("/api/test/e2e-auth", {
@@ -34,10 +42,12 @@ async function seedAccount(page: Page, options: TestAccountOptions) {
 
   await page.goto("/");
   await page.evaluate(
-    ({ storageKey, user }) => {
+    ({ authEventName, storageKey, user }) => {
       window.localStorage.setItem(storageKey, JSON.stringify(user));
+      window.dispatchEvent(new Event(authEventName));
     },
     {
+      authEventName: E2E_AUTH_EVENT,
       storageKey: E2E_STORAGE_KEY,
       user: {
         displayName: profilePayload.displayName,
@@ -46,6 +56,23 @@ async function seedAccount(page: Page, options: TestAccountOptions) {
         providerIds: profilePayload.authProviders,
         uid: profilePayload.uid,
       },
+    },
+  );
+
+  await page.waitForFunction(
+    ({ storageKey, expectedUid }) => {
+      const raw = window.localStorage.getItem(storageKey);
+
+      if (!raw) {
+        return false;
+      }
+
+      const parsed = JSON.parse(raw) as { uid?: string };
+      return parsed.uid === expectedUid;
+    },
+    {
+      storageKey: E2E_STORAGE_KEY,
+      expectedUid: profilePayload.uid,
     },
   );
 }
@@ -87,15 +114,57 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await page.getByRole("button", { name: "Edit profile" }).click();
   await page.getByLabel("First name").fill("Avery");
   await page.getByLabel("Last name").fill("Curator");
+  await page.getByLabel("Username tag").fill("@avery-curator");
   await page.getByRole("button", { name: "Save profile" }).click();
 
   await expect(page.getByLabel("First name")).toHaveCount(0);
   await page.reload();
 
   await expect(page.getByRole("heading", { name: "Avery Curator" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "View your personal art page" })).toHaveAttribute("href", "/artists/avery-curator");
   await page.getByRole("button", { name: "Edit profile" }).click();
   await expect(page.getByLabel("First name")).toHaveValue("Avery");
   await expect(page.getByLabel("Last name")).toHaveValue("Curator");
+  await expect(page.getByLabel("Username tag")).toHaveValue("avery-curator");
+});
+
+test("shows a navbar link to the personal art page using the chosen username", async ({ page }) => {
+  await seedAccount(page, {
+    uid: "artist-link-user",
+    displayName: "Maya Studio",
+    username: "maya-studio",
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "@maya-studio" })).toHaveAttribute("href", "/artists/maya-studio");
+
+  await page.getByRole("link", { name: "@maya-studio" }).click();
+  await expect(page).toHaveURL(/\/artists\/maya-studio$/);
+  await expect(page.getByRole("heading", { name: "Maya Studio" })).toBeVisible();
+  await expect(page.getByText("Personal art page URL:")).toBeVisible();
+});
+
+test("uploads and removes a profile banner from account settings", async ({ page }) => {
+  await seedAccount(page, { uid: "banner-user" });
+
+  await page.goto("/account");
+  await expect(page.getByText("No banner uploaded yet.")).toBeVisible();
+
+  await page.getByLabel("Upload profile banner").setInputFiles({
+    mimeType: "image/png",
+    name: "banner.png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
+
+  await expect(page.getByText("Your profile banner has been updated.")).toBeVisible();
+  await expect(page.getByRole("img", { name: "Jordan Collector banner", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Remove banner" }).click();
+  await expect(page.getByText("Your profile banner has been removed.")).toBeVisible();
+  await expect(page.getByText("No banner uploaded yet.")).toBeVisible();
 });
 
 test("sends a password reset action for password users", async ({ page }) => {
