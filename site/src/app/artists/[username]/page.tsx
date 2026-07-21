@@ -163,7 +163,12 @@ export default async function ArtistPage({
                 const price = formatPrice(item);
 
                 return (
-                  <article key={item.id} className="group overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg">
+                  <Link
+                    key={item.id}
+                    aria-label={`View ${item.artworkDetails.title || "artwork"}`}
+                    href={`/artists/${profile.username}/art/${item.id}`}
+                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
                     <div className="aspect-[4/3] overflow-hidden bg-muted/30">
                       {item.media.mainImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -193,7 +198,7 @@ export default async function ArtistPage({
                           : item.pricingInventory.availability.replaceAll("_", " ")}
                       </p>
                     </div>
-                  </article>
+                  </Link>
                 );
               })}
             </div>

@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -42,6 +43,20 @@ export const ContactForm = ({ className }: ContactFormProps) => {
       message: "",
     },
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const artwork = params.get("artwork");
+    const artist = params.get("artist");
+    const listing = params.get("listing");
+
+    if (!artwork) return;
+
+    form.setValue(
+      "message",
+      `I'm interested in purchasing “${artwork}”${artist ? ` by ${artist}` : ""}.${listing ? `\n\nArtwork: ${window.location.origin}${listing}` : ""}\n\nPlease let me know the next steps.`,
+    );
+  }, [form]);
 
   const onSubmit = async (data: FormData) => {
     try {
