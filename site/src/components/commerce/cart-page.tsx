@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +13,7 @@ export type CartItem = { artistName: string; artistUsername: string; availabilit
 
 export function CartPage({ checkout = false }: { checkout?: boolean }) {
   const { status, user } = useAuth();
+  const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +45,17 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <Link className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" href={checkout ? "/cart" : "/"}><ArrowLeft className="size-4" />{checkout ? "Back to cart" : "Continue browsing"}</Link>
+        {checkout ? (
+          <Link className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" href="/cart"><ArrowLeft className="size-4" />Back to cart</Link>
+        ) : (
+          <button
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => window.history.length > 1 ? router.back() : router.push("/")}
+            type="button"
+          >
+            <ArrowLeft className="size-4" />Continue browsing
+          </button>
+        )}
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <section>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">{checkout ? "Checkout" : "Your cart"}</p>

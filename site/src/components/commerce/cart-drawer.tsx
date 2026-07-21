@@ -90,7 +90,7 @@ export function CartDrawer() {
         </div>
 
         <SheetFooter className="border-t border-border bg-background px-6 py-5">
-          {items.length > 0 ? <><div className="mb-2 flex items-center justify-between text-base"><span>Subtotal</span><strong className="text-xl">{money(total)}</strong></div><p className="mb-3 text-left text-xs leading-5 text-muted-foreground">Shipping and taxes are calculated during checkout.</p><Button asChild size="lg"><Link href="/checkout" onClick={() => setOpen(false)}>Go to checkout</Link></Button><Button asChild variant="outline"><Link href="/cart" onClick={() => setOpen(false)}>View full cart</Link></Button></> : <Button asChild variant="outline"><Link href="/#browse" onClick={() => setOpen(false)}>Continue shopping</Link></Button>}
+          {items.length > 0 ? <><div className="mb-2 flex items-center justify-between text-base"><span>Subtotal</span><strong className="text-xl">{money(total)}</strong></div><p className="mb-3 text-left text-xs leading-5 text-muted-foreground">Shipping and taxes are calculated during checkout.</p><Button asChild size="lg"><Link href="/checkout" onClick={() => setOpen(false)}>Go to checkout</Link></Button><Button asChild variant="outline"><Link href="/cart" onClick={() => setOpen(false)}>View full cart</Link></Button></> : <Button asChild variant="outline"><Link href="/" onClick={() => setOpen(false)}>Continue shopping</Link></Button>}
         </SheetFooter>
       </SheetContent>
     </Sheet>
