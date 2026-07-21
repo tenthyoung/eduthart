@@ -1851,7 +1851,7 @@ export function ListingFlowPage({
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 alt={previewTitle}
-                                className="aspect-[4/3] w-full object-contain"
+                                className="aspect-[4/3] w-full object-cover"
                                 src={activePreviewImage}
                               />
                               {previewImages.length > 1 ? (
