@@ -1172,7 +1172,7 @@ export function ListingFlowPage({
 
   if (loading || status === "loading") {
     return (
-      <section className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+      <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
         <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
@@ -1190,7 +1190,7 @@ export function ListingFlowPage({
   return (
     <section
       className={cn(
-        "min-h-screen bg-[radial-gradient(circle_at_top,_rgba(203,145,78,0.14),_transparent_36%),linear-gradient(180deg,#fbfaf7_0%,#ffffff_26%)] px-4 pb-28 pt-36 font-sans text-base sm:px-6 lg:px-8",
+        "min-h-screen bg-transparent px-0 pb-12 pt-0 font-sans text-base",
         listingsTypographyClassName,
         standaloneTypographyClassName,
       )}
@@ -1402,21 +1402,12 @@ export function ListingFlowPage({
                 className="rounded-[2rem] border border-white/70 bg-white/95 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]"
                 id="listing-preview"
               >
-                <div className="flex flex-col gap-4 border-b border-border/70 pb-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="border-b border-border/70 pb-5">
                   <div className="space-y-2">
                     <p className="text-base font-medium uppercase tracking-[0.22em] text-primary">Listing preview</p>
                     <h2 className="text-3xl text-foreground">{previewTitle}</h2>
                     <p className="max-w-3xl text-base leading-7 text-muted-foreground">
                       This preview updates from the fields below so you can edit the actual listing experience, not just the form.
-                    </p>
-                  </div>
-                  <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 px-5 py-4 text-right">
-                    <p className="text-base text-muted-foreground">Current price</p>
-                    <p className="mt-2 text-3xl font-semibold text-foreground">{previewPrice}</p>
-                    <p className="mt-2 text-base text-muted-foreground">
-                      {activeItem.pricingInventory.availability === "original_available"
-                        ? "Original available"
-                        : activeItem.pricingInventory.availability.replaceAll("_", " ")}
                     </p>
                   </div>
                 </div>
@@ -1434,10 +1425,43 @@ export function ListingFlowPage({
                           />
                         </>
                       ) : (
-                        <div className="flex aspect-[4/3] items-center justify-center bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))] p-8 text-center text-base leading-7 text-muted-foreground">
-                          Add a cover image to see your hero listing preview here.
+                        <div className="flex aspect-[4/3] flex-col items-center justify-center gap-5 bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))] p-8 text-center">
+                          <div className="space-y-2">
+                            <ImagePlus className="mx-auto size-8 text-primary" />
+                            <p className="text-base leading-7 text-muted-foreground">
+                              Add a cover image to see your hero listing preview here.
+                            </p>
+                          </div>
+                          <label
+                            className={cn(
+                              "inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-base font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90",
+                              uploading && "pointer-events-none opacity-60",
+                            )}
+                            htmlFor="preview-cover-image"
+                          >
+                            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                            {uploading ? "Uploading..." : "Add cover image"}
+                            <input
+                              accept="image/*"
+                              className="sr-only"
+                              disabled={uploading}
+                              id="preview-cover-image"
+                              onChange={(event) => void handleSingleUpload(event, "mainImageUrl", "artwork-media/main")}
+                              type="file"
+                            />
+                          </label>
                         </div>
                       )}
+                    </div>
+
+                    <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 px-5 py-4">
+                      <p className="text-base text-muted-foreground">Current price</p>
+                      <p className="mt-2 text-3xl font-semibold text-foreground">{previewPrice}</p>
+                      <p className="mt-2 text-base text-muted-foreground">
+                        {activeItem.pricingInventory.availability === "original_available"
+                          ? "Original available"
+                          : activeItem.pricingInventory.availability.replaceAll("_", " ")}
+                      </p>
                     </div>
 
                     {previewImages.length > 1 ? (

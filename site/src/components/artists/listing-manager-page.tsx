@@ -343,7 +343,7 @@ export function ListingManagerPage({ username }: { username: string }) {
 
   if (loading || status === "loading") {
     return (
-      <section className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+      <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
         <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
@@ -359,7 +359,7 @@ export function ListingManagerPage({ username }: { username: string }) {
   }
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(203,145,78,0.14),_transparent_36%),linear-gradient(180deg,#fbfaf7_0%,#ffffff_26%)] px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

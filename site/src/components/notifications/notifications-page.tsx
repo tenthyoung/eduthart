@@ -283,14 +283,14 @@ export function NotificationsPage() {
                 <p className="text-sm text-foreground">
                   Current username:
                   {" "}
-                  <span className="font-medium">{profile.username ? `@${profile.username}` : "Not set yet"}</span>
+                  <span className="font-medium">{profile?.username ? `@${profile.username}` : "Not set yet"}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
               <Button onClick={() => setIsUsernameDialogOpen(true)} size="lg">
-                {profile.username ? "Update username" : "Choose username"}
+                {profile?.username ? "Update username" : "Choose username"}
               </Button>
               <Button
                 onClick={() => handleNotificationStatusChange(!chooseUsernameRead)}

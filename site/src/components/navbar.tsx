@@ -1,21 +1,30 @@
 "use client";
 
 import type { AccountProfile } from "@/lib/auth/account-profile";
-import { buildArtistPageHref } from "@/lib/auth/account-profile";
 import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
-import { Bell, ChevronRight, CircleUserRound, Linkedin, Loader2, LogOut, Menu, Settings, X } from "lucide-react";
+import { Bell, ChevronRight, CircleUserRound, LayoutDashboard, Linkedin, Loader2, LogOut, Menu, Settings, X, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
+import { getNavContext, isArtistCapableUsername } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
+type NavItem = {
+  href: string;
+  icon?: LucideIcon;
+  name: string;
+};
+
 export function Navbar() {
+  const pathname = usePathname();
+  const navContext = getNavContext(pathname);
   const { signOut, status, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,17 +33,38 @@ export function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
-  const navItems = [
+  const isArtistCapable = isArtistCapableUsername(username);
+  const isHomepage = navContext === "marketing-home";
+  const homepageNavItems: NavItem[] = [
     { name: "Browse Art", href: "/#browse" },
     { name: "Collections", href: "/#collections" },
     { name: "Advisory", href: "/#advisory" },
+  ];
+  const guestNavItems: NavItem[] = [
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
-  const desktopNavItems =
-    status === "authenticated" && username
-      ? [...navItems, { name: "My Gallery", href: buildArtistPageHref(username) }]
-      : navItems;
+  const authenticatedNavItems: NavItem[] =
+    isArtistCapable && username
+      ? [
+          {
+            name: "Artist Dashboard",
+            href: `/artists/${username}/listings/new`,
+            icon: LayoutDashboard,
+          },
+        ]
+      : [];
+  const navItems: NavItem[] =
+    status === "authenticated"
+      ? [
+          ...(isHomepage ? homepageNavItems : []),
+          ...authenticatedNavItems,
+        ]
+      : [
+          ...(isHomepage ? homepageNavItems : []),
+          ...guestNavItems,
+        ];
+  const desktopNavItems = navItems;
 
   const socialIcons = [
     {
@@ -195,15 +225,22 @@ export function Navbar() {
 
           {/* Center - Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            {desktopNavItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {desktopNavItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {Icon ? <Icon className="size-4" /> : null}
+                    {item.name}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right - Theme Toggle & Hamburger Menu */}
@@ -249,9 +286,11 @@ export function Navbar() {
                 </Button>
               </div>
             )}
-            <Button asChild variant="gradient" size="lg" className="hidden xl:inline-flex">
-              <Link href="/#collections">Shop</Link>
-            </Button>
+            {isHomepage ? (
+              <Button asChild variant="gradient" size="lg" className="hidden xl:inline-flex">
+                <Link href="/#collections">Shop</Link>
+              </Button>
+            ) : null}
             <Button
               ref={mobileMenuToggleRef}
               variant="ghost"
@@ -276,27 +315,34 @@ export function Navbar() {
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="space-y-2">
-              {desktopNavItems.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  className={cn(index === 0 && "mt-2")}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.22,
-                    delay: 0.06 + index * 0.05,
-                    ease: "easeOut",
-                  }}
-                >
-                  <Link
-                    href={item.href}
-                    className="block rounded-md px-4 py-3 text-foreground transition-colors duration-200 hover:bg-accent"
-                    onClick={() => setIsMobileMenuOpen(false)}
+              {desktopNavItems.map((item, index) => {
+                const Icon = item.icon;
+
+                return (
+                  <motion.div
+                    key={item.name}
+                    className={cn(index === 0 && "mt-2")}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.22,
+                      delay: 0.06 + index * 0.05,
+                      ease: "easeOut",
+                    }}
                   >
-                    {item.name}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      href={item.href}
+                      className="block rounded-md px-4 py-3 text-foreground transition-colors duration-200 hover:bg-accent"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        {Icon ? <Icon className="size-4" /> : null}
+                        {item.name}
+                      </span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
 
             <div className="mt-6 space-y-4 border-t border-border/60 px-4 pt-6">
@@ -330,9 +376,9 @@ export function Navbar() {
                     </Button>
                     {username ? (
                       <Button asChild className="w-full" variant="gradient">
-                        <Link href={buildArtistPageHref(username)} onClick={() => setIsMobileMenuOpen(false)}>
-                          <CircleUserRound />
-                          My Gallery
+                        <Link href={`/artists/${username}/listings/new`} onClick={() => setIsMobileMenuOpen(false)}>
+                          <LayoutDashboard />
+                          Artist Dashboard
                         </Link>
                       </Button>
                     ) : null}
@@ -364,11 +410,13 @@ export function Navbar() {
                     </Button>
                   </>
                 )}
-                <Button asChild className="w-full" variant="gradient">
-                  <Link href="/#collections" onClick={() => setIsMobileMenuOpen(false)}>
-                    Shop
-                  </Link>
-                </Button>
+                {isHomepage ? (
+                  <Button asChild className="w-full" variant="gradient">
+                    <Link href="/#collections" onClick={() => setIsMobileMenuOpen(false)}>
+                      Shop
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
 
               {/* Mobile Social Icons */}
