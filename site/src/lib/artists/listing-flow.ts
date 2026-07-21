@@ -398,15 +398,7 @@ export function getItemCompletionCount(item: ListingItemDraft, shared: ListingSh
     completed += 1;
   }
 
-  if (
-    item.media.mainImageUrl &&
-    item.media.galleryImageUrls.length > 0 &&
-    item.media.detailImageUrls.length > 0 &&
-    item.media.sideProfileImageUrl &&
-    item.media.signatureImageUrl &&
-    item.media.backImageUrl &&
-    item.media.videoUrl
-  ) {
+  if (item.media.mainImageUrl) {
     completed += 1;
   }
 

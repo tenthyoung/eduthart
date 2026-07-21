@@ -462,9 +462,7 @@ function getItemChecklist(
     { label: "Title", done: Boolean(item.artworkDetails.title.trim()) },
     {
       label: "Photos",
-      done: Boolean(
-        item.media.mainImageUrl && item.media.galleryImageUrls.length > 0
-      ),
+      done: Boolean(item.media.mainImageUrl),
     },
     { label: "Price", done: Boolean(item.pricingInventory.price) },
     { label: "Medium", done: Boolean(item.artworkDetails.medium) },
@@ -492,9 +490,6 @@ function getMissingFieldMessages(
   }
   if (!item.media.mainImageUrl) {
     messages.push("Upload a cover image.");
-  }
-  if (item.media.galleryImageUrls.length === 0) {
-    messages.push("Add at least one gallery image.");
   }
   if (!item.artworkDetails.medium) {
     messages.push("Choose a medium.");
@@ -2253,16 +2248,13 @@ export function ListingFlowPage({
                           Artwork Photos
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Upload strong visuals first. The cover image and
-                          gallery drive conversion.
+                          Upload a strong cover image first, then add more
+                          gallery images if you have them.
                         </p>
                       </div>
                       <span className="ml-auto rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground">
                         {sectionState(
-                          Boolean(
-                            activeItem.media.mainImageUrl &&
-                            activeItem.media.galleryImageUrls.length > 0
-                          ),
+                          Boolean(activeItem.media.mainImageUrl),
                           !activeItem.media.mainImageUrl
                         )}
                       </span>
@@ -2290,7 +2282,7 @@ export function ListingFlowPage({
                         />
                         <FileButton
                           accept="image/*"
-                          helper="Upload multiple gallery images. At least one is required."
+                          helper="Upload additional gallery images if you have them."
                           label="Gallery Images"
                           multiple
                           onChange={(event) =>
@@ -2299,13 +2291,6 @@ export function ListingFlowPage({
                               "galleryImageUrls",
                               "artwork-media/gallery"
                             )
-                          }
-                        />
-                        <ValidationText
-                          message={
-                            activeItem.media.galleryImageUrls.length === 0
-                              ? "Add at least one gallery image."
-                              : null
                           }
                         />
                         <div className="grid gap-4 sm:grid-cols-2">
