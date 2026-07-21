@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { normalizeListingStudio, type ListingItemDraft, type ListingStudioDraft } from "@/lib/artists/listing-flow";
+import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
 import { findE2EAccountProfileByUsername, getE2EListingFlow, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 
@@ -149,9 +150,10 @@ export default async function PublicArtworkPage({
               </div>
 
               {available ? (
-                <Link className="mt-6 flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition hover:brightness-105" href={inquiryHref}>
-                  Inquire to purchase
-                </Link>
+                <>
+                  <AddToCartButton itemId={item.id} username={username} />
+                  <Link className="mt-3 flex w-full items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-muted" href={inquiryHref}>Ask a question</Link>
+                </>
               ) : (
                 <button className="mt-6 w-full rounded-xl bg-muted px-5 py-3.5 text-base font-semibold text-muted-foreground" disabled type="button">
                   Currently unavailable
