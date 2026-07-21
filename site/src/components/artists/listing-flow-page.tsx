@@ -16,17 +16,11 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -93,6 +87,22 @@ type ArtworkDetailHelpKey =
   | "story"
   | "seo"
   | "visibility";
+
+function Accordion({ children, className }: { children: ReactNode; className?: string; collapsible?: boolean; defaultValue?: string; type?: string }) {
+  return <div className={cn("space-y-6", className)}>{children}</div>;
+}
+
+function AccordionItem({ children, className }: { children: ReactNode; className?: string; value?: string }) {
+  return <section className={cn("overflow-hidden rounded-[1.5rem] border bg-card", className)}>{children}</section>;
+}
+
+function AccordionTrigger({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={cn("flex items-start gap-4 border-b border-border/70 p-5", className)}>{children}</div>;
+}
+
+function AccordionContent({ children }: { children: ReactNode }) {
+  return <div className="p-5">{children}</div>;
+}
 
 const CATEGORY_OPTIONS = ["Painting", "Drawing", "Sculpture", "Photography", "Digital", "Textile", "Ceramic"];
 const MEDIUM_OPTIONS = ["Oil", "Acrylic", "Watercolor", "Mixed Media", "Digital", "Bronze", "Resin", "Film"];
@@ -253,22 +263,6 @@ function formatPriceInput(value: string) {
   const groupedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
   return decimalPart === undefined ? groupedInteger : `${groupedInteger}.${decimalPart}`;
-}
-
-function formatArtworkDimensions(item: ListingItemDraft) {
-  const { depth, height, unit, width } = item.dimensions;
-
-  if (!width || !height) {
-    return "Dimensions not set";
-  }
-
-  const parts = [`${width} x ${height} ${unit}`];
-
-  if (depth) {
-    parts.push(`Depth ${depth} ${unit}`);
-  }
-
-  return parts.join(" • ");
 }
 
 function getItemChecklist(item: ListingItemDraft, shared: ListingSharedSettings) {
@@ -614,15 +608,9 @@ export function ListingFlowPage({
         ...activeItem.media.galleryImageUrls,
       ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index)
     : [];
-  const previewDimensions = activeItem ? formatArtworkDimensions(activeItem) : "Dimensions not set";
   const previewTitle = activeItem
     ? getItemDisplayTitle(activeItem, studio.items.findIndex((item) => item.id === activeItem.id))
     : "Untitled artwork";
-  const previewStory =
-    activeItem?.artworkDetails.storyBehindPiece ||
-    activeItem?.artworkDetails.artistStatement ||
-    activeItem?.artworkDetails.description ||
-    "Your listing preview will update here as you add details.";
   const previewGalleryHref = buildArtistPageHref(profile?.username ?? username);
 
   useEffect(() => {
@@ -1394,10 +1382,16 @@ export function ListingFlowPage({
               >
                 <div className="border-b border-border/70 pb-5">
                   <div className="space-y-2">
-                    <p className="text-base font-medium uppercase tracking-[0.22em] text-primary">Listing preview</p>
-                    <h2 className="text-3xl text-foreground">{previewTitle}</h2>
+                    <p className="text-base font-medium uppercase tracking-[0.22em] text-primary">Edit listing</p>
+                    <Input
+                      aria-label="Artwork title"
+                      className="h-auto border-0 border-b border-transparent px-0 py-1 !text-3xl shadow-none hover:border-border focus-visible:border-primary focus-visible:ring-0 md:!text-3xl"
+                      onChange={(event) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, title: event.target.value } }))}
+                      placeholder="Untitled artwork"
+                      value={activeItem.artworkDetails.title}
+                    />
                     <p className="max-w-3xl text-base leading-7 text-muted-foreground">
-                      This preview updates from the fields below so you can edit the actual listing experience, not just the form.
+                      Edit the listing directly. Changes save automatically as you type.
                     </p>
                   </div>
                 </div>
@@ -1499,40 +1493,50 @@ export function ListingFlowPage({
                   <div className="space-y-5">
                     <div className="rounded-[1.5rem] border border-border/70 bg-card p-5">
                       <p className="text-base font-medium text-foreground">Artwork details</p>
-                      <div className="mt-4 grid gap-3 text-base text-muted-foreground">
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <div className="flex items-start justify-between gap-4">
-                          <span>Artist</span>
-                          <span className="text-right text-foreground">{profile.displayName ?? profile.email ?? "Artist"}</span>
+                          <div className="w-full space-y-2"><Label>Artist</Label><Input disabled value={profile.displayName ?? profile.email ?? "Artist"} /></div>
                         </div>
-                        <div className="flex items-start justify-between gap-4">
-                          <span>Category</span>
-                          <span className="text-right text-foreground">{activeItem.artworkDetails.category || "Not set"}</span>
+                        <div className="space-y-2">
+                          <Label>Category</Label>
+                          <Select value={activeItem.artworkDetails.category} onValueChange={(value) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, category: value } }))}>
+                            <SelectTrigger className="w-full"><SelectValue placeholder="Choose category" /></SelectTrigger>
+                            <SelectContent>{CATEGORY_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                          </Select>
                         </div>
-                        <div className="flex items-start justify-between gap-4">
-                          <span>Medium</span>
-                          <span className="text-right text-foreground">{activeItem.artworkDetails.medium || "Not set"}</span>
+                        <div className="space-y-2">
+                          <Label>Medium</Label>
+                          <Select value={activeItem.artworkDetails.medium} onValueChange={(value) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, medium: value } }))}>
+                            <SelectTrigger className="w-full"><SelectValue placeholder="Choose medium" /></SelectTrigger>
+                            <SelectContent>{MEDIUM_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                          </Select>
                         </div>
-                        <div className="flex items-start justify-between gap-4">
-                          <span>Subject</span>
-                          <span className="text-right text-foreground">{activeItem.artworkDetails.subject || "Not set"}</span>
+                        <div className="space-y-2">
+                          <Label>Subject</Label>
+                          <Select value={activeItem.artworkDetails.subject} onValueChange={(value) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, subject: value } }))}>
+                            <SelectTrigger className="w-full"><SelectValue placeholder="Choose subject" /></SelectTrigger>
+                            <SelectContent>{SUBJECT_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                          </Select>
                         </div>
-                        <div className="flex items-start justify-between gap-4">
-                          <span>Dimensions</span>
-                          <span className="text-right text-foreground">{previewDimensions}</span>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Dimensions ({activeItem.dimensions.unit})</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Input aria-label="Width" placeholder="Width" value={activeItem.dimensions.width} onChange={(event) => updateActiveItem((current) => ({ ...current, dimensions: { ...current.dimensions, width: event.target.value } }))} />
+                            <Input aria-label="Height" placeholder="Height" value={activeItem.dimensions.height} onChange={(event) => updateActiveItem((current) => ({ ...current, dimensions: { ...current.dimensions, height: event.target.value } }))} />
+                            <Input aria-label="Depth" placeholder="Depth" value={activeItem.dimensions.depth} onChange={(event) => updateActiveItem((current) => ({ ...current, dimensions: { ...current.dimensions, depth: event.target.value } }))} />
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <div className="rounded-[1.5rem] border border-border/70 bg-card p-5">
-                      <p className="text-base font-medium text-foreground">Description</p>
-                      <p className="mt-3 text-base leading-7 text-muted-foreground">
-                        {activeItem.artworkDetails.description || "Add a description to show buyers what makes this work special."}
-                      </p>
+                      <Label htmlFor="listing-description">Description</Label>
+                      <Textarea className="mt-3 min-h-32 border-0 bg-muted/20 text-base leading-7 shadow-none focus-visible:ring-1" id="listing-description" onChange={(event) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, description: event.target.value } }))} placeholder="Tell buyers what makes this work special." value={activeItem.artworkDetails.description} />
                     </div>
 
                     <div className="rounded-[1.5rem] border border-border/70 bg-card p-5">
-                      <p className="text-base font-medium text-foreground">Story behind the piece</p>
-                      <p className="mt-3 text-base leading-7 text-muted-foreground">{previewStory}</p>
+                      <Label htmlFor="listing-story">Story behind the piece</Label>
+                      <Textarea className="mt-3 min-h-32 border-0 bg-muted/20 text-base leading-7 shadow-none focus-visible:ring-1" id="listing-story" onChange={(event) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, storyBehindPiece: event.target.value } }))} placeholder="Share the story behind this piece." value={activeItem.artworkDetails.storyBehindPiece} />
                     </div>
                   </div>
                 </div>
@@ -1543,12 +1547,12 @@ export function ListingFlowPage({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-                    {isStandaloneEditor ? "Listing fields" : "Editing"}
+                    {isStandaloneEditor ? "More listing details" : "Editing"}
                   </p>
                   <h2 className="mt-2 text-2xl text-foreground">{getItemDisplayTitle(activeItem, studio.items.findIndex((item) => item.id === activeItem.id))}</h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {isStandaloneEditor
-                      ? "Update photos, pricing, story, shipping, and visibility while watching the listing preview above change with you."
+                      ? "Complete the supporting details below. Every section stays visible, and your changes save automatically."
                       : "Work section by section. Advanced fields are placed lower in each card so the page never feels overwhelming."}
                   </p>
                 </div>
