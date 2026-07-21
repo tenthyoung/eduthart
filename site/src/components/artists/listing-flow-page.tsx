@@ -248,18 +248,11 @@ function formatRelativeSaveTime(value: Date | null) {
   return `Saved ${diffMinutes}m ago`;
 }
 
-function formatListingPrice(price: string, currency: string) {
-  const value = Number(price);
+function formatPriceInput(value: string) {
+  const [integerPart = "", decimalPart] = value.split(".");
+  const groupedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-  if (!Number.isFinite(value) || value <= 0) {
-    return "Price not set";
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return decimalPart === undefined ? groupedInteger : `${groupedInteger}.${decimalPart}`;
 }
 
 function formatArtworkDimensions(item: ListingItemDraft) {
@@ -621,9 +614,6 @@ export function ListingFlowPage({
         ...activeItem.media.galleryImageUrls,
       ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index)
     : [];
-  const previewPrice = activeItem
-    ? formatListingPrice(activeItem.pricingInventory.price, activeItem.pricingInventory.currency)
-    : "Price not set";
   const previewDimensions = activeItem ? formatArtworkDimensions(activeItem) : "Dimensions not set";
   const previewTitle = activeItem
     ? getItemDisplayTitle(activeItem, studio.items.findIndex((item) => item.id === activeItem.id))
@@ -1455,8 +1445,32 @@ export function ListingFlowPage({
                     </div>
 
                     <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 px-5 py-4">
-                      <p className="text-base text-muted-foreground">Current price</p>
-                      <p className="mt-2 text-3xl font-semibold text-foreground">{previewPrice}</p>
+                      <Label className="text-base text-muted-foreground" htmlFor="preview-price">
+                        Current price ({activeItem.pricingInventory.currency})
+                      </Label>
+                      <Input
+                        className="mt-2 min-h-16 py-2 !text-4xl font-semibold md:!text-4xl"
+                        id="preview-price"
+                        inputMode="decimal"
+                        onChange={(event) => {
+                          const price = event.target.value.replaceAll(",", "");
+
+                          if (!/^\d*(?:\.\d{0,2})?$/.test(price)) {
+                            return;
+                          }
+
+                          updateActiveItem((current) => ({
+                            ...current,
+                            pricingInventory: {
+                              ...current.pricingInventory,
+                              price,
+                            },
+                          }));
+                        }}
+                        placeholder="0.00"
+                        type="text"
+                        value={formatPriceInput(activeItem.pricingInventory.price)}
+                      />
                       <p className="mt-2 text-base text-muted-foreground">
                         {activeItem.pricingInventory.availability === "original_available"
                           ? "Original available"
