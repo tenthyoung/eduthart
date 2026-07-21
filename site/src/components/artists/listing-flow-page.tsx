@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   CopyPlus,
   ImagePlus,
   Info,
   Loader2,
   MinusCircle,
+  GripVertical,
   Plus,
   RefreshCw,
   Save,
@@ -558,6 +561,7 @@ export function ListingFlowPage({
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [activePreviewImageIndex, setActivePreviewImageIndex] = useState(0);
   const activeHelp = activeHelpKey ? ARTWORK_DETAIL_HELP[activeHelpKey] : null;
   const isStandaloneEditor = Boolean(itemId);
   const listingsTypographyClassName =
@@ -597,6 +601,7 @@ export function ListingFlowPage({
   const hasLoadedRef = useRef(false);
   const autosaveTimerRef = useRef<number | null>(null);
   const saveRequestIdRef = useRef(0);
+  const draggedPreviewImageIndexRef = useRef<number | null>(null);
 
   const activeItem =
     studio.items.find((item) => item.id === activeItemId) ?? studio.items[0] ?? null;
@@ -619,6 +624,8 @@ export function ListingFlowPage({
         ...activeItem.media.galleryImageUrls,
       ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index)
     : [];
+  const safeActivePreviewImageIndex = Math.min(activePreviewImageIndex, Math.max(0, previewImages.length - 1));
+  const activePreviewImage = previewImages[safeActivePreviewImageIndex] ?? null;
   const previewTitle = activeItem
     ? getItemDisplayTitle(activeItem, studio.items.findIndex((item) => item.id === activeItem.id))
     : "Untitled artwork";
@@ -1148,6 +1155,68 @@ export function ListingFlowPage({
     }
   };
 
+  const handleListingImagesUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    try {
+      const uploaded = await uploadFiles(event.target.files, "artwork-media/gallery");
+      if (uploaded.length === 0) {
+        return;
+      }
+
+      updateActiveItem((current) => {
+        const images = [
+          current.media.mainImageUrl,
+          ...current.media.galleryImageUrls,
+          ...uploaded,
+        ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index).slice(0, 20);
+
+        return {
+          ...current,
+          media: {
+            ...current.media,
+            mainImageUrl: images[0] ?? null,
+            galleryImageUrls: images.slice(1),
+          },
+        };
+      });
+      toast.success(`${uploaded.length} ${uploaded.length === 1 ? "image" : "images"} added.`);
+    } catch (uploadError) {
+      const message = uploadError instanceof Error ? uploadError.message : "Unable to upload these images.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const reorderListingImages = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
+      return;
+    }
+
+    updateActiveItem((current) => {
+      const images = [current.media.mainImageUrl, ...current.media.galleryImageUrls].filter(
+        (value, index, array): value is string => Boolean(value) && array.indexOf(value) === index,
+      );
+      const [movedImage] = images.splice(fromIndex, 1);
+
+      if (!movedImage) {
+        return current;
+      }
+
+      images.splice(toIndex, 0, movedImage);
+
+      return {
+        ...current,
+        media: {
+          ...current.media,
+          mainImageUrl: images[0] ?? null,
+          galleryImageUrls: images.slice(1),
+        },
+      };
+    });
+    setActivePreviewImageIndex(toIndex);
+  };
+
   const saveStatusLabel =
     uploading
       ? "Uploading media..."
@@ -1409,44 +1478,87 @@ export function ListingFlowPage({
 
                 <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                   <div className="space-y-4">
-                    <div className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-muted/20">
-                      {activeItem.media.mainImageUrl ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            alt={previewTitle}
-                            className="aspect-[4/3] w-full object-cover"
-                            src={activeItem.media.mainImageUrl}
-                          />
-                        </>
-                      ) : (
-                        <div className="flex aspect-[4/3] flex-col items-center justify-center gap-5 bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))] p-8 text-center">
-                          <div className="space-y-2">
-                            <ImagePlus className="mx-auto size-8 text-primary" />
-                            <p className="text-base leading-7 text-muted-foreground">
-                              Add a cover image to see your hero listing preview here.
-                            </p>
+                    <div className="rounded-[1.75rem] border border-border/70 bg-muted/20 p-3">
+                      <div className="grid gap-3 md:grid-cols-[5.25rem_minmax(0,1fr)]">
+                        {previewImages.length > 0 ? (
+                          <div className="order-2 flex gap-2 overflow-x-auto pb-1 md:order-1 md:max-h-[34rem] md:flex-col md:overflow-y-auto md:pr-1">
+                            {previewImages.map((image, index) => (
+                              <div
+                                key={image}
+                                className="group relative shrink-0"
+                                draggable
+                                onDragEnd={() => { draggedPreviewImageIndexRef.current = null; }}
+                                onDragOver={(event) => event.preventDefault()}
+                                onDragStart={() => { draggedPreviewImageIndexRef.current = index; }}
+                                onDrop={(event) => {
+                                  event.preventDefault();
+                                  const fromIndex = draggedPreviewImageIndexRef.current;
+                                  if (fromIndex !== null) reorderListingImages(fromIndex, index);
+                                  draggedPreviewImageIndexRef.current = null;
+                                }}
+                              >
+                                <button
+                                  aria-label={`Show image ${index + 1}`}
+                                  className={cn(
+                                    "block overflow-hidden rounded-xl border-2 bg-white transition-all",
+                                    index === safeActivePreviewImageIndex ? "border-primary shadow-sm" : "border-transparent hover:border-primary/30",
+                                  )}
+                                  onClick={() => setActivePreviewImageIndex(index)}
+                                  type="button"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img alt="" className="size-20 object-cover" src={image} />
+                                </button>
+                                <GripVertical className="pointer-events-none absolute right-1 top-1 size-4 rounded bg-white/90 text-muted-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100" />
+                                {index === 0 ? <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">Cover</span> : null}
+                                <div className="mt-1 flex justify-center gap-1">
+                                  <button aria-label={`Move image ${index + 1} earlier`} className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white hover:text-primary disabled:opacity-30" disabled={index === 0} onClick={() => reorderListingImages(index, index - 1)} type="button"><ChevronLeft className="size-3.5" /></button>
+                                  <button aria-label={`Move image ${index + 1} later`} className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white hover:text-primary disabled:opacity-30" disabled={index === previewImages.length - 1} onClick={() => reorderListingImages(index, index + 1)} type="button"><ChevronRight className="size-3.5" /></button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <label
-                            className={cn(
-                              "inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-base font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90",
-                              uploading && "pointer-events-none opacity-60",
-                            )}
-                            htmlFor="preview-cover-image"
-                          >
-                            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                            {uploading ? "Uploading..." : "Add cover image"}
-                            <input
-                              accept="image/*"
-                              className="sr-only"
-                              disabled={uploading}
-                              id="preview-cover-image"
-                              onChange={(event) => void handleSingleUpload(event, "mainImageUrl", "artwork-media/main")}
-                              type="file"
-                            />
-                          </label>
+                        ) : null}
+
+                        <div className="relative order-1 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))] md:order-2">
+                          {activePreviewImage ? (
+                            <>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img alt={previewTitle} className="aspect-[4/3] w-full object-contain" src={activePreviewImage} />
+                              {previewImages.length > 1 ? (
+                                <>
+                                  <Button aria-label="Previous image" className="absolute left-3 top-1/2 size-10 -translate-y-1/2 rounded-full bg-white/90 p-0 text-foreground shadow-md hover:bg-white" onClick={() => setActivePreviewImageIndex((safeActivePreviewImageIndex - 1 + previewImages.length) % previewImages.length)} type="button" variant="outline"><ChevronLeft /></Button>
+                                  <Button aria-label="Next image" className="absolute right-3 top-1/2 size-10 -translate-y-1/2 rounded-full bg-white/90 p-0 text-foreground shadow-md hover:bg-white" onClick={() => setActivePreviewImageIndex((safeActivePreviewImageIndex + 1) % previewImages.length)} type="button" variant="outline"><ChevronRight /></Button>
+                                </>
+                              ) : null}
+                            </>
+                          ) : (
+                            <div className="flex aspect-[4/3] flex-col items-center justify-center gap-3 p-8 text-center">
+                              <ImagePlus className="size-9 text-primary" />
+                              <p className="max-w-sm text-base leading-7 text-muted-foreground">Add artwork photos to build the listing gallery.</p>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                        <label className={cn("inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90", uploading && "pointer-events-none opacity-60")}>
+                          {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                          {uploading ? "Uploading..." : previewImages.length > 0 ? "Add more photos" : "Add artwork photos"}
+                          <input accept="image/*" className="sr-only" disabled={uploading} multiple onChange={(event) => void handleListingImagesUpload(event)} type="file" />
+                        </label>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary">
+                          <ImagePlus className="size-4" />
+                          Add detail photos
+                          <input accept="image/*" className="sr-only" multiple onChange={(event) => void handleMultiUpload(event, "detailImageUrls", "artwork-media/details")} type="file" />
+                        </label>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary">
+                          <Upload className="size-4" />
+                          {activeItem.media.videoUrl ? "Replace video" : "Add video"}
+                          <input accept="video/*" className="sr-only" onChange={(event) => void handleSingleUpload(event, "videoUrl", "artwork-media/video")} type="file" />
+                        </label>
+                        <p className="text-sm text-muted-foreground">Drag thumbnails to reorder. The first image is the cover.</p>
+                      </div>
                     </div>
 
                     <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 px-5 py-4">
@@ -1483,22 +1595,6 @@ export function ListingFlowPage({
                       </p>
                     </div>
 
-                    {previewImages.length > 1 ? (
-                      <div className="grid gap-3 sm:grid-cols-4">
-                        {previewImages.slice(1, 5).map((image, index) => (
-                          <div key={`${image}-${index}`} className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-muted/20">
-                            <>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                alt={`${previewTitle} preview ${index + 2}`}
-                                className="aspect-square w-full object-cover"
-                                src={image}
-                              />
-                            </>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
 
                   <div className="space-y-5">
@@ -1573,6 +1669,7 @@ export function ListingFlowPage({
               </div>
 
               <Accordion className="mt-8" collapsible defaultValue="photos" type="single">
+                {!isStandaloneEditor ? (
                 <AccordionItem className="border-border/70" value="photos">
                   <AccordionTrigger className="hover:no-underline">
                     <div>
@@ -1609,6 +1706,7 @@ export function ListingFlowPage({
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+                ) : null}
 
                 <AccordionItem className="border-border/70" value="basic">
                   <AccordionTrigger className="hover:no-underline">
