@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
   BadgeCheck,
+  BookOpen,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/moderation", label: "Moderation", icon: Shield },
   { href: "/admin/refunds", label: "Refunds", icon: CreditCard },
   { href: "/admin/roles", label: "Roles", icon: Users },
+  { href: "/admin/docs", label: "Documentation", icon: BookOpen },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
