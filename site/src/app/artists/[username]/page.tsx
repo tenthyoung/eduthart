@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { normalizeListingStudio, type ListingItemDraft, type ListingStudioDraft } from "@/lib/artists/listing-flow";
 import { buildArtistPageHref, type AccountProfile } from "@/lib/auth/account-profile";
-import { findE2EAccountProfileByUsername, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
+import { findE2EAccountProfileByUsername, getE2EListingFlow, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 
 async function getProfileByUsername(username: string): Promise<AccountProfile | null> {
@@ -55,6 +56,40 @@ async function getProfileByUsername(username: string): Promise<AccountProfile | 
   };
 }
 
+async function getPublishedListings(uid: string): Promise<ListingItemDraft[]> {
+  const studio = isE2EAuthEnabled()
+    ? await getE2EListingFlow(uid)
+    : (
+        await getFirebaseAdminDb()
+          .collection("users")
+          .doc(uid)
+          .collection("seller")
+          .doc("listing_flow")
+          .get()
+      ).data();
+
+  if (!studio) {
+    return [];
+  }
+
+  return normalizeListingStudio(studio as ListingStudioDraft).items.filter(
+    (item) => item.salesVisibility.public && !item.salesVisibility.draft,
+  );
+}
+
+function formatPrice(item: ListingItemDraft) {
+  const price = Number(item.pricingInventory.price);
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return null;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: item.pricingInventory.currency || "USD",
+  }).format(price);
+}
+
 export default async function ArtistPage({
   params,
 }: {
@@ -68,6 +103,7 @@ export default async function ArtistPage({
   }
 
   const displayName = profile.displayName || [profile.firstName, profile.lastName].filter(Boolean).join(" ") || `@${profile.username}`;
+  const publishedListings = await getPublishedListings(profile.uid);
 
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
@@ -112,22 +148,60 @@ export default async function ArtistPage({
           </div>
         </div>
 
-        <section className="rounded-[2rem] border border-white/70 bg-white/92 p-8 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
           <div className="max-w-3xl space-y-3">
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">Gallery</p>
-            <h2 className="text-3xl text-foreground">A public home for this artist&apos;s work</h2>
+            <h2 className="text-3xl text-foreground">Available artwork</h2>
             <p className="text-base leading-7 text-muted-foreground">
-              This page is ready to showcase featured artwork, collections, and artist details under the chosen username tag.
+              Explore the work {displayName} has published for collectors.
             </p>
-            <div className="pt-3">
-              <Link
-                className="inline-flex items-center rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:brightness-105"
-                href={`/artists/${profile.username}/listings/new`}
-              >
-                Start listing artwork
-              </Link>
-            </div>
           </div>
+
+          {publishedListings.length > 0 ? (
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {publishedListings.map((item) => {
+                const price = formatPrice(item);
+
+                return (
+                  <article key={item.id} className="group overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted/30">
+                      {item.media.mainImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          alt={item.artworkDetails.title || "Published artwork"}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                          src={item.media.mainImageUrl}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="space-y-3 p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-xl text-foreground">{item.artworkDetails.title || "Untitled artwork"}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {[item.artworkDetails.medium, item.artworkDetails.yearCreated].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        {price ? <p className="shrink-0 text-base font-semibold text-foreground">{price}</p> : null}
+                      </div>
+                      {item.artworkDetails.description ? (
+                        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">{item.artworkDetails.description}</p>
+                      ) : null}
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                        {item.pricingInventory.availability === "original_available"
+                          ? "Original available"
+                          : item.pricingInventory.availability.replaceAll("_", " ")}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-[1.5rem] border border-dashed border-border bg-muted/20 px-6 py-10 text-center text-base text-muted-foreground">
+              No public artwork has been added yet.
+            </div>
+          )}
         </section>
       </div>
     </main>
