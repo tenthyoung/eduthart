@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
 import { getNavContext, isArtistCapableUsername } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { CartDrawer } from "@/components/commerce/cart-drawer";
 
 type NavItem = {
   href: string;
@@ -245,6 +246,7 @@ export function Navbar() {
 
           {/* Right - Theme Toggle & Hamburger Menu */}
           <div className="flex items-center gap-2">
+            <CartDrawer />
             <ThemeToggle />
             {status === "authenticated" ? (
               <div className="hidden items-center gap-2 lg:flex">

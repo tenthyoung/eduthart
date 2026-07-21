@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { CART_OPEN_EVENT } from "@/components/commerce/cart-drawer";
 
 export function AddToCartButton({ itemId, username }: { itemId: string; username: string }) {
   const { status, user } = useAuth();
@@ -28,7 +29,7 @@ export function AddToCartButton({ itemId, username }: { itemId: string; username
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Unable to add artwork to cart.");
       toast.success("Artwork added to your cart.");
-      router.push("/cart");
+      window.dispatchEvent(new Event(CART_OPEN_EVENT));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to add artwork to cart.");
     } finally {
