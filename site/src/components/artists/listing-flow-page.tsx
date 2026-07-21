@@ -1769,9 +1769,9 @@ export function ListingFlowPage({
                 <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                   <div className="space-y-4">
                     <div className="rounded-[1.75rem] border border-border/70 bg-muted/20 p-3">
-                      <div className="grid gap-3 md:grid-cols-[5.25rem_minmax(0,1fr)]">
+                      <div className="grid gap-3">
                         {previewImages.length > 0 ? (
-                          <div className="order-2 flex gap-2 overflow-x-auto pb-1 md:order-1 md:max-h-[34rem] md:flex-col md:overflow-y-auto md:pr-1">
+                          <div className="order-2 flex gap-2 overflow-x-auto pb-1">
                             {previewImages.map((image, index) => (
                               <div
                                 key={image}
@@ -1850,7 +1850,7 @@ export function ListingFlowPage({
                           </div>
                         ) : null}
 
-                        <div className="relative order-1 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))] md:order-2">
+                        <div className="relative order-1 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,rgba(203,145,78,0.16),rgba(249,244,237,0.95))]">
                           {activePreviewImage ? (
                             <>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
