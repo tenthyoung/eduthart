@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import { toast } from "sonner";
 import {
   confirmPasswordReset,
@@ -69,7 +75,7 @@ function formatResetError(error: unknown) {
   return "We could not reset your password. Please try again.";
 }
 
-export default function AuthActionPage() {
+function AuthActionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
@@ -272,5 +278,39 @@ export default function AuthActionPage() {
         ) : null}
       </div>
     </AuthShell>
+  );
+}
+
+function AuthActionFallback() {
+  return (
+    <AuthShell
+      eyebrow="Account Recovery"
+      title="Reset your password with EduthArt"
+      description="This custom password reset page replaces the default Firebase form so the recovery flow feels like the rest of the site."
+    >
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-2xl text-foreground">Choose a new password</h2>
+          <p className="text-sm text-muted-foreground">
+            We’re verifying your secure reset link before showing the form.
+          </p>
+        </div>
+
+        <Alert>
+          <AlertTitle>Checking link</AlertTitle>
+          <AlertDescription>
+            Verifying your password reset request through Firebase Auth.
+          </AlertDescription>
+        </Alert>
+      </div>
+    </AuthShell>
+  );
+}
+
+export default function AuthActionPage() {
+  return (
+    <Suspense fallback={<AuthActionFallback />}>
+      <AuthActionContent />
+    </Suspense>
   );
 }

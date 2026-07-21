@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { PasswordInput } from "@/components/auth/password-input";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signInWithEmail, signInWithGoogle, status } = useAuth();
@@ -168,5 +168,28 @@ export default function LoginPage() {
         </p>
       </div>
     </AuthShell>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <AuthShell
+      eyebrow="Collector Access"
+      title="Log in to EduthArt"
+      description="Use your email and password or continue with Google to pick up where you left off."
+    >
+      <div className="space-y-2">
+        <h2 className="text-2xl text-foreground">Welcome back</h2>
+        <p className="text-sm text-muted-foreground">Loading sign-in…</p>
+      </div>
+    </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }
