@@ -120,6 +120,7 @@ const ARTWORK_DETAIL_HELP: Record<
   ArtworkDetailHelpKey,
   {
     description: string;
+    definitions?: Array<{ description: string; label: string }>;
     examples: string[];
     title: string;
   }
@@ -140,9 +141,19 @@ const ARTWORK_DETAIL_HELP: Record<
     examples: ["Painting", "Drawing", "Sculpture", "Photography"],
   },
   medium: {
-    title: "Medium",
+    title: "Medium guide",
     description: "Medium tells buyers how the artwork was created or what the main material is.",
     examples: ["Oil", "Acrylic", "Watercolor", "Digital"],
+    definitions: [
+      { label: "Oil", description: "Pigment bound with drying oil, known for rich color, depth, and slow blending." },
+      { label: "Acrylic", description: "Fast-drying, water-based polymer paint that can range from transparent washes to heavy texture." },
+      { label: "Watercolor", description: "Transparent, water-soluble pigment typically painted on paper for luminous, layered effects." },
+      { label: "Mixed Media", description: "A single artwork combining two or more materials or techniques, such as paint, collage, and ink." },
+      { label: "Digital", description: "Artwork created primarily with digital tools, including illustration, painting, or generative processes." },
+      { label: "Bronze", description: "A durable metal alloy commonly cast into sculpture, often finished with a colored patina." },
+      { label: "Resin", description: "A liquid synthetic material that cures into a hard surface and may be cast, layered, or used as a glossy finish." },
+      { label: "Film", description: "Photography captured on light-sensitive film before being developed and printed or digitized." },
+    ],
   },
   subject: {
     title: "Subject",
@@ -1505,7 +1516,7 @@ export function ListingFlowPage({
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Medium</Label>
+                          <HelpLabel helpKey="medium" label="Medium" onOpen={setActiveHelpKey} />
                           <Select value={activeItem.artworkDetails.medium} onValueChange={(value) => updateActiveItem((current) => ({ ...current, artworkDetails: { ...current.artworkDetails, medium: value } }))}>
                             <SelectTrigger className="w-full"><SelectValue placeholder="Choose medium" /></SelectTrigger>
                             <SelectContent>{MEDIUM_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
@@ -2079,16 +2090,30 @@ export function ListingFlowPage({
                     Clear, confident listing details reduce buyer hesitation and make the work easier to discover.
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Examples</p>
-                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    {activeHelp.examples.map((example) => (
-                      <li key={example} className="rounded-xl border border-border/70 bg-card px-3 py-2">
-                        {example}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {activeHelp.definitions ? (
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Available mediums</p>
+                    <dl className="mt-3 space-y-3">
+                      {activeHelp.definitions.map((definition) => (
+                        <div key={definition.label} className="rounded-xl border border-border/70 bg-card px-4 py-3">
+                          <dt className="text-sm font-semibold text-foreground">{definition.label}</dt>
+                          <dd className="mt-1 text-sm leading-6 text-muted-foreground">{definition.description}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Examples</p>
+                    <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                      {activeHelp.examples.map((example) => (
+                        <li key={example} className="rounded-xl border border-border/70 bg-card px-3 py-2">
+                          {example}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </>
           ) : null}
