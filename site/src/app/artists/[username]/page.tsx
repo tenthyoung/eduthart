@@ -5,6 +5,7 @@ import { normalizeListingStudio, type ListingItemDraft, type ListingStudioDraft 
 import { buildArtistPageHref, type AccountProfile } from "@/lib/auth/account-profile";
 import { findE2EAccountProfileByUsername, getE2EListingFlow, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
+import { cn } from "@/lib/utils";
 
 async function getProfileByUsername(username: string): Promise<AccountProfile | null> {
   const normalized = username.trim().toLowerCase();
@@ -109,21 +110,21 @@ export default async function ArtistPage({
     <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-          <div className="relative h-56 w-full bg-gradient-to-r from-primary/30 via-amber-100 to-primary-light/20">
-            {profile.bannerURL ? (
-              // eslint-disable-next-line @next/next/no-img-element
+          {profile.bannerURL ? (
+            <div className="relative h-56 w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt={`${displayName} banner`}
                 className="h-full w-full object-cover"
                 src={profile.bannerURL}
               />
-            ) : null}
-            <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/10 to-transparent" />
-          </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8">
             <div className="flex items-center gap-4">
-              <div className="-mt-16 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg">
+              <div className={cn("flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg", profile.bannerURL && "-mt-16")}>
                 {profile.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img alt={displayName} className="h-full w-full object-cover" src={profile.photoURL} />

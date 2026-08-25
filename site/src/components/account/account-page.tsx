@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { buildArtistPageHref, buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { getFirebaseStorage } from "@/lib/firebase/client";
+import { cn } from "@/lib/utils";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 const MAX_BANNER_FILE_SIZE = 5 * 1024 * 1024;
@@ -538,22 +539,53 @@ export function AccountPage() {
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
           </div>
-          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-            <div className="relative h-44 w-full bg-gradient-to-r from-primary/25 via-amber-100 to-primary-light/20">
-              {profile?.bannerURL ? (
-                // eslint-disable-next-line @next/next/no-img-element
+          <div className="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+            {profile?.bannerURL ? (
+              <div className="relative h-44 w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   alt={`${displayNamePreview} banner`}
                   className="h-full w-full object-cover"
                   src={profile.bannerURL}
                 />
-              ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/10 to-transparent" />
-            </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+                <Button
+                  className={cn(
+                    "absolute right-4 top-4 bg-white/85 opacity-0 backdrop-blur-sm transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
+                    uploadingBanner && "opacity-100",
+                  )}
+                  disabled={uploadingBanner}
+                  onClick={() => bannerInputRef.current?.click()}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {uploadingBanner ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+                  {uploadingBanner ? "Uploading cover..." : "Change cover"}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex h-12 items-center px-4 pt-3 md:px-6">
+                <Button
+                  className={cn(
+                    "text-muted-foreground opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
+                    uploadingBanner && "opacity-100",
+                  )}
+                  disabled={uploadingBanner}
+                  onClick={() => bannerInputRef.current?.click()}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {uploadingBanner ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+                  {uploadingBanner ? "Uploading cover..." : "Add cover"}
+                </Button>
+              </div>
+            )}
 
             <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
               <div className="flex items-center gap-4">
-                <div className="-mt-16 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg">
+                <div className={cn("flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg", profile?.bannerURL && "-mt-16")}>
                   {profile?.photoURL ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -681,7 +713,7 @@ export function AccountPage() {
                     src={profile.bannerURL}
                   />
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center gap-3 bg-gradient-to-r from-primary/8 via-amber-50 to-primary-light/10 px-6 text-center">
+                  <div className="bg-profile-banner flex h-40 flex-col items-center justify-center gap-3 px-6 text-center">
                     <ImagePlus className="size-6 text-primary" />
                     <p className="text-sm text-muted-foreground">No banner uploaded yet.</p>
                   </div>
