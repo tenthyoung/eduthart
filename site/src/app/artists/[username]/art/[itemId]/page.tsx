@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 
 import { type ListingItemDraft } from "@/lib/artists/listing-flow";
 import { AddToCartButton } from "@/components/commerce/add-to-cart-button";
+import { ArtworkActions } from "@/components/collectors/artwork-actions";
+import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
 import { getPublicArtwork } from "@/lib/artists/public-artwork";
+import { buildArtworkKey } from "@/lib/collectors/artwork-reference";
+import { getArtworkSaveCount } from "@/lib/collectors/favorites";
 
 function formatPrice(item: ListingItemDraft) {
   const price = Number(item.pricingInventory.price);
@@ -28,6 +32,8 @@ export default async function PublicArtworkPage({
   if (!artwork) notFound();
 
   const { item, artistName } = artwork;
+  const artworkKey = buildArtworkKey({ artistUid: artwork.artistUid, itemId: item.id });
+  const saveCount = await getArtworkSaveCount(artworkKey);
   const images = [item.media.mainImageUrl, ...item.media.galleryImageUrls].filter(
     (value, index, array): value is string => Boolean(value) && array.indexOf(value) === index,
   );
@@ -73,9 +79,12 @@ export default async function PublicArtworkPage({
             <div className="rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_-48px_rgba(47,36,28,0.4)] sm:p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Original artwork</p>
               <h1 className="mt-3 text-4xl text-foreground">{item.artworkDetails.title || "Untitled artwork"}</h1>
-              <Link className="mt-2 inline-block text-base text-muted-foreground underline decoration-primary/30 underline-offset-4" href={`/artists/${username}`}>
-                by {artistName}
-              </Link>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <Link className="text-base text-muted-foreground underline decoration-primary/30 underline-offset-4" href={`/artists/${username}`}>
+                  by {artistName}
+                </Link>
+                <FollowArtistButton artistName={artistName} artistUid={artwork.artistUid} username={username} />
+              </div>
               <p className="mt-6 text-3xl font-semibold text-foreground">{formatPrice(item)}</p>
 
               <div className="mt-6 grid gap-3 border-y border-border/60 py-6 text-sm">
@@ -85,11 +94,18 @@ export default async function PublicArtworkPage({
                 {item.artworkDetails.category ? <Detail label="Category" value={item.artworkDetails.category} /> : null}
               </div>
 
-              <div className="mt-6 flex items-center gap-2 text-sm font-medium text-foreground">
-                <span className={`inline-flex size-6 items-center justify-center rounded-full ${available ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
-                  {available ? <Check className="size-4" /> : null}
+              <div className="mt-6 flex flex-wrap items-center gap-3 text-sm font-medium text-foreground">
+                <span className="flex items-center gap-2">
+                  <span className={`inline-flex size-6 items-center justify-center rounded-full ${available ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                    {available ? <Check className="size-4" /> : null}
+                  </span>
+                  {available ? "Original available" : item.pricingInventory.availability.replaceAll("_", " ")}
                 </span>
-                {available ? "Original available" : item.pricingInventory.availability.replaceAll("_", " ")}
+                {saveCount > 0 ? (
+                  <span className="text-muted-foreground">
+                    Saved by {saveCount} {saveCount === 1 ? "collector" : "collectors"}
+                  </span>
+                ) : null}
               </div>
 
               {available ? (
@@ -103,9 +119,16 @@ export default async function PublicArtworkPage({
                 </button>
               )}
 
+              <ArtworkActions
+                artworkKey={artworkKey}
+                itemId={item.id}
+                title={item.artworkDetails.title || "Untitled artwork"}
+                username={username}
+              />
+
               <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-muted-foreground">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                Payment and shipping are coordinated securely after the artist confirms availability.
+                Payment is handled by Stripe. Your card details never pass through EduthArt.
               </p>
             </div>
           </aside>

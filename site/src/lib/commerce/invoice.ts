@@ -1,4 +1,4 @@
-import { formatAddressLines } from "@/lib/collectors/addresses";
+import { formatAddressLines } from "@/lib/collectors/address-format";
 import { formatMinorUnits } from "@/lib/commerce/money";
 import type { Order } from "@/lib/commerce/orders";
 import { getSiteUrl } from "@/lib/notifications/email";

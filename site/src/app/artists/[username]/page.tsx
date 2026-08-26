@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -5,6 +6,8 @@ import { type ListingItemDraft } from "@/lib/artists/listing-flow";
 import { listPublishedArtworks } from "@/lib/artists/listing-store";
 import { buildArtistPageHref } from "@/lib/auth/account-profile";
 import { buildProfileDisplayName, findAccountProfileByUsername } from "@/lib/auth/profile-store";
+import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
+import { countArtistFollowers } from "@/lib/collectors/follows";
 import { cn } from "@/lib/utils";
 
 function formatPrice(item: ListingItemDraft) {
@@ -33,7 +36,10 @@ export default async function ArtistPage({
   }
 
   const displayName = buildProfileDisplayName(profile);
-  const publishedListings = await listPublishedArtworks(profile.uid);
+  const [publishedListings, followerCount] = await Promise.all([
+    listPublishedArtworks(profile.uid),
+    countArtistFollowers(profile.uid),
+  ]);
 
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
@@ -65,18 +71,43 @@ export default async function ArtistPage({
                 <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">Artist Page</p>
                 <h1 className="text-4xl text-foreground sm:text-5xl">{displayName}</h1>
                 <p className="text-base text-muted-foreground">@{profile.username}</p>
+                {profile.location ? (
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="size-4" />
+                    {profile.location}
+                  </p>
+                ) : null}
+                <p className="text-sm text-muted-foreground">
+                  {followerCount} {followerCount === 1 ? "follower" : "followers"}
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
-              Personal art page URL:
-              {" "}
-              <Link className="font-medium text-foreground underline decoration-primary/30 underline-offset-4" href={buildArtistPageHref(profile.username)}>
-                {buildArtistPageHref(profile.username)}
-              </Link>
+            <div className="space-y-3">
+              <FollowArtistButton
+                artistName={displayName}
+                artistUid={profile.uid}
+                username={profile.username}
+              />
+              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
+                Personal art page URL:
+                {" "}
+                <Link className="font-medium text-foreground underline decoration-primary/30 underline-offset-4" href={buildArtistPageHref(profile.username)}>
+                  {buildArtistPageHref(profile.username)}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+
+        {profile.bio ? (
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">About</p>
+            <p className="mt-3 max-w-3xl whitespace-pre-line text-base leading-8 text-muted-foreground">
+              {profile.bio}
+            </p>
+          </section>
+        ) : null}
 
         <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
           <div className="max-w-3xl space-y-3">

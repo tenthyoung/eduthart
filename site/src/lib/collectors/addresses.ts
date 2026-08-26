@@ -1,3 +1,4 @@
+import type { AddressKind, SavedAddress } from "@/lib/collectors/address-format";
 import {
   createDocumentId,
   deleteUserDocument,
@@ -8,24 +9,7 @@ import {
 
 const ADDRESSES_COLLECTION = "addresses";
 
-export type AddressKind = "billing" | "shipping";
-
-export type SavedAddress = {
-  city: string;
-  country: string;
-  createdAt: string;
-  id: string;
-  isDefault: boolean;
-  kind: AddressKind;
-  label: string | null;
-  line1: string;
-  line2: string | null;
-  name: string;
-  phone: string | null;
-  postalCode: string;
-  region: string;
-  updatedAt: string;
-};
+export type { AddressKind, SavedAddress } from "@/lib/collectors/address-format";
 
 export type AddressInput = {
   city?: string;
@@ -186,14 +170,4 @@ export async function deleteAddress(uid: string, id: string) {
       await saveUserDocument(uid, ADDRESSES_COLLECTION, remaining[0].id, { isDefault: true });
     }
   }
-}
-
-export function formatAddressLines(address: SavedAddress) {
-  return [
-    address.name,
-    address.line1,
-    address.line2,
-    [address.city, address.region, address.postalCode].filter(Boolean).join(", "),
-    address.country,
-  ].filter((line): line is string => Boolean(line));
 }

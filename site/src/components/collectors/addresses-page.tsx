@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
-import { formatAddressLines, type AddressKind, type SavedAddress } from "@/lib/collectors/addresses";
+import { formatAddressLines, type AddressKind, type SavedAddress } from "@/lib/collectors/address-format";
 
 type AddressDraft = {
   city: string;

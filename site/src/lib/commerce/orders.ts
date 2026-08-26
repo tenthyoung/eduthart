@@ -1,4 +1,4 @@
-import type { SavedAddress } from "@/lib/collectors/addresses";
+import type { SavedAddress } from "@/lib/collectors/address-format";
 import { normalizeCurrency } from "@/lib/commerce/money";
 import {
   createDocumentId,

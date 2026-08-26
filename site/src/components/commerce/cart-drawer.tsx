@@ -78,11 +78,11 @@ export function CartDrawer() {
           ) : (
             <div className="space-y-5">{items.map((item) => (
               <article key={item.itemId} className="flex gap-4 border-b border-border/70 pb-5">
-                <Link href={`/artists/${item.artistUsername}/art/${item.itemId}`} onClick={() => setOpen(false)}>{item.imageUrl ? (
+                <Link href={item.href} onClick={() => setOpen(false)}>{item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img alt="" className="size-24 rounded-xl object-cover" src={item.imageUrl} />
                 ) : <div className="size-24 rounded-xl bg-muted" />}</Link>
-                <div className="min-w-0 flex-1"><Link className="line-clamp-2 font-medium hover:underline" href={`/artists/${item.artistUsername}/art/${item.itemId}`} onClick={() => setOpen(false)}>{item.title}</Link><p className="mt-1 text-sm text-muted-foreground">by {item.artistName}</p><p className="mt-3 font-semibold">{money(Number(item.price))}</p><p className="mt-1 text-xs text-muted-foreground">Quantity: 1</p></div>
+                <div className="min-w-0 flex-1"><Link className="line-clamp-2 font-medium hover:underline" href={item.href} onClick={() => setOpen(false)}>{item.title}</Link><p className="mt-1 text-sm text-muted-foreground">by {item.artistName}</p><p className="mt-3 font-semibold">{money(Number(item.price))}</p><p className="mt-1 text-xs text-muted-foreground">Quantity: 1</p></div>
                 <Button aria-label={`Remove ${item.title}`} className="shrink-0" onClick={() => void remove(item.itemId)} size="icon" variant="ghost"><Trash2 /></Button>
               </article>
             ))}</div>
