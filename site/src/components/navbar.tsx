@@ -53,15 +53,17 @@ export function Navbar() {
 
   const isArtistCapable = isArtistCapableUsername(username);
   const isHomepage = navContext === "marketing-home";
+  // Anchors into homepage sections, so they only make sense on the homepage.
   const homepageNavItems: NavItem[] = [
-    { name: "Browse Art", href: "/#browse" },
-    { name: "Collections", href: "/#collections" },
+    { name: "Categories", href: "/#collections" },
     { name: "Advisory", href: "/#advisory" },
   ];
   const guestNavItems: NavItem[] = [
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
+  // Browsing is a real page now, so it stays reachable from every route.
+  const browseNavItem: NavItem = { name: "Browse Art", href: "/browse" };
   const authenticatedNavItems: NavItem[] =
     isArtistCapable && username
       ? [
@@ -74,8 +76,16 @@ export function Navbar() {
       : [];
   const navItems: NavItem[] =
     status === "authenticated"
-      ? [...(isHomepage ? homepageNavItems : []), ...authenticatedNavItems]
-      : [...(isHomepage ? homepageNavItems : []), ...guestNavItems];
+      ? [
+          browseNavItem,
+          ...(isHomepage ? homepageNavItems : []),
+          ...authenticatedNavItems,
+        ]
+      : [
+          browseNavItem,
+          ...(isHomepage ? homepageNavItems : []),
+          ...guestNavItems,
+        ];
   const desktopNavItems = navItems;
 
   const socialIcons = [
@@ -354,7 +364,7 @@ export function Navbar() {
                 size="lg"
                 className="hidden xl:inline-flex"
               >
-                <Link href="/#collections">Shop</Link>
+                <Link href="/browse">Shop</Link>
               </Button>
             ) : null}
             <Button
@@ -495,7 +505,7 @@ export function Navbar() {
                 {isHomepage ? (
                   <Button asChild className="w-full" variant="gradient">
                     <Link
-                      href="/#collections"
+                      href="/browse"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Shop
