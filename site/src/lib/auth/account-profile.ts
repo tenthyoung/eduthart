@@ -88,3 +88,22 @@ export function buildFallbackAccountProfile(user: {
     username,
   };
 }
+
+/**
+ * Best-effort split of a provider display name into first and last name.
+ *
+ * Apple hands back only a display name, so this is the only way to prefill the
+ * profile completion step for an Apple sign-up.
+ */
+export function splitDisplayName(displayName?: string | null) {
+  const parts = displayName?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+export function isProfileComplete(profile: Pick<AccountProfile, "firstName" | "lastName">) {
+  return Boolean(profile.firstName?.trim() && profile.lastName?.trim());
+}
