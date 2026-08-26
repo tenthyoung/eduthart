@@ -18,6 +18,7 @@ export function POST(request: Request) {
 
     const body = (await request.json().catch(() => ({}))) as {
       billingAddressId?: string | null;
+      billingSameAsShipping?: boolean;
       savePaymentMethod?: boolean;
       shippingAddressId?: string | null;
     };
@@ -25,6 +26,7 @@ export function POST(request: Request) {
 
     const { order, url } = await createCheckoutSession({
       billingAddressId: body.billingAddressId ?? null,
+      billingSameAsShipping: body.billingSameAsShipping === true,
       buyerEmail: profile?.email ?? session.user.email,
       buyerName: profile?.displayName ?? session.user.displayName,
       buyerUid: session.uid,
