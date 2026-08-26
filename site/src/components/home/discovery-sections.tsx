@@ -59,10 +59,14 @@ export async function DiscoverySections() {
               Categories appear here as artists publish their first originals.
             </p>
           ) : (
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <nav
+              aria-label="Browse by category"
+              className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
               {categories.map((category) => (
                 <Link
                   key={category.name}
+                  aria-label={`${category.name} artwork`}
                   className="group rounded-[1.75rem] border border-border/70 bg-card p-6 transition-colors hover:border-primary/40"
                   href={category.href}
                 >
@@ -76,7 +80,7 @@ export async function DiscoverySections() {
                   </p>
                 </Link>
               ))}
-            </div>
+            </nav>
           )}
         </div>
       </section>

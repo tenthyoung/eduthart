@@ -13,12 +13,14 @@ import {
 import { isE2EAuthEnabled, updateE2EListingFlow } from "@/lib/auth/e2e-store";
 
 type SeedListingBody = {
+  category?: string;
   currency?: string;
   /** Reuse an existing listing id to edit that artwork rather than add one. */
   itemId?: string;
   medium?: string;
   price?: string;
   style?: string;
+  subject?: string;
   tags?: string[];
   title?: string;
   uid?: string;
@@ -69,7 +71,8 @@ export async function POST(request: Request) {
   item.artworkDetails.title = body.title ?? "Harbour Light";
   item.artworkDetails.medium = body.medium ?? "Oil on canvas";
   item.artworkDetails.style = body.style ?? "Contemporary";
-  item.artworkDetails.category = "Painting";
+  item.artworkDetails.category = body.category ?? "Painting";
+  item.artworkDetails.subject = body.subject ?? "Landscape";
   item.artworkDetails.description =
     "A study of morning light across the water.";
   item.artworkDetails.tags = body.tags ?? ["coastal", "light"];
