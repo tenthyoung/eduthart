@@ -13,6 +13,7 @@ export type AccountLegalAcceptance = {
 export type AccountProfile = {
   authProviders: string[];
   bannerURL: string | null;
+  bio: string | null;
   createdAt: string | null;
   displayName: string | null;
   email: string | null;
@@ -20,7 +21,13 @@ export type AccountProfile = {
   lastLoginAt: string | null;
   lastName: string | null;
   legal: AccountLegalAcceptance | null;
+  location: string | null;
   photoURL: string | null;
+  /**
+   * Set once a collector uploads or removes their own picture, so a later
+   * sign-in sync does not overwrite their choice with the provider's avatar.
+   */
+  photoURLManagedByUser: boolean;
   shippingOriginAddress: ShippingOriginAddress | null;
   uid: string;
   updatedAt: string | null;
@@ -46,4 +53,38 @@ export function isValidUsername(value: string) {
 
 export function buildArtistPageHref(username: string) {
   return `/artists/${username}`;
+}
+
+/**
+ * A profile placeholder built from the signed-in Firebase user.
+ *
+ * Client screens render this when the profile API is unreachable so the page
+ * still shows the collector's own name instead of an error shell.
+ */
+export function buildFallbackAccountProfile(user: {
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  providerIds: string[];
+  uid: string;
+}, username: string | null = null): AccountProfile {
+  return {
+    authProviders: user.providerIds,
+    bannerURL: null,
+    bio: null,
+    createdAt: null,
+    displayName: user.displayName ?? user.email ?? "EduthArt Collector",
+    email: user.email ?? null,
+    firstName: null,
+    lastLoginAt: null,
+    lastName: null,
+    legal: null,
+    location: null,
+    photoURL: user.photoURL ?? null,
+    photoURLManagedByUser: false,
+    shippingOriginAddress: null,
+    uid: user.uid,
+    updatedAt: null,
+    username,
+  };
 }

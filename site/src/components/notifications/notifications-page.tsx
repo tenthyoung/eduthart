@@ -9,7 +9,7 @@ import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { AccountProfile } from "@/lib/auth/account-profile";
+import { buildFallbackAccountProfile, type AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 
 const NOTIFICATION_STORAGE_PREFIX = "eduthart:notifications";
@@ -52,27 +52,6 @@ function writeNotificationState(uid: string, next: { chooseUsernameRead: boolean
   }
 
   window.localStorage.setItem(getNotificationStorageKey(uid), JSON.stringify(next));
-}
-
-function buildFallbackProfile(
-  user: NonNullable<ReturnType<typeof useAuth>["user"]>,
-): AccountProfile {
-  return {
-    authProviders: user.providerIds,
-    bannerURL: null,
-    createdAt: null,
-    displayName: user.displayName ?? user.email ?? "EduthArt Collector",
-    email: user.email ?? null,
-    firstName: null,
-    lastLoginAt: null,
-    lastName: null,
-    legal: null,
-    photoURL: user.photoURL ?? null,
-    shippingOriginAddress: null,
-    uid: user.uid,
-    updatedAt: null,
-    username: null,
-  };
 }
 
 export function NotificationsPage() {
@@ -127,7 +106,7 @@ export function NotificationsPage() {
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError instanceof Error ? loadError.message : "Unable to load your notifications.");
-          const fallbackProfile = buildFallbackProfile(user);
+          const fallbackProfile = buildFallbackAccountProfile(user);
           setProfile(fallbackProfile);
           setUsernameDraft(fallbackProfile.username ?? "");
           const notificationState = readNotificationState(fallbackProfile.uid);

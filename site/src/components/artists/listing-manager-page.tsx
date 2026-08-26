@@ -34,7 +34,7 @@ import {
   normalizeListingStudio,
   type ListingStudioDraft,
 } from "@/lib/artists/listing-flow";
-import { buildArtistPageHref, type AccountProfile } from "@/lib/auth/account-profile";
+import { buildArtistPageHref, buildFallbackAccountProfile, type AccountProfile } from "@/lib/auth/account-profile";
 
 type ListingStudioPayload = {
   profile: AccountProfile;
@@ -47,28 +47,6 @@ type SortValue =
   | "progress_desc"
   | "price_desc"
   | "title_asc";
-
-function buildFallbackProfile(
-  user: NonNullable<ReturnType<typeof useAuth>["user"]>,
-  username: string,
-): AccountProfile {
-  return {
-    authProviders: user.providerIds,
-    bannerURL: null,
-    createdAt: null,
-    displayName: user.displayName ?? user.email ?? "EduthArt Collector",
-    email: user.email ?? null,
-    firstName: null,
-    lastLoginAt: null,
-    lastName: null,
-    legal: null,
-    photoURL: user.photoURL ?? null,
-    shippingOriginAddress: null,
-    uid: user.uid,
-    updatedAt: null,
-    username,
-  };
-}
 
 async function parseApiError(response: Response, fallbackMessage: string) {
   const payload = (await response.json().catch(() => null)) as
@@ -153,7 +131,7 @@ export function ListingManagerPage({ username }: { username: string }) {
                 : loadError.message
               : "Unable to load your listings.";
           setError(message);
-          setProfile(buildFallbackProfile(user, username));
+          setProfile(buildFallbackAccountProfile(user, username));
           setStudio(createEmptyListingStudio());
           setSelectedItemIds([]);
         }

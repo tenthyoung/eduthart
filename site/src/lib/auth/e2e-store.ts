@@ -8,6 +8,7 @@ import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profil
 type SeedProfileArgs = {
   authProviders?: string[];
   bannerURL?: string | null;
+  bio?: string | null;
   createdAt?: string | null;
   displayName?: string | null;
   email?: string | null;
@@ -15,7 +16,9 @@ type SeedProfileArgs = {
   lastLoginAt?: string | null;
   lastName?: string | null;
   legal?: AccountProfile["legal"];
+  location?: string | null;
   photoURL?: string | null;
+  photoURLManagedByUser?: boolean;
   shippingOriginAddress?: ShippingOriginAddress | null;
   uid: string;
   username?: string | null;
@@ -39,6 +42,7 @@ async function ensureStoreDir() {
 export async function seedE2EAccountProfile({
   authProviders,
   bannerURL,
+  bio,
   createdAt,
   displayName,
   email,
@@ -46,7 +50,9 @@ export async function seedE2EAccountProfile({
   lastLoginAt,
   lastName,
   legal,
+  location,
   photoURL,
+  photoURLManagedByUser,
   shippingOriginAddress,
   uid,
   username,
@@ -58,6 +64,7 @@ export async function seedE2EAccountProfile({
   const profile: AccountProfile = {
     authProviders: authProviders?.length ? authProviders : ["password"],
     bannerURL: bannerURL ?? null,
+    bio: bio?.trim() || null,
     createdAt: createdAt ?? now,
     displayName:
       displayName?.trim() ||
@@ -79,7 +86,9 @@ export async function seedE2EAccountProfile({
         termsOfServiceAcceptedAt: now,
         termsOfServicePath: "/legal/terms-of-service",
       } satisfies NonNullable<AccountProfile["legal"]>),
+    location: location?.trim() || null,
     photoURL: photoURL ?? null,
+    photoURLManagedByUser: photoURLManagedByUser ?? false,
     shippingOriginAddress: shippingOriginAddress ?? null,
     uid,
     updatedAt: now,
@@ -102,7 +111,7 @@ export async function getE2EAccountProfile(uid: string) {
 
 export async function updateE2EAccountProfile(
   uid: string,
-  updates: Partial<Pick<AccountProfile, "bannerURL" | "displayName" | "email" | "firstName" | "lastName" | "shippingOriginAddress" | "updatedAt" | "username">>,
+  updates: Partial<AccountProfile>,
 ) {
   const current = await getE2EAccountProfile(uid);
 

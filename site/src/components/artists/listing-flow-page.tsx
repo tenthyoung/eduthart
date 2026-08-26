@@ -71,6 +71,7 @@ import {
 } from "@/lib/artists/listing-flow";
 import {
   buildArtistPageHref,
+  buildFallbackAccountProfile,
   type AccountProfile,
 } from "@/lib/auth/account-profile";
 import { getFirebaseStorage } from "@/lib/firebase/client";
@@ -373,28 +374,6 @@ const ARTWORK_DETAIL_HELP: Record<
     examples: ["Draft", "Public", "Unlisted"],
   },
 };
-
-function buildFallbackProfile(
-  user: NonNullable<ReturnType<typeof useAuth>["user"]>,
-  username: string
-): AccountProfile {
-  return {
-    authProviders: user.providerIds,
-    bannerURL: null,
-    createdAt: null,
-    displayName: user.displayName ?? user.email ?? "EduthArt Collector",
-    email: user.email ?? null,
-    firstName: null,
-    lastLoginAt: null,
-    lastName: null,
-    legal: null,
-    photoURL: user.photoURL ?? null,
-    shippingOriginAddress: null,
-    uid: user.uid,
-    updatedAt: null,
-    username,
-  };
-}
 
 async function parseApiError(response: Response, fallbackMessage: string) {
   const payload = (await response.json().catch(() => null)) as {
@@ -904,7 +883,7 @@ export function ListingFlowPage({
         setLastSavedAt(new Date());
       } catch (loadError) {
         if (!cancelled) {
-          const fallbackProfile = buildFallbackProfile(user, username);
+          const fallbackProfile = buildFallbackAccountProfile(user, username);
           const fallbackStudio = normalizeListingStudio(null, {
             existingAddress: fallbackProfile.shippingOriginAddress,
           });

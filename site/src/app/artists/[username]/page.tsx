@@ -1,82 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { normalizeListingStudio, type ListingItemDraft, type ListingStudioDraft } from "@/lib/artists/listing-flow";
-import { buildArtistPageHref, type AccountProfile } from "@/lib/auth/account-profile";
-import { findE2EAccountProfileByUsername, getE2EListingFlow, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
-import { getFirebaseAdminDb } from "@/lib/firebase/admin";
+import { type ListingItemDraft } from "@/lib/artists/listing-flow";
+import { listPublishedArtworks } from "@/lib/artists/listing-store";
+import { buildArtistPageHref } from "@/lib/auth/account-profile";
+import { buildProfileDisplayName, findAccountProfileByUsername } from "@/lib/auth/profile-store";
 import { cn } from "@/lib/utils";
-
-async function getProfileByUsername(username: string): Promise<AccountProfile | null> {
-  const normalized = username.trim().toLowerCase();
-
-  if (!normalized) {
-    return null;
-  }
-
-  if (isE2EAuthEnabled()) {
-    return findE2EAccountProfileByUsername(normalized);
-  }
-
-  const snapshot = await getFirebaseAdminDb()
-    .collection("users")
-    .where("usernameLower", "==", normalized)
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
-    return null;
-  }
-
-  const data = snapshot.docs[0]?.data() as Record<string, unknown> | undefined;
-
-  if (!data) {
-    return null;
-  }
-
-  return {
-    authProviders: Array.isArray(data.authProviders)
-      ? data.authProviders.filter((value): value is string => typeof value === "string")
-      : [],
-    bannerURL: typeof data.bannerURL === "string" ? data.bannerURL : null,
-    createdAt: typeof data.createdAt === "string" ? data.createdAt : null,
-    displayName: typeof data.displayName === "string" ? data.displayName : null,
-    email: typeof data.email === "string" ? data.email : null,
-    firstName: typeof data.firstName === "string" ? data.firstName : null,
-    lastLoginAt: typeof data.lastLoginAt === "string" ? data.lastLoginAt : null,
-    lastName: typeof data.lastName === "string" ? data.lastName : null,
-    legal: null,
-    photoURL: typeof data.photoURL === "string" ? data.photoURL : null,
-    shippingOriginAddress:
-      typeof data.shippingOriginAddress === "object" && data.shippingOriginAddress !== null
-        ? (data.shippingOriginAddress as AccountProfile["shippingOriginAddress"])
-        : null,
-    uid: typeof data.uid === "string" ? data.uid : snapshot.docs[0]?.id ?? "",
-    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : null,
-    username: typeof data.username === "string" ? data.username : normalized,
-  };
-}
-
-async function getPublishedListings(uid: string): Promise<ListingItemDraft[]> {
-  const studio = isE2EAuthEnabled()
-    ? await getE2EListingFlow(uid)
-    : (
-        await getFirebaseAdminDb()
-          .collection("users")
-          .doc(uid)
-          .collection("seller")
-          .doc("listing_flow")
-          .get()
-      ).data();
-
-  if (!studio) {
-    return [];
-  }
-
-  return normalizeListingStudio(studio as ListingStudioDraft).items.filter(
-    (item) => item.salesVisibility.public && !item.salesVisibility.draft,
-  );
-}
 
 function formatPrice(item: ListingItemDraft) {
   const price = Number(item.pricingInventory.price);
@@ -97,14 +26,14 @@ export default async function ArtistPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getProfileByUsername(username);
+  const profile = await findAccountProfileByUsername(username);
 
   if (!profile?.username) {
     notFound();
   }
 
-  const displayName = profile.displayName || [profile.firstName, profile.lastName].filter(Boolean).join(" ") || `@${profile.username}`;
-  const publishedListings = await getPublishedListings(profile.uid);
+  const displayName = buildProfileDisplayName(profile);
+  const publishedListings = await listPublishedArtworks(profile.uid);
 
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
