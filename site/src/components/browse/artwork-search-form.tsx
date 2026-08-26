@@ -27,6 +27,23 @@ import { cn } from "@/lib/utils";
  */
 const ANY = "any";
 
+/**
+ * One type size and line box for the input and both selects.
+ *
+ * They sit side by side in a single control, so they have to match. The size
+ * is stated at every breakpoint the base components style: `Input` carries its
+ * own `md:text-sm`, which silently won over a plain `text-lg` on wide screens
+ * and left the field two sizes smaller than the selects beside it.
+ *
+ * `leading-7` is what keeps descenders on letters like "j" and "p" inside the
+ * box: an input clips to its content height, so a line box only as tall as the
+ * font cuts them off.
+ */
+const FIELD_TEXT = "text-base leading-7 md:text-base";
+
+/** Matching heights, so the three fields align across the bar. */
+const FIELD_BOX = "h-9 py-1";
+
 function toSelectValue(value: string) {
   return value || ANY;
 }
@@ -73,7 +90,11 @@ export function ArtworkSearchForm({
           <p className="text-sm font-semibold text-foreground">What</p>
           <Input
             aria-label="Search artwork"
-            className="mt-1 h-auto border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg"
+            className={cn(
+              "mt-1 border-0 px-0 shadow-none focus-visible:ring-0",
+              FIELD_BOX,
+              FIELD_TEXT
+            )}
             name="q"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Title, artist, medium, or subject"
@@ -89,7 +110,12 @@ export function ArtworkSearchForm({
           >
             <SelectTrigger
               aria-label="Category"
-              className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg [&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate"
+              className={cn(
+                "mt-1 w-full border-0 px-0 shadow-none focus-visible:ring-0 data-[size=default]:h-9",
+                "[&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate",
+                FIELD_BOX,
+                FIELD_TEXT
+              )}
             >
               <SelectValue placeholder="Any category" />
             </SelectTrigger>
@@ -112,7 +138,12 @@ export function ArtworkSearchForm({
           >
             <SelectTrigger
               aria-label="Budget"
-              className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg [&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate"
+              className={cn(
+                "mt-1 w-full border-0 px-0 shadow-none focus-visible:ring-0 data-[size=default]:h-9",
+                "[&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate",
+                FIELD_BOX,
+                FIELD_TEXT
+              )}
             >
               <SelectValue placeholder="Any budget" />
             </SelectTrigger>
