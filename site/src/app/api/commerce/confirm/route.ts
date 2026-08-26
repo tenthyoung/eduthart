@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { buildE2EPaidSession, isE2ESessionId } from "@/lib/commerce/e2e-payments";
 import { fulfillCheckoutSession } from "@/lib/commerce/fulfillment";
 import { getStripeClient, isStripeConfigured } from "@/lib/commerce/stripe";
 import { apiError, withSession } from "@/lib/api/handler";
@@ -14,17 +15,19 @@ import { apiError, withSession } from "@/lib/api/handler";
  */
 export function POST(request: Request) {
   return withSession(request, async (session) => {
-    if (!isStripeConfigured()) {
-      return apiError("Payment checkout is not configured yet.", 503, "unavailable");
-    }
-
     const body = (await request.json().catch(() => ({}))) as { sessionId?: string };
 
     if (!body.sessionId) {
       return apiError("A checkout session is required.", 400);
     }
 
-    const checkoutSession = await getStripeClient().checkout.sessions.retrieve(body.sessionId);
+    if (!isE2ESessionId(body.sessionId) && !isStripeConfigured()) {
+      return apiError("Payment checkout is not configured yet.", 503, "unavailable");
+    }
+
+    const checkoutSession = isE2ESessionId(body.sessionId)
+      ? buildE2EPaidSession(body.sessionId)
+      : await getStripeClient().checkout.sessions.retrieve(body.sessionId);
     const order = await fulfillCheckoutSession(checkoutSession);
 
     if (!order) {

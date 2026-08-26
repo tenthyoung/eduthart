@@ -1,5 +1,3 @@
-import type Stripe from "stripe";
-
 import { setIndexedArtworkAvailability } from "@/lib/artists/artwork-index";
 import { setListingAvailability } from "@/lib/artists/listing-store";
 import { loadAccountProfile } from "@/lib/auth/profile-store";
@@ -19,6 +17,20 @@ import {
   orderConfirmedNotification,
   savedArtworkSoldNotification,
 } from "@/lib/notifications/templates";
+
+/**
+ * The parts of a Stripe Checkout Session fulfilment actually reads.
+ *
+ * Narrowing it here means the E2E payment stand-in can satisfy the same
+ * contract without pretending to be a full Stripe object.
+ */
+export type FulfillableSession = {
+  client_reference_id?: string | null;
+  id: string;
+  metadata?: { orderId?: string } | null;
+  payment_intent?: string | { id: string } | null;
+  payment_status: string;
+};
 
 async function notifyEveryone(order: Order) {
   const [buyer, seller] = await Promise.all([
@@ -83,7 +95,7 @@ async function notifyEveryone(order: Order) {
  * independently, so this has to be safe to run more than once: an order that is
  * already paid short-circuits, and every notification carries a dedupe key.
  */
-export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
+export async function fulfillCheckoutSession(session: FulfillableSession) {
   const orderId =
     session.metadata?.orderId ?? session.client_reference_id ?? null;
   const order = orderId ? await getOrder(orderId) : await findOrderByCheckoutSession(session.id);
@@ -123,7 +135,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
 }
 
 /** Release the held originals when a checkout is abandoned or expires. */
-export async function releaseCheckoutSession(session: Stripe.Checkout.Session) {
+export async function releaseCheckoutSession(session: FulfillableSession) {
   const orderId = session.metadata?.orderId ?? session.client_reference_id ?? null;
   const order = orderId ? await getOrder(orderId) : await findOrderByCheckoutSession(session.id);
 

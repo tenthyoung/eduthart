@@ -10,6 +10,7 @@ import { normalizeCurrency, toMinorUnits } from "@/lib/commerce/money";
 import { createOrder, attachCheckoutSession, type OrderLineItem } from "@/lib/commerce/orders";
 import { reserveArtwork } from "@/lib/commerce/reservations";
 import { resolveShippingAmountMinor } from "@/lib/commerce/shipping";
+import { buildE2ESessionId, isE2ECheckout } from "@/lib/commerce/e2e-payments";
 import { getStripeClient } from "@/lib/commerce/stripe";
 import { ensureStripeCustomer } from "@/lib/commerce/payment-methods";
 
@@ -147,6 +148,12 @@ export async function createCheckoutSession(request: CheckoutRequest) {
       reserveArtwork({ artworkKey: item.artworkKey, buyerUid: request.buyerUid, orderId: order.id }),
     ),
   );
+
+  if (isE2ECheckout()) {
+    const sessionId = buildE2ESessionId(order.id);
+    await attachCheckoutSession(order.id, sessionId);
+    return { order, url: `${request.origin}/checkout/success?session_id=${sessionId}` };
+  }
 
   const stripe = getStripeClient();
   const customerId = await ensureStripeCustomer({

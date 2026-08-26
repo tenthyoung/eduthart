@@ -34,11 +34,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
       await fulfillCheckoutSession(event.data.object);
     }
 
-    if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+    if (
+      event.type === "checkout.session.expired" ||
+      event.type === "checkout.session.async_payment_failed"
+    ) {
       await releaseCheckoutSession(event.data.object);
     }
   } catch (error) {
