@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  Circle,
   CopyPlus,
   EyeOff,
   ImagePlus,
@@ -56,12 +57,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
+  getItemChecklist,
   getItemDisplayTitle,
   getItemMissingRequirements,
   getItemProgressPercent,
-  getItemRequirements,
   isSharedShippingComplete,
   normalizeListingStudio,
+  type ListingChecklistEntry,
   type ListingItemDraft,
   type ListingSharedSettings,
   type ListingStudioDraft,
@@ -84,11 +86,6 @@ type ListingStudioPayload = {
 };
 
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "offline";
-
-type ChecklistItem = {
-  done: boolean;
-  label: string;
-};
 
 type ArtworkDetailHelpKey =
   | "title"
@@ -457,15 +454,6 @@ function formatPriceInput(value: string) {
     : `${groupedInteger}.${decimalPart}`;
 }
 
-function getItemChecklist(
-  item: ListingItemDraft,
-  shared: ListingSharedSettings
-) {
-  return getItemRequirements(item, shared).map(
-    ({ done, label }): ChecklistItem => ({ done, label })
-  );
-}
-
 function getMissingFieldMessages(
   item: ListingItemDraft,
   shared: ListingSharedSettings
@@ -693,21 +681,54 @@ function ShippingAddressFields({
   );
 }
 
-function SidebarChecklist({ checklist }: { checklist: ChecklistItem[] }) {
+function SidebarChecklist({
+  checklist,
+}: {
+  checklist: ListingChecklistEntry[];
+}) {
+  const groups = [
+    {
+      entries: checklist.filter((entry) => entry.required),
+      hint: "Needed before this listing goes live.",
+      key: "required",
+      label: "Required to publish",
+    },
+    {
+      entries: checklist.filter((entry) => !entry.required),
+      hint: "Not required, but they help a piece sell.",
+      key: "optional",
+      label: "Optional",
+    },
+  ].filter((group) => group.entries.length > 0);
+
   return (
-    <div className="space-y-3">
-      {checklist.map((item) => (
-        <div key={item.label} className="flex items-center gap-3 text-base">
-          {item.done ? (
-            <CheckCircle2 className="size-4 text-green-600" />
-          ) : (
-            <MinusCircle className="size-4 text-amber-600" />
-          )}
-          <span
-            className={item.done ? "text-foreground" : "text-muted-foreground"}
-          >
-            {item.label}
-          </span>
+    <div className="space-y-5">
+      {groups.map((group) => (
+        <div key={group.key} className="space-y-3">
+          <div>
+            <p className="font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {group.label}
+            </p>
+            <p className="mt-1 text-muted-foreground">{group.hint}</p>
+          </div>
+          {group.entries.map((entry) => (
+            <div key={entry.key} className="flex items-center gap-3 text-base">
+              {entry.done ? (
+                <CheckCircle2 className="size-4 text-green-600" />
+              ) : entry.required ? (
+                <MinusCircle className="size-4 text-amber-600" />
+              ) : (
+                <Circle className="size-4 text-muted-foreground/50" />
+              )}
+              <span
+                className={
+                  entry.done ? "text-foreground" : "text-muted-foreground"
+                }
+              >
+                {entry.label}
+              </span>
+            </div>
+          ))}
         </div>
       ))}
     </div>

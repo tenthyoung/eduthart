@@ -473,6 +473,69 @@ export function getItemRequirements(
   ];
 }
 
+export type ListingChecklistEntry = ListingRequirement & {
+  required: boolean;
+};
+
+/**
+ * Fields that are not gated on, but that make a listing more convincing.
+ * These never count toward the completion percentage.
+ */
+export function getItemOptionalEnhancements(
+  item: ListingItemDraft
+): ListingRequirement[] {
+  return [
+    {
+      done:
+        item.media.galleryImageUrls.length > 0 ||
+        item.media.detailImageUrls.length > 0,
+      key: "additional-photos",
+      label: "Additional photos",
+      message: "Add detail or gallery photos so buyers can inspect the piece.",
+    },
+    {
+      done: Boolean(item.media.videoUrl),
+      key: "video",
+      label: "Video",
+      message: "Add a short video to show scale and texture.",
+    },
+    {
+      done: Boolean(item.artworkDetails.storyBehindPiece.trim()),
+      key: "story",
+      label: "Story behind the piece",
+      message: "Share the story behind the piece.",
+    },
+    {
+      done: Boolean(item.artworkDetails.yearCreated),
+      key: "year-created",
+      label: "Year created",
+      message: "Add the year the piece was created.",
+    },
+    {
+      done: item.artworkDetails.tags.length > 0,
+      key: "tags",
+      label: "Tags",
+      message: "Add tags so the piece is easier to discover.",
+    },
+  ];
+}
+
+export function getItemChecklist(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+): ListingChecklistEntry[] {
+  return [
+    ...getItemRequirements(item, shared).map((requirement) => ({
+      ...requirement,
+      required: true,
+    })),
+    ...getItemOptionalEnhancements(item).map((enhancement) => ({
+      ...enhancement,
+      required: false,
+    })),
+  ];
+}
+
 export function getItemMissingRequirements(
   item: ListingItemDraft,
   shared: ListingSharedSettings
