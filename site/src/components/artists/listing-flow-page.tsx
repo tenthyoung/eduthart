@@ -70,6 +70,19 @@ import {
   type ShippingOriginAddress,
 } from "@/lib/artists/listing-flow";
 import {
+  CATEGORY_OPTIONS,
+  COLOR_OPTIONS,
+  CURRENCY_OPTIONS,
+  FINISH_OPTIONS,
+  MEDIUM_DETAIL_OPTIONS,
+  MEDIUM_OPTIONS,
+  MOOD_OPTIONS,
+  ORIENTATION_OPTIONS,
+  ROOM_OPTIONS,
+  SUBJECT_OPTIONS,
+  THEME_OPTIONS,
+} from "@/lib/artists/taxonomy";
+import {
   buildArtistPageHref,
   buildFallbackAccountProfile,
   type AccountProfile,
@@ -158,78 +171,6 @@ function AccordionTrigger({
 function AccordionContent({ children }: { children: ReactNode }) {
   return <div className="p-5">{children}</div>;
 }
-
-const CATEGORY_OPTIONS = [
-  "Painting",
-  "Drawing",
-  "Sculpture",
-  "Photography",
-  "Digital",
-  "Textile",
-  "Ceramic",
-];
-const MEDIUM_OPTIONS = [
-  "Oil",
-  "Acrylic",
-  "Watercolor",
-  "Mixed Media",
-  "Digital",
-  "Bronze",
-  "Resin",
-  "Film",
-];
-const SUBJECT_OPTIONS = [
-  "Landscape",
-  "Portrait",
-  "Animals",
-  "Abstract",
-  "Nature",
-  "Cityscape",
-  "Faith",
-];
-const ORIENTATION_OPTIONS = ["Portrait", "Landscape", "Square"];
-const COLOR_OPTIONS = ["Blue", "White", "Gold", "Red", "Green", "Black"];
-const ROOM_OPTIONS = [
-  "Living Room",
-  "Bedroom",
-  "Office",
-  "Kitchen",
-  "Hotel",
-  "Restaurant",
-];
-const MOOD_OPTIONS = [
-  "Peaceful",
-  "Dramatic",
-  "Joyful",
-  "Spiritual",
-  "Dark",
-  "Minimal",
-  "Vibrant",
-];
-const THEME_OPTIONS = [
-  "Faith",
-  "Nature",
-  "Animals",
-  "Travel",
-  "Family",
-  "Love",
-  "Oceans",
-  "Mountains",
-];
-const MEDIUM_DETAIL_OPTIONS = [
-  "Oil",
-  "Acrylic",
-  "Mixed Media",
-  "Gouache",
-  "Digital",
-  "Film",
-  "Giclee",
-  "Wood",
-  "Stone",
-  "Resin",
-];
-const FINISH_OPTIONS = ["Matte", "Satin", "Gloss", "Lustre"];
-const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "CAD"];
 
 const ARTWORK_DETAIL_HELP: Record<
   ArtworkDetailHelpKey,
