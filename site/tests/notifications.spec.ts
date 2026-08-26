@@ -30,6 +30,28 @@ test("marks a notification read and dismisses it", async ({ page }) => {
   await expect(page.getByText("You are all caught up")).toBeVisible();
 });
 
+test("tells followers when an artist lowers a price", async ({ page }) => {
+  const artist = await createAccount(page, {
+    displayName: "Marina Vale",
+    uid: "artist-price-alert",
+    username: "marina-price-alert",
+  });
+  const artwork = await seedPublishedArtwork(page, { price: "2400", uid: artist.uid });
+  const follower = await seedAccount(page, { displayName: "Sam Follower", uid: "collector-price-watcher" });
+
+  await page.goto(`/artists/${artist.username}`);
+  await page.getByRole("button", { name: "Follow artist" }).click();
+  await expect(page.getByRole("button", { name: "Following" })).toBeVisible();
+
+  // Re-publish the same listing at a lower price.
+  await seedPublishedArtwork(page, { itemId: artwork.itemId, price: "1800", uid: artist.uid });
+
+  await signInAs(page, follower);
+  await page.goto("/notifications");
+  await expect(page.getByRole("heading", { name: 'Price drop on "Harbour Light"' })).toBeVisible();
+  await expect(page.getByText("from $2,400.00 to $1,800.00")).toBeVisible();
+});
+
 test("tells followers when an artist publishes new work", async ({ page }) => {
   const artist = await createAccount(page, {
     displayName: "Marina Vale",

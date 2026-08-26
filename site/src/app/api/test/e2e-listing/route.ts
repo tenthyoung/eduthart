@@ -8,6 +8,8 @@ import { isE2EAuthEnabled, updateE2EListingFlow } from "@/lib/auth/e2e-store";
 
 type SeedListingBody = {
   currency?: string;
+  /** Reuse an existing listing id to edit that artwork rather than add one. */
+  itemId?: string;
   medium?: string;
   price?: string;
   style?: string;
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const item = createEmptyListingItem();
+  const item = createEmptyListingItem(body.itemId ? { id: body.itemId } : undefined);
   item.artworkDetails.title = body.title ?? "Harbour Light";
   item.artworkDetails.medium = body.medium ?? "Oil on canvas";
   item.artworkDetails.style = body.style ?? "Contemporary";

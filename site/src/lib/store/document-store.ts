@@ -51,6 +51,40 @@ async function writeE2ECollection(
   await fs.writeFile(path, JSON.stringify(documents), "utf8");
 }
 
+const e2eWriteQueues = new Map<string, Promise<unknown>>();
+
+/**
+ * Read, change, and rewrite one E2E collection file without losing writes.
+ *
+ * Root collections such as followers and orders are a single file shared by
+ * every user, so two concurrent requests would otherwise both read the old
+ * contents and the second write would discard the first. Firestore handles this
+ * itself; the file store needs the updates chained. Everything runs in one dev
+ * server process, so an in-memory queue per file is enough.
+ */
+async function mutateE2ECollection<T>(
+  scope: string,
+  collection: string,
+  mutator: (documents: Record<string, Record<string, unknown>>) => T,
+): Promise<T> {
+  const key = `${scope}/${collection}`;
+  const run = (e2eWriteQueues.get(key) ?? Promise.resolve()).then(async () => {
+    const documents = await readE2ECollection(scope, collection);
+    const result = mutator(documents);
+    await writeE2ECollection(scope, collection, documents);
+    return result;
+  });
+
+  // Keep the chain alive even when a link rejects, or every later write to this
+  // file would inherit the rejection.
+  e2eWriteQueues.set(
+    key,
+    run.catch(() => undefined),
+  );
+
+  return run;
+}
+
 function matchesFilters(data: Record<string, unknown>, filters: DocumentFilter[]) {
   return filters.every((filter) => data[filter.field] === filter.value);
 }
@@ -103,10 +137,10 @@ export async function saveUserDocument(
   data: Record<string, unknown>,
 ): Promise<StoredDocument> {
   if (isE2EAuthEnabled()) {
-    const documents = await readE2ECollection(uid, collection);
-    documents[id] = { ...(documents[id] ?? {}), ...data };
-    await writeE2ECollection(uid, collection, documents);
-    return toStoredDocument(id, documents[id]);
+    return mutateE2ECollection(uid, collection, (documents) => {
+      documents[id] = { ...(documents[id] ?? {}), ...data };
+      return toStoredDocument(id, documents[id]);
+    });
   }
 
   await userCollectionRef(uid, collection).doc(id).set(data, { merge: true });
@@ -116,9 +150,9 @@ export async function saveUserDocument(
 
 export async function deleteUserDocument(uid: string, collection: string, id: string) {
   if (isE2EAuthEnabled()) {
-    const documents = await readE2ECollection(uid, collection);
-    delete documents[id];
-    await writeE2ECollection(uid, collection, documents);
+    await mutateE2ECollection(uid, collection, (documents) => {
+      delete documents[id];
+    });
     return;
   }
 
@@ -175,10 +209,10 @@ export async function saveRootDocument(
   data: Record<string, unknown>,
 ): Promise<StoredDocument> {
   if (isE2EAuthEnabled()) {
-    const documents = await readE2ECollection(ROOT_SCOPE, collection);
-    documents[id] = { ...(documents[id] ?? {}), ...data };
-    await writeE2ECollection(ROOT_SCOPE, collection, documents);
-    return toStoredDocument(id, documents[id]);
+    return mutateE2ECollection(ROOT_SCOPE, collection, (documents) => {
+      documents[id] = { ...(documents[id] ?? {}), ...data };
+      return toStoredDocument(id, documents[id]);
+    });
   }
 
   await getFirebaseAdminDb().collection(collection).doc(id).set(data, { merge: true });
@@ -188,9 +222,9 @@ export async function saveRootDocument(
 
 export async function deleteRootDocument(collection: string, id: string) {
   if (isE2EAuthEnabled()) {
-    const documents = await readE2ECollection(ROOT_SCOPE, collection);
-    delete documents[id];
-    await writeE2ECollection(ROOT_SCOPE, collection, documents);
+    await mutateE2ECollection(ROOT_SCOPE, collection, (documents) => {
+      delete documents[id];
+    });
     return;
   }
 

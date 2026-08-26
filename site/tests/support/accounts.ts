@@ -84,7 +84,7 @@ export async function seedAccount(page: Page, options: TestAccountOptions) {
 /** Publish an artwork for an artist account that already has a username. */
 export async function seedPublishedArtwork(
   page: Page,
-  options: { price?: string; title?: string; uid: string },
+  options: { itemId?: string; price?: string; title?: string; uid: string },
 ) {
   const response = await page.request.post("/api/test/e2e-listing", { data: options });
   expect(response.ok()).toBeTruthy();
