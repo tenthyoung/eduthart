@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
 import { getNavContext, isArtistCapableUsername } from "@/lib/navigation";
+import { fetchNotifications, NOTIFICATIONS_CHANGED_EVENT } from "@/lib/notifications/client";
 import { cn } from "@/lib/utils";
 import { CartDrawer } from "@/components/commerce/cart-drawer";
 
@@ -31,6 +32,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
@@ -171,6 +173,35 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
+    if (status !== "authenticated" || !user) {
+      setUnreadNotifications(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadUnreadCount = async () => {
+      try {
+        const payload = await fetchNotifications(await user.getIdToken());
+
+        if (!cancelled) {
+          setUnreadNotifications(payload.unreadCount);
+        }
+      } catch {
+        // The badge is decorative, so a failed poll simply leaves it as it was.
+      }
+    };
+
+    void loadUnreadCount();
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, loadUnreadCount);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, loadUnreadCount);
+    };
+  }, [status, user]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 12);
     };
@@ -251,13 +282,27 @@ export function Navbar() {
             {status === "authenticated" ? (
               <div className="hidden items-center gap-2 lg:flex">
                 <Button asChild className="relative" size="icon" variant="outline">
-                  <Link aria-label="Notifications" href="/notifications">
+                  <Link
+                    aria-label={
+                      unreadNotifications > 0
+                        ? `Notifications, ${unreadNotifications} unread`
+                        : "Notifications"
+                    }
+                    href="/notifications"
+                  >
                     <Bell />
-                    {!username ? (
-                      <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-500" />
+                    {unreadNotifications > 0 ? (
+                      <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold leading-5 text-white">
+                        {unreadNotifications}
+                      </span>
                     ) : null}
                   </Link>
                 </Button>
+                {username ? (
+                  <Button asChild size="lg" variant="ghost">
+                    <Link href={`/artists/${username}`}>@{username}</Link>
+                  </Button>
+                ) : null}
                 <Button asChild size="lg" variant="outline">
                   <Link href="/account">
                     <CircleUserRound />
@@ -362,9 +407,9 @@ export function Navbar() {
                       <Link href="/notifications" onClick={() => setIsMobileMenuOpen(false)}>
                         <Bell />
                         Notifications
-                        {!username ? (
+                        {unreadNotifications > 0 ? (
                           <span className="ml-auto inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                            1
+                            {unreadNotifications}
                           </span>
                         ) : null}
                       </Link>
