@@ -65,6 +65,11 @@ test("buys an original from the artwork page through to the invoice", async ({ p
   await page.goto("/notifications");
   await expect(page.getByRole("heading", { name: '"Harbour Light" sold' })).toBeVisible();
 
+  // The artist can open the same order to see where to ship it.
+  await page.getByRole("link", { name: "View the order" }).click();
+  await expect(page.getByText("You are the seller on this order")).toBeVisible();
+  await expect(page.getByText("18 Harbour Road")).toBeVisible();
+
   expect(collector.uid).toBe("collector-purchase");
 });
 

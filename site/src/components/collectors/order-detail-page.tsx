@@ -23,14 +23,19 @@ function formatOrderDate(value: string | null) {
     : new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeStyle: "short" }).format(date);
 }
 
+type OrderView = { order: Order | null; role: "buyer" | "seller" };
+
 export function OrderDetailPage({ orderId }: { orderId: string }) {
-  const { data, error, loading } = useCollectorResource<Order[]>({
-    initialData: [],
-    path: "/api/commerce/orders",
-    select: (payload) => (payload.orders as Order[]) ?? [],
+  const { data, error, loading } = useCollectorResource<OrderView>({
+    initialData: { order: null, role: "buyer" },
+    path: `/api/commerce/orders/${orderId}`,
+    select: (payload) => ({
+      order: (payload.order as Order) ?? null,
+      role: payload.role === "seller" ? "seller" : "buyer",
+    }),
     signInPath: `/account/orders/${orderId}`,
   });
-  const order = data.find((candidate) => candidate.id === orderId) ?? null;
+  const { order, role } = data;
 
   if (loading) {
     return (
@@ -60,7 +65,11 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
   return (
     <AccountShell
       action={order.status === "paid" ? <DownloadInvoiceButton order={order} /> : undefined}
-      description={`Placed ${formatOrderDate(order.createdAt)} · sold by ${order.sellerName}`}
+      description={
+        role === "seller"
+          ? `Placed ${formatOrderDate(order.createdAt)} · bought by ${order.buyerName ?? "a collector"}`
+          : `Placed ${formatOrderDate(order.createdAt)} · sold by ${order.sellerName}`
+      }
       title={`Order ${order.number}`}
     >
       <Link
@@ -70,6 +79,15 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
         <ArrowLeft className="size-4" />
         Back to purchases
       </Link>
+
+      {role === "seller" ? (
+        <Alert className="mt-6">
+          <AlertTitle>You are the seller on this order</AlertTitle>
+          <AlertDescription>
+            Ship the artwork to the address below and keep the invoice for your records.
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <section className="space-y-5 rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
@@ -121,7 +139,9 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
           <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
             <div className="flex items-center gap-3">
               <MapPin className="size-5 text-primary" />
-              <h2 className="text-xl text-foreground">Delivery</h2>
+              <h2 className="text-xl text-foreground">
+              {role === "seller" ? "Ship to" : "Delivery"}
+            </h2>
             </div>
             <address className="mt-4 text-sm not-italic leading-6 text-muted-foreground">
               {order.shippingAddress ? (
