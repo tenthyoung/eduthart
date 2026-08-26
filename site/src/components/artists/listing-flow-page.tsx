@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CheckCircle2,
   CopyPlus,
+  EyeOff,
   ImagePlus,
   Info,
   Loader2,
@@ -827,6 +828,9 @@ export function ListingFlowPage({
     [activeItem, studio.shared]
   );
   const publishReady = missingFields.length === 0;
+  const isPublished = Boolean(
+    activeItem?.salesVisibility.public && !activeItem.salesVisibility.draft
+  );
   const selectedCount = selectedItemIds.length;
   const sharedReady = isSharedShippingComplete(studio.shared);
   const itemProgress = activeItem
@@ -1313,6 +1317,41 @@ export function ListingFlowPage({
         ),
       },
       successMessage: "Listing published.",
+    });
+  };
+
+  const unpublishItem = async () => {
+    if (!activeItem) {
+      return;
+    }
+
+    updateActiveItem((current) => ({
+      ...current,
+      salesVisibility: {
+        ...current.salesVisibility,
+        draft: true,
+        public: false,
+      },
+    }));
+
+    await persistStudio({
+      nextStudio: {
+        ...studio,
+        items: studio.items.map((item) =>
+          item.id === activeItem.id
+            ? {
+                ...item,
+                salesVisibility: {
+                  ...item.salesVisibility,
+                  draft: true,
+                  public: false,
+                },
+                updatedAt: new Date().toISOString(),
+              }
+            : item
+        ),
+      },
+      successMessage: "Listing unpublished.",
     });
   };
 
@@ -3402,17 +3441,27 @@ export function ListingFlowPage({
               </p>
               <div className="mt-3 flex items-center justify-between">
                 <h3 className="text-2xl text-foreground">
-                  {publishReady ? "Ready to publish" : "Draft"}
+                  {isPublished
+                    ? "Published"
+                    : publishReady
+                      ? "Ready to publish"
+                      : "Draft"}
                 </h3>
                 <span
                   className={[
                     "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                    publishReady
-                      ? "bg-green-100 text-green-800"
-                      : "bg-amber-100 text-amber-900",
+                    isPublished
+                      ? "bg-emerald-600 text-white"
+                      : publishReady
+                        ? "bg-green-100 text-green-800"
+                        : "bg-amber-100 text-amber-900",
                   ].join(" ")}
                 >
-                  {publishReady ? "Ready" : "In progress"}
+                  {isPublished
+                    ? "Live"
+                    : publishReady
+                      ? "Ready"
+                      : "In progress"}
                 </span>
               </div>
 
@@ -3463,7 +3512,9 @@ export function ListingFlowPage({
                 <div className="mt-3 space-y-2">
                   {missingFields.length === 0 ? (
                     <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-                      Everything required is complete.
+                      {isPublished
+                        ? "This listing is published and visible to buyers."
+                        : "Everything required is complete."}
                     </div>
                   ) : (
                     missingFields.map((message) => (
@@ -3487,14 +3538,24 @@ export function ListingFlowPage({
                   )}
                 </Button>
                 <Button
-                  disabled={!publishReady || saveState === "saving"}
-                  onClick={() => void publishItem()}
+                  disabled={
+                    (!isPublished && !publishReady) || saveState === "saving"
+                  }
+                  onClick={() =>
+                    void (isPublished ? unpublishItem() : publishItem())
+                  }
                   size="lg"
+                  variant={isPublished ? "outline" : "default"}
                 >
                   {saveState === "saving" ? (
                     <>
                       <Loader2 className="animate-spin" />
                       Saving...
+                    </>
+                  ) : isPublished ? (
+                    <>
+                      <EyeOff />
+                      Unpublish item
                     </>
                   ) : (
                     <>
@@ -3525,11 +3586,16 @@ export function ListingFlowPage({
               Save
             </Button>
             <Button
-              disabled={!publishReady || saveState === "saving"}
-              onClick={() => void publishItem()}
+              disabled={
+                (!isPublished && !publishReady) || saveState === "saving"
+              }
+              onClick={() =>
+                void (isPublished ? unpublishItem() : publishItem())
+              }
               size="sm"
+              variant={isPublished ? "outline" : "default"}
             >
-              Publish
+              {isPublished ? "Unpublish" : "Publish"}
             </Button>
           </div>
         </div>
