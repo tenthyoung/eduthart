@@ -154,7 +154,10 @@ export type LegacyListingFlowDraft = {
 };
 
 function createId() {
-  return globalThis.crypto?.randomUUID?.() ?? `listing-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `listing-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  );
 }
 
 export function createEmptyListingItem(seed?: Partial<ListingItemDraft>) {
@@ -257,7 +260,9 @@ export function createEmptyListingItem(seed?: Partial<ListingItemDraft>) {
   } satisfies ListingItemDraft;
 }
 
-export function createDefaultSharedSettings(existingAddress?: ShippingOriginAddress | null) {
+export function createDefaultSharedSettings(
+  existingAddress?: ShippingOriginAddress | null
+) {
   return {
     shippingAuthentication: {
       certificateOfAuthenticityIncluded: false,
@@ -286,18 +291,29 @@ export function createEmptyListingStudio(options?: {
   includeStarterItem?: boolean;
 }) {
   return {
-    items: options?.includeStarterItem === false ? [] : [createEmptyListingItem()],
+    items:
+      options?.includeStarterItem === false ? [] : [createEmptyListingItem()],
     shared: createDefaultSharedSettings(options?.existingAddress ?? null),
     updatedAt: null,
   } satisfies ListingStudioDraft;
 }
 
 function isLegacyFlow(value: unknown): value is LegacyListingFlowDraft {
-  return typeof value === "object" && value !== null && "currentStep" in value && "completedSteps" in value;
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "currentStep" in value &&
+    "completedSteps" in value
+  );
 }
 
 function isStudio(value: unknown): value is ListingStudioDraft {
-  return typeof value === "object" && value !== null && "items" in value && "shared" in value;
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "items" in value &&
+    "shared" in value
+  );
 }
 
 function normalizeItem(item: Partial<ListingItemDraft> | null | undefined) {
@@ -306,7 +322,7 @@ function normalizeItem(item: Partial<ListingItemDraft> | null | undefined) {
 
 export function normalizeListingStudio(
   value: ListingStudioDraft | LegacyListingFlowDraft | null | undefined,
-  options?: { existingAddress?: ShippingOriginAddress | null },
+  options?: { existingAddress?: ShippingOriginAddress | null }
 ) {
   const base = createEmptyListingStudio({
     existingAddress: options?.existingAddress ?? null,
@@ -337,7 +353,8 @@ export function normalizeListingStudio(
           ...base.shared.shippingAuthentication,
           ...value.shippingAuthentication,
         },
-        shippingOriginAddress: value.shippingOriginAddress ?? options?.existingAddress ?? null,
+        shippingOriginAddress:
+          value.shippingOriginAddress ?? options?.existingAddress ?? null,
       },
       updatedAt: value.updatedAt,
     } satisfies ListingStudioDraft;
@@ -350,9 +367,10 @@ export function normalizeListingStudio(
     } satisfies ListingStudioDraft;
   }
 
-  const items = Array.isArray(value.items) && value.items.length > 0
-    ? value.items.map((item) => normalizeItem(item))
-    : [createEmptyListingItem()];
+  const items =
+    Array.isArray(value.items) && value.items.length > 0
+      ? value.items.map((item) => normalizeItem(item))
+      : [createEmptyListingItem()];
 
   return {
     items,
@@ -371,67 +389,181 @@ export function normalizeListingStudio(
 export function isSharedShippingComplete(shared: ListingSharedSettings) {
   return Boolean(
     shared.shippingOriginAddress?.line1 &&
-      shared.shippingOriginAddress.city &&
-      shared.shippingOriginAddress.region &&
-      shared.shippingOriginAddress.postalCode &&
-      shared.shippingOriginAddress.country &&
-      shared.shippingAuthentication.processingTime &&
-      shared.shippingAuthentication.domesticShipping &&
-      shared.shippingAuthentication.internationalShipping,
+    shared.shippingOriginAddress.city &&
+    shared.shippingOriginAddress.region &&
+    shared.shippingOriginAddress.postalCode &&
+    shared.shippingOriginAddress.country &&
+    shared.shippingAuthentication.processingTime &&
+    shared.shippingAuthentication.domesticShipping &&
+    shared.shippingAuthentication.internationalShipping
   );
 }
 
-export function getItemCompletionCount(item: ListingItemDraft, shared: ListingSharedSettings) {
-  let completed = 0;
+export type ListingRequirement = {
+  done: boolean;
+  key: string;
+  label: string;
+  message: string;
+};
 
-  if (isSharedShippingComplete(shared)) {
-    completed += 1;
-  }
-
-  if (
-    item.artworkDetails.title.trim() &&
-    item.artworkDetails.description.trim() &&
-    item.artworkDetails.category &&
-    item.artworkDetails.medium &&
-    item.artworkDetails.subject
-  ) {
-    completed += 1;
-  }
-
-  if (item.media.mainImageUrl) {
-    completed += 1;
-  }
-
-  if (item.dimensions.width && item.dimensions.height) {
-    completed += 1;
-  }
-
-  if (item.pricingInventory.price && item.pricingInventory.currency) {
-    completed += 1;
-  }
-
-  if (
-    (item.salesVisibility.public ||
-      item.salesVisibility.unlisted ||
-      item.salesVisibility.private ||
-      item.salesVisibility.draft) &&
-    item.salesVisibility.createdArtwork &&
-    item.salesVisibility.ownsRights &&
-    item.salesVisibility.noCopyrightedMaterial &&
-    item.salesVisibility.aiDisclosureConfirmed &&
-    item.salesVisibility.agreeSellerAgreement &&
-    item.salesVisibility.agreeCommissionRate &&
-    item.salesVisibility.understandShippingRequirements &&
-    item.salesVisibility.certifyAccurateInformation
-  ) {
-    completed += 1;
-  }
-
-  return completed;
+/**
+ * The minimum an item needs before it can be published. This is the single
+ * source of truth behind the publish gate, the sidebar checklist, and the
+ * completion percentage, so "100%" always means "publishable".
+ */
+export function getItemRequirements(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+): ListingRequirement[] {
+  return [
+    {
+      done: Boolean(item.artworkDetails.title.trim()),
+      key: "title",
+      label: "Title",
+      message: "Add an artwork title.",
+    },
+    {
+      done: Boolean(item.artworkDetails.description.trim()),
+      key: "description",
+      label: "Description",
+      message: "Add a clear artwork description.",
+    },
+    {
+      done: Boolean(item.media.mainImageUrl),
+      key: "photos",
+      label: "Photos",
+      message: "Upload a cover image.",
+    },
+    {
+      done: Boolean(item.pricingInventory.price),
+      key: "price",
+      label: "Price",
+      message: "Set a price.",
+    },
+    {
+      done: Boolean(item.artworkDetails.medium),
+      key: "medium",
+      label: "Medium",
+      message: "Choose a medium.",
+    },
+    {
+      done: Boolean(item.artworkDetails.category),
+      key: "category",
+      label: "Category",
+      message: "Choose a category.",
+    },
+    {
+      done: Boolean(item.artworkDetails.subject),
+      key: "subject",
+      label: "Subject",
+      message: "Choose a subject.",
+    },
+    {
+      done: Boolean(item.dimensions.width && item.dimensions.height),
+      key: "dimensions",
+      label: "Dimensions",
+      message: "Enter width and height.",
+    },
+    {
+      done: isSharedShippingComplete(shared),
+      key: "shipping",
+      label: "Shipping information",
+      message: "Complete shared shipping settings.",
+    },
+  ];
 }
 
-export function getItemProgressPercent(item: ListingItemDraft, shared: ListingSharedSettings) {
-  return Math.round((getItemCompletionCount(item, shared) / 6) * 100);
+export type ListingChecklistEntry = ListingRequirement & {
+  required: boolean;
+};
+
+/**
+ * Fields that are not gated on, but that make a listing more convincing.
+ * These never count toward the completion percentage.
+ */
+export function getItemOptionalEnhancements(
+  item: ListingItemDraft
+): ListingRequirement[] {
+  return [
+    {
+      done:
+        item.media.galleryImageUrls.length > 0 ||
+        item.media.detailImageUrls.length > 0,
+      key: "additional-photos",
+      label: "Additional photos",
+      message: "Add detail or gallery photos so buyers can inspect the piece.",
+    },
+    {
+      done: Boolean(item.media.videoUrl),
+      key: "video",
+      label: "Video",
+      message: "Add a short video to show scale and texture.",
+    },
+    {
+      done: Boolean(item.artworkDetails.storyBehindPiece.trim()),
+      key: "story",
+      label: "Story behind the piece",
+      message: "Share the story behind the piece.",
+    },
+    {
+      done: Boolean(item.artworkDetails.yearCreated),
+      key: "year-created",
+      label: "Year created",
+      message: "Add the year the piece was created.",
+    },
+    {
+      done: item.artworkDetails.tags.length > 0,
+      key: "tags",
+      label: "Tags",
+      message: "Add tags so the piece is easier to discover.",
+    },
+  ];
+}
+
+export function getItemChecklist(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+): ListingChecklistEntry[] {
+  return [
+    ...getItemRequirements(item, shared).map((requirement) => ({
+      ...requirement,
+      required: true,
+    })),
+    ...getItemOptionalEnhancements(item).map((enhancement) => ({
+      ...enhancement,
+      required: false,
+    })),
+  ];
+}
+
+export function getItemMissingRequirements(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+) {
+  return getItemRequirements(item, shared).filter(
+    (requirement) => !requirement.done
+  );
+}
+
+export function getItemCompletionCount(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+) {
+  return getItemRequirements(item, shared).filter(
+    (requirement) => requirement.done
+  ).length;
+}
+
+export function getItemProgressPercent(
+  item: ListingItemDraft,
+  shared: ListingSharedSettings
+) {
+  const requirements = getItemRequirements(item, shared);
+  const completed = requirements.filter(
+    (requirement) => requirement.done
+  ).length;
+
+  return Math.round((completed / requirements.length) * 100);
 }
 
 export function getItemDisplayTitle(item: ListingItemDraft, index: number) {

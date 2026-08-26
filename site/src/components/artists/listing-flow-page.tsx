@@ -7,7 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  Circle,
   CopyPlus,
+  EyeOff,
   ImagePlus,
   Info,
   Loader2,
@@ -55,10 +57,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
+  getItemChecklist,
   getItemDisplayTitle,
+  getItemMissingRequirements,
   getItemProgressPercent,
   isSharedShippingComplete,
   normalizeListingStudio,
+  type ListingChecklistEntry,
   type ListingItemDraft,
   type ListingSharedSettings,
   type ListingStudioDraft,
@@ -81,11 +86,6 @@ type ListingStudioPayload = {
 };
 
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "offline";
-
-type ChecklistItem = {
-  done: boolean;
-  label: string;
-};
 
 type ArtworkDetailHelpKey =
   | "title"
@@ -454,63 +454,13 @@ function formatPriceInput(value: string) {
     : `${groupedInteger}.${decimalPart}`;
 }
 
-function getItemChecklist(
-  item: ListingItemDraft,
-  shared: ListingSharedSettings
-) {
-  const checklist: ChecklistItem[] = [
-    { label: "Title", done: Boolean(item.artworkDetails.title.trim()) },
-    {
-      label: "Photos",
-      done: Boolean(item.media.mainImageUrl),
-    },
-    { label: "Price", done: Boolean(item.pricingInventory.price) },
-    { label: "Medium", done: Boolean(item.artworkDetails.medium) },
-    {
-      label: "Dimensions",
-      done: Boolean(item.dimensions.width && item.dimensions.height),
-    },
-    { label: "Shipping information", done: isSharedShippingComplete(shared) },
-  ];
-
-  return checklist;
-}
-
 function getMissingFieldMessages(
   item: ListingItemDraft,
   shared: ListingSharedSettings
 ) {
-  const messages: string[] = [];
-
-  if (!item.artworkDetails.title.trim()) {
-    messages.push("Add an artwork title.");
-  }
-  if (!item.artworkDetails.description.trim()) {
-    messages.push("Add a clear artwork description.");
-  }
-  if (!item.media.mainImageUrl) {
-    messages.push("Upload a cover image.");
-  }
-  if (!item.artworkDetails.medium) {
-    messages.push("Choose a medium.");
-  }
-  if (!item.artworkDetails.category) {
-    messages.push("Choose a category.");
-  }
-  if (!item.artworkDetails.subject) {
-    messages.push("Choose a subject.");
-  }
-  if (!item.dimensions.width || !item.dimensions.height) {
-    messages.push("Enter width and height.");
-  }
-  if (!item.pricingInventory.price) {
-    messages.push("Set a price.");
-  }
-  if (!isSharedShippingComplete(shared)) {
-    messages.push("Complete shared shipping settings.");
-  }
-
-  return messages;
+  return getItemMissingRequirements(item, shared).map(
+    (requirement) => requirement.message
+  );
 }
 
 function sectionState(done: boolean, warning: boolean) {
@@ -731,21 +681,54 @@ function ShippingAddressFields({
   );
 }
 
-function SidebarChecklist({ checklist }: { checklist: ChecklistItem[] }) {
+function SidebarChecklist({
+  checklist,
+}: {
+  checklist: ListingChecklistEntry[];
+}) {
+  const groups = [
+    {
+      entries: checklist.filter((entry) => entry.required),
+      hint: "Needed before this listing goes live.",
+      key: "required",
+      label: "Required to publish",
+    },
+    {
+      entries: checklist.filter((entry) => !entry.required),
+      hint: "Not required, but they help a piece sell.",
+      key: "optional",
+      label: "Optional",
+    },
+  ].filter((group) => group.entries.length > 0);
+
   return (
-    <div className="space-y-3">
-      {checklist.map((item) => (
-        <div key={item.label} className="flex items-center gap-3 text-base">
-          {item.done ? (
-            <CheckCircle2 className="size-4 text-green-600" />
-          ) : (
-            <MinusCircle className="size-4 text-amber-600" />
-          )}
-          <span
-            className={item.done ? "text-foreground" : "text-muted-foreground"}
-          >
-            {item.label}
-          </span>
+    <div className="space-y-5">
+      {groups.map((group) => (
+        <div key={group.key} className="space-y-3">
+          <div>
+            <p className="font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {group.label}
+            </p>
+            <p className="mt-1 text-muted-foreground">{group.hint}</p>
+          </div>
+          {group.entries.map((entry) => (
+            <div key={entry.key} className="flex items-center gap-3 text-base">
+              {entry.done ? (
+                <CheckCircle2 className="size-4 text-green-600" />
+              ) : entry.required ? (
+                <MinusCircle className="size-4 text-amber-600" />
+              ) : (
+                <Circle className="size-4 text-muted-foreground/50" />
+              )}
+              <span
+                className={
+                  entry.done ? "text-foreground" : "text-muted-foreground"
+                }
+              >
+                {entry.label}
+              </span>
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -827,6 +810,9 @@ export function ListingFlowPage({
     [activeItem, studio.shared]
   );
   const publishReady = missingFields.length === 0;
+  const isPublished = Boolean(
+    activeItem?.salesVisibility.public && !activeItem.salesVisibility.draft
+  );
   const selectedCount = selectedItemIds.length;
   const sharedReady = isSharedShippingComplete(studio.shared);
   const itemProgress = activeItem
@@ -1313,6 +1299,41 @@ export function ListingFlowPage({
         ),
       },
       successMessage: "Listing published.",
+    });
+  };
+
+  const unpublishItem = async () => {
+    if (!activeItem) {
+      return;
+    }
+
+    updateActiveItem((current) => ({
+      ...current,
+      salesVisibility: {
+        ...current.salesVisibility,
+        draft: true,
+        public: false,
+      },
+    }));
+
+    await persistStudio({
+      nextStudio: {
+        ...studio,
+        items: studio.items.map((item) =>
+          item.id === activeItem.id
+            ? {
+                ...item,
+                salesVisibility: {
+                  ...item.salesVisibility,
+                  draft: true,
+                  public: false,
+                },
+                updatedAt: new Date().toISOString(),
+              }
+            : item
+        ),
+      },
+      successMessage: "Listing unpublished.",
     });
   };
 
@@ -3402,17 +3423,27 @@ export function ListingFlowPage({
               </p>
               <div className="mt-3 flex items-center justify-between">
                 <h3 className="text-2xl text-foreground">
-                  {publishReady ? "Ready to publish" : "Draft"}
+                  {isPublished
+                    ? "Published"
+                    : publishReady
+                      ? "Ready to publish"
+                      : "Draft"}
                 </h3>
                 <span
                   className={[
                     "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                    publishReady
-                      ? "bg-green-100 text-green-800"
-                      : "bg-amber-100 text-amber-900",
+                    isPublished
+                      ? "bg-emerald-600 text-white"
+                      : publishReady
+                        ? "bg-green-100 text-green-800"
+                        : "bg-amber-100 text-amber-900",
                   ].join(" ")}
                 >
-                  {publishReady ? "Ready" : "In progress"}
+                  {isPublished
+                    ? "Live"
+                    : publishReady
+                      ? "Ready"
+                      : "In progress"}
                 </span>
               </div>
 
@@ -3458,12 +3489,16 @@ export function ListingFlowPage({
 
               <div className="mt-6">
                 <p className="text-sm font-medium text-foreground">
-                  Missing required fields
+                  {isPublished && missingFields.length === 0
+                    ? "Listing visibility"
+                    : "Missing required fields"}
                 </p>
                 <div className="mt-3 space-y-2">
                   {missingFields.length === 0 ? (
                     <div className="rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-                      Everything required is complete.
+                      {isPublished
+                        ? "This listing is published and visible to buyers."
+                        : "Everything required is complete."}
                     </div>
                   ) : (
                     missingFields.map((message) => (
@@ -3487,14 +3522,24 @@ export function ListingFlowPage({
                   )}
                 </Button>
                 <Button
-                  disabled={!publishReady || saveState === "saving"}
-                  onClick={() => void publishItem()}
+                  disabled={
+                    (!isPublished && !publishReady) || saveState === "saving"
+                  }
+                  onClick={() =>
+                    void (isPublished ? unpublishItem() : publishItem())
+                  }
                   size="lg"
+                  variant={isPublished ? "outline" : "default"}
                 >
                   {saveState === "saving" ? (
                     <>
                       <Loader2 className="animate-spin" />
                       Saving...
+                    </>
+                  ) : isPublished ? (
+                    <>
+                      <EyeOff />
+                      Unpublish item
                     </>
                   ) : (
                     <>
@@ -3525,11 +3570,16 @@ export function ListingFlowPage({
               Save
             </Button>
             <Button
-              disabled={!publishReady || saveState === "saving"}
-              onClick={() => void publishItem()}
+              disabled={
+                (!isPublished && !publishReady) || saveState === "saving"
+              }
+              onClick={() =>
+                void (isPublished ? unpublishItem() : publishItem())
+              }
               size="sm"
+              variant={isPublished ? "outline" : "default"}
             >
-              Publish
+              {isPublished ? "Unpublish" : "Publish"}
             </Button>
           </div>
         </div>
