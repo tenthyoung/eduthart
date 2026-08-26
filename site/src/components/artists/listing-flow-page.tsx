@@ -3507,7 +3507,9 @@ export function ListingFlowPage({
 
               <div className="mt-6">
                 <p className="text-sm font-medium text-foreground">
-                  Missing required fields
+                  {isPublished && missingFields.length === 0
+                    ? "Listing visibility"
+                    : "Missing required fields"}
                 </p>
                 <div className="mt-3 space-y-2">
                   {missingFields.length === 0 ? (
