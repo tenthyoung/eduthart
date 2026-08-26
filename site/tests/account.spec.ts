@@ -144,7 +144,7 @@ test("shows a navbar link to the personal art page using the chosen username", a
   await expect(page.getByText("Personal art page URL:")).toBeVisible();
 });
 
-test("uploads and removes a profile banner from account settings", async ({ page }) => {
+test("crops, uploads, and removes a profile banner from account settings", async ({ page }) => {
   await seedAccount(page, { uid: "banner-user" });
 
   await page.goto("/account");
@@ -158,6 +158,10 @@ test("uploads and removes a profile banner from account settings", async ({ page
       "base64",
     ),
   });
+
+  await expect(page.getByRole("heading", { name: "Position your banner" })).toBeVisible();
+  await expect(page.getByText("Banners are saved at 1500 × 500 pixels (3:1).")).toBeVisible();
+  await page.getByRole("button", { name: "Save banner" }).click();
 
   await expect(page.getByText("Your profile banner has been updated.")).toBeVisible();
   await expect(page.getByRole("img", { name: "Jordan Collector banner", exact: true })).toBeVisible();
