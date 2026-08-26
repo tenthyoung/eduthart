@@ -111,7 +111,7 @@ export default async function ArtistPage({
       <div className="mx-auto max-w-5xl space-y-8">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           {profile.bannerURL ? (
-            <div className="relative h-56 w-full">
+            <div className="relative aspect-[3/1] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt={`${displayName} banner`}

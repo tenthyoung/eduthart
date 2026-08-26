@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { toast } from "sonner";
 import Link from "next/link";
 
+import { BannerCropDialog } from "@/components/account/banner-crop-dialog";
 import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,11 +25,15 @@ import { Label } from "@/components/ui/label";
 import { buildArtistPageHref, buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { getFirebaseStorage } from "@/lib/firebase/client";
+import {
+  ACCEPTED_BANNER_TYPES_ATTRIBUTE,
+  BANNER_DIMENSIONS_LABEL,
+  isAcceptedBannerType,
+  MAX_BANNER_FILE_SIZE,
+} from "@/lib/profile/banner";
 import { cn } from "@/lib/utils";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
-const MAX_BANNER_FILE_SIZE = 5 * 1024 * 1024;
-const ACCEPTED_BANNER_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
 
 function formatAccountDate(value: string | null) {
@@ -101,6 +106,7 @@ export function AccountPage() {
   const [savingUsername, setSavingUsername] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [refreshingVerification, setRefreshingVerification] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -309,18 +315,19 @@ export function AccountPage() {
     }
   };
 
-  const handleBannerFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
+    event.target.value = "";
 
     if (!file || !user) {
       return;
     }
 
-    if (!ACCEPTED_BANNER_TYPES.has(file.type)) {
+    if (!isAcceptedBannerType(file.type)) {
       const message = "Please upload a JPG, PNG, or WebP image for your banner.";
       setError(message);
       toast.error(message);
-      event.target.value = "";
       return;
     }
 
@@ -328,7 +335,15 @@ export function AccountPage() {
       const message = "Please choose an image smaller than 5 MB.";
       setError(message);
       toast.error(message);
-      event.target.value = "";
+      return;
+    }
+
+    setError(null);
+    setPendingBannerFile(file);
+  };
+
+  const handleCroppedBanner = async (file: File) => {
+    if (!user) {
       return;
     }
 
@@ -352,6 +367,7 @@ export function AccountPage() {
       }
 
       await updateProfileBanner(bannerURL, "Your profile banner has been updated.");
+      setPendingBannerFile(null);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to upload your profile banner.";
@@ -359,7 +375,6 @@ export function AccountPage() {
       toast.error(message);
     } finally {
       setUploadingBanner(false);
-      event.target.value = "";
     }
   };
 
@@ -541,7 +556,7 @@ export function AccountPage() {
           </div>
           <div className="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
             {profile?.bannerURL ? (
-              <div className="relative h-44 w-full">
+              <div className="relative aspect-[3/1] w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   alt={`${displayNamePreview} banner`}
@@ -700,7 +715,9 @@ export function AccountPage() {
                   Profile banner
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Add a wide image for the personal page where people can view your art.
+                  Add a wide image for the personal page where people can view your art. Banners are
+                  saved at {BANNER_DIMENSIONS_LABEL} pixels (3:1), and you can reposition and zoom
+                  before saving.
                 </p>
               </div>
 
@@ -709,11 +726,11 @@ export function AccountPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     alt={`${displayNamePreview} banner preview`}
-                    className="h-40 w-full object-cover"
+                    className="aspect-[3/1] w-full object-cover"
                     src={profile.bannerURL}
                   />
                 ) : (
-                  <div className="bg-profile-banner flex h-40 flex-col items-center justify-center gap-3 px-6 text-center">
+                  <div className="bg-profile-banner flex aspect-[3/1] flex-col items-center justify-center gap-3 px-6 text-center">
                     <ImagePlus className="size-6 text-primary" />
                     <p className="text-sm text-muted-foreground">No banner uploaded yet.</p>
                   </div>
@@ -725,7 +742,7 @@ export function AccountPage() {
               </Label>
               <input
                 ref={bannerInputRef}
-                accept="image/jpeg,image/png,image/webp"
+                accept={ACCEPTED_BANNER_TYPES_ATTRIBUTE}
                 className="sr-only"
                 id="profile-banner-upload"
                 onChange={handleBannerFileChange}
@@ -765,7 +782,8 @@ export function AccountPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Use a JPG, PNG, or WebP image up to 5 MB. Wider images work best here.
+                Use a JPG, PNG, or WebP image up to 5 MB. For the sharpest result, start from an
+                image at least {BANNER_DIMENSIONS_LABEL} pixels.
               </p>
             </div>
 
@@ -1083,6 +1101,12 @@ export function AccountPage() {
           </Button>
         </section>
       </div>
+
+      <BannerCropDialog
+        file={pendingBannerFile}
+        onCancel={() => setPendingBannerFile(null)}
+        onCropped={handleCroppedBanner}
+      />
     </section>
   );
 }
