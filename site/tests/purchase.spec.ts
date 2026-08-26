@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  addAddress,
   createAccount,
   seedAccount,
   seedPublishedArtwork,
@@ -32,15 +33,13 @@ test("buys an original from the artwork page through to the invoice", async ({
   });
 
   await page.goto("/account/addresses");
-  await page.getByRole("button", { name: "Add address" }).click();
-  await page.getByLabel("Full name").fill("Robin Buyer");
-  await page.getByLabel("Street address").fill("18 Harbour Road");
-  await page.getByLabel("City").fill("Brooklyn");
-  await page.getByLabel("State or region").fill("NY");
-  await page.getByLabel("Postal code").fill("11201");
-  await page.getByLabel("Country").fill("US");
-  await page.getByRole("button", { name: "Save address" }).click();
-  await expect(page.getByText("Address saved.")).toBeVisible();
+  await addAddress(page, {
+    city: "Brooklyn",
+    line1: "18 Harbour Road",
+    name: "Robin Buyer",
+    postalCode: "11201",
+    region: "NY",
+  });
 
   await page.goto(artwork.href);
   await expect(page.getByText("Original available")).toBeVisible();
@@ -123,14 +122,12 @@ test("tells a collector when artwork they saved is sold to someone else", async 
 
   await signInAs(page, buyer);
   await page.goto("/account/addresses");
-  await page.getByRole("button", { name: "Add address" }).click();
-  await page.getByLabel("Full name").fill("Robin Buyer");
-  await page.getByLabel("Street address").fill("4 Kiln Lane");
-  await page.getByLabel("City").fill("Hudson");
-  await page.getByLabel("Postal code").fill("12534");
-  await page.getByLabel("Country").fill("US");
-  await page.getByRole("button", { name: "Save address" }).click();
-  await expect(page.getByText("Address saved.")).toBeVisible();
+  await addAddress(page, {
+    city: "Hudson",
+    line1: "4 Kiln Lane",
+    name: "Robin Buyer",
+    postalCode: "12534",
+  });
 
   await page.goto(artwork.href);
   await page.getByRole("button", { name: "Add to cart" }).click();
@@ -145,6 +142,72 @@ test("tells a collector when artwork they saved is sold to someone else", async 
   await expect(
     page.getByRole("heading", { name: "An artwork you saved has sold" })
   ).toBeVisible();
+});
+
+test("bills the card to the shipping address when the collector asks it to", async ({
+  page,
+}) => {
+  const artist = await createAccount(page, {
+    displayName: "Marina Vale",
+    uid: "artist-billing-match",
+    username: "marina-billing-match",
+  });
+  const artwork = await seedPublishedArtwork(page, { uid: artist.uid });
+  const collector = await seedAccount(page, {
+    displayName: "Robin Buyer",
+    uid: "collector-billing-match",
+  });
+
+  await page.goto("/account/addresses");
+  await addAddress(page, {
+    city: "Brooklyn",
+    line1: "18 Harbour Road",
+    name: "Robin Buyer",
+    postalCode: "11201",
+    region: "NY",
+  });
+  await addAddress(page, {
+    city: "Albany",
+    kind: "billing",
+    line1: "9 Ledger Street",
+    name: "Robin Buyer",
+    postalCode: "12207",
+    region: "NY",
+  });
+
+  await page.goto(artwork.href);
+  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.goto("/checkout");
+
+  // A saved billing address is used as-is until the collector says otherwise.
+  await expect(page.getByLabel("Bill to")).toBeVisible();
+
+  await page
+    .getByLabel("My billing address is the same as my shipping address")
+    .check();
+  await expect(page.getByLabel("Bill to")).toBeHidden();
+
+  await page.getByRole("button", { name: "Pay with Stripe" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Thank you for your purchase" })
+  ).toBeVisible();
+
+  await page.getByRole("link", { name: "View your order" }).click();
+  await page.waitForURL(/\/account\/orders\/.+/);
+
+  const orderId = new URL(page.url()).pathname.split("/").pop();
+  const invoice = await page.request.get(
+    `/api/commerce/orders/${orderId}/invoice?download=0`,
+    { headers: { authorization: `Bearer e2e:${collector.uid}` } }
+  );
+  expect(invoice.ok()).toBeTruthy();
+
+  const billedTo =
+    /<h2>Billed to<\/h2>\s*<address>([\s\S]*?)<\/address>/.exec(
+      await invoice.text()
+    )?.[1] ?? "";
+  expect(billedTo).toContain("18 Harbour Road");
+  expect(billedTo).not.toContain("9 Ledger Street");
 });
 
 test("refuses to check out without a shipping address", async ({ page }) => {

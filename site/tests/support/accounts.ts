@@ -85,6 +85,47 @@ export async function seedAccount(page: Page, options: TestAccountOptions) {
   return profile;
 }
 
+/**
+ * Fill in the address dialog on /account/addresses and save it.
+ *
+ * Checkout reads its shipping and billing options straight from these, so the
+ * purchase specs set them up through the same form a collector would use.
+ */
+export async function addAddress(
+  page: Page,
+  address: {
+    city: string;
+    country?: string;
+    kind?: "billing" | "shipping";
+    line1: string;
+    name: string;
+    postalCode: string;
+    region?: string;
+  }
+) {
+  await page.getByRole("button", { name: "Add address" }).click();
+
+  if (address.kind === "billing") {
+    await page.getByLabel("Address type").selectOption("billing");
+  }
+
+  await page.getByLabel("Full name").fill(address.name);
+  await page.getByLabel("Street address").fill(address.line1);
+  await page.getByLabel("City").fill(address.city);
+
+  if (address.region) {
+    await page.getByLabel("State or region").fill(address.region);
+  }
+
+  await page.getByLabel("Postal code").fill(address.postalCode);
+  await page.getByLabel("Country").fill(address.country ?? "US");
+  await page.getByRole("button", { name: "Save address" }).click();
+
+  // The toast lingers between saves, so wait on the saved address itself.
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByText(address.line1)).toBeVisible();
+}
+
 /** Publish an artwork for an artist account that already has a username. */
 export async function seedPublishedArtwork(
   page: Page,
