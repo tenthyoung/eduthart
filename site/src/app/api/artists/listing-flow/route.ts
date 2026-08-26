@@ -6,7 +6,13 @@ import {
   type ListingStudioDraft,
   type ShippingOriginAddress,
 } from "@/lib/artists/listing-flow";
-import { loadAccountProfile, saveAccountProfile } from "@/lib/auth/profile-store";
+import { syncArtworkIndex } from "@/lib/artists/artwork-index";
+import { notifyFollowersOfListingChanges } from "@/lib/artists/listing-notifications";
+import {
+  buildProfileDisplayName,
+  loadAccountProfile,
+  saveAccountProfile,
+} from "@/lib/auth/profile-store";
 import { getAuthenticatedSession } from "@/lib/auth/server-session";
 import {
   getE2EListingFlow,
@@ -144,6 +150,18 @@ export async function PATCH(request: Request) {
     }
 
     await saveFlow(session.uid, normalizedFlow, session.authType === "e2e");
+
+    // Keeping the public index in step here is what lets collectors discover
+    // this work at all, and the changes it reports drive follower alerts.
+    const artistName = buildProfileDisplayName(profile);
+    const changes = profile.username
+      ? await syncArtworkIndex(
+          { artistName, artistUid: session.uid, artistUsername: profile.username },
+          normalizedFlow,
+        )
+      : [];
+    await notifyFollowersOfListingChanges(session.uid, artistName, changes);
+
     const nextProfile = await loadAccountProfile(session.uid);
 
     return NextResponse.json({

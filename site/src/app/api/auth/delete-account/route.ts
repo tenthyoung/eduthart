@@ -1,55 +1,70 @@
 import { NextResponse } from "next/server";
 
-import { deleteE2EAccountProfile } from "@/lib/auth/e2e-store";
+import { deleteE2EAccountProfile, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getAuthenticatedSession } from "@/lib/auth/server-session";
+import { deleteAllCollections } from "@/lib/collectors/collections";
+import { listFavorites, removeFavorite } from "@/lib/collectors/favorites";
+import { removeAllFollowsForUser } from "@/lib/collectors/follows";
+import { clearRecentlyViewed } from "@/lib/collectors/recently-viewed";
+import { clearCart } from "@/lib/commerce/cart";
+import { forgetStripeCustomer } from "@/lib/commerce/payment-methods";
+import { isStripeConfigured } from "@/lib/commerce/stripe";
+import { deleteAllNotifications } from "@/lib/notifications/store";
+import { deleteUserCollection } from "@/lib/store/document-store";
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
 
-async function deleteUserSubcollectionDocuments(uid: string, subcollection: string) {
-  const db = getFirebaseAdminDb();
-  const documents = await db.collection("users").doc(uid).collection(subcollection).listDocuments();
+/**
+ * Remove the data this account owns.
+ *
+ * Favorites and follows go through their own helpers rather than a bulk delete
+ * because both maintain reverse lookups and aggregate counts that would
+ * otherwise be left pointing at a user who no longer exists. Orders are kept:
+ * they are the other party's financial record as much as this one's.
+ */
+async function deleteCollectorData(uid: string) {
+  const favorites = await listFavorites(uid);
 
-  await Promise.all(documents.map((documentRef) => documentRef.delete()));
-}
-
-async function deleteUserNotifications(uid: string) {
-  const db = getFirebaseAdminDb();
-  const notifications = await db
-    .collection("user_notifications")
-    .where("userUid", "==", uid)
-    .get();
-
-  if (notifications.empty) {
-    return;
-  }
-
-  const batch = db.batch();
-  notifications.docs.forEach((document) => {
-    batch.delete(document.ref);
-  });
-  await batch.commit();
+  await Promise.allSettled([
+    ...favorites.map((favorite) =>
+      removeFavorite(uid, {
+        artistUid: favorite.artistUid,
+        artistUsername: favorite.artistUsername,
+        itemId: favorite.itemId,
+      }),
+    ),
+    removeAllFollowsForUser(uid),
+    deleteAllCollections(uid),
+    clearRecentlyViewed(uid),
+    clearCart(uid),
+    deleteAllNotifications(uid),
+    deleteUserCollection(uid, "addresses"),
+  ]);
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getAuthenticatedSession(request);
 
-    if (session.authType === "e2e") {
+    await deleteCollectorData(session.uid);
+
+    if (session.authType === "e2e" || isE2EAuthEnabled()) {
       await deleteE2EAccountProfile(session.uid);
       return NextResponse.json({ success: true });
     }
 
-    // Keep the v1 cleanup targeted to user-owned data we can see in this repo today.
+    if (isStripeConfigured()) {
+      await forgetStripeCustomer(session.uid).catch(() => undefined);
+    }
+
     await Promise.allSettled([
-      deleteUserSubcollectionDocuments(session.uid, "settings"),
-      deleteUserSubcollectionDocuments(session.uid, "decks"),
-      deleteUserNotifications(session.uid),
+      deleteUserCollection(session.uid, "settings"),
+      deleteUserCollection(session.uid, "decks"),
     ]);
 
     const db = getFirebaseAdminDb();
     await db.collection("users").doc(session.uid).delete().catch(() => undefined);
 
-    const auth = getFirebaseAdminAuth();
-    await auth.deleteUser(session.uid);
+    await getFirebaseAdminAuth().deleteUser(session.uid);
 
     return NextResponse.json({ success: true });
   } catch (error) {

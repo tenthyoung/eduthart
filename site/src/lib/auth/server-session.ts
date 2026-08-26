@@ -1,7 +1,7 @@
 import { getFirebaseAdminAuth } from "@/lib/firebase/admin";
 import { getE2EAccountProfile, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 
-type SessionUser = {
+export type SessionUser = {
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
