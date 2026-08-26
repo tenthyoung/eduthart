@@ -26,6 +26,7 @@ import { ensureStripeCustomer } from "@/lib/commerce/payment-methods";
 
 export type CheckoutRequest = {
   billingAddressId?: string | null;
+  billingSameAsShipping?: boolean;
   buyerEmail: string | null;
   buyerName: string | null;
   buyerUid: string;
@@ -150,14 +151,25 @@ export async function createCheckoutSession(request: CheckoutRequest) {
     );
   }
 
-  const [shippingAddress, billingAddress] = await Promise.all([
-    resolveAddress(request.buyerUid, request.shippingAddressId, "shipping"),
-    resolveAddress(request.buyerUid, request.billingAddressId, "billing"),
-  ]);
+  const shippingAddress = await resolveAddress(
+    request.buyerUid,
+    request.shippingAddressId,
+    "shipping"
+  );
 
   if (!shippingAddress) {
     throw new Error("Add a shipping address before checking out.");
   }
+
+  // Asking to bill to the shipping address is a decision the collector makes at
+  // checkout, so it beats any billing address they happen to have saved.
+  const billingAddress = request.billingSameAsShipping
+    ? shippingAddress
+    : ((await resolveAddress(
+        request.buyerUid,
+        request.billingAddressId,
+        "billing"
+      )) ?? shippingAddress);
 
   const lineItems = items.map((item) => toLineItem(item, artist, currency));
   const shippingAmountMinor = items.reduce(
@@ -167,7 +179,7 @@ export async function createCheckoutSession(request: CheckoutRequest) {
   );
 
   const order = await createOrder({
-    billingAddress: billingAddress ?? shippingAddress,
+    billingAddress,
     buyerEmail: request.buyerEmail,
     buyerName: request.buyerName,
     buyerUid: request.buyerUid,

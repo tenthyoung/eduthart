@@ -53,6 +53,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
     null
   );
   const [billingAddressId, setBillingAddressId] = useState<string | null>(null);
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
   const [savePaymentMethod, setSavePaymentMethod] = useState(false);
   const [loading, setLoading] = useState(true);
   const [payError, setPayError] = useState<string | null>(null);
@@ -83,11 +84,14 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
           saved.addresses.find((address) => address.kind === "shipping")?.id ??
           null
       );
-      setBillingAddressId(
+      // A saved billing default says the card lives somewhere other than the
+      // delivery address, so respect it rather than overriding their setup.
+      const defaultBilling =
         saved.addresses.find(
           (address) => address.kind === "billing" && address.isDefault
-        )?.id ?? null
-      );
+        ) ?? null;
+      setBillingAddressId(defaultBilling?.id ?? null);
+      setBillingSameAsShipping(defaultBilling === null);
     }
   }, [checkout, user]);
 
@@ -147,7 +151,12 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
         "/api/commerce/checkout",
         await user.getIdToken(),
         {
-          body: { billingAddressId, savePaymentMethod, shippingAddressId },
+          body: {
+            billingAddressId: billingSameAsShipping ? null : billingAddressId,
+            billingSameAsShipping,
+            savePaymentMethod,
+            shippingAddressId,
+          },
           method: "POST",
         }
       );
@@ -172,6 +181,8 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
   const shippingAddress =
     shippingAddresses.find((address) => address.id === shippingAddressId) ??
     null;
+  const billingAddress =
+    billingAddresses.find((address) => address.id === billingAddressId) ?? null;
 
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-28 sm:px-6 lg:px-8">
@@ -328,32 +339,78 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                   </div>
                 )}
 
-                {billingAddresses.length > 0 ? (
-                  <div className="space-y-3">
-                    <Label htmlFor="checkout-billing-address">Bill to</Label>
-                    <select
-                      className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                      id="checkout-billing-address"
-                      onChange={(event) =>
-                        setBillingAddressId(event.target.value || null)
-                      }
-                      value={billingAddressId ?? ""}
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={billingSameAsShipping}
+                      id="billing-same-as-shipping"
+                      onCheckedChange={(checked) => {
+                        const same = checked === true;
+                        setBillingSameAsShipping(same);
+
+                        if (!same && !billingAddressId) {
+                          setBillingAddressId(billingAddresses[0]?.id ?? null);
+                        }
+                      }}
+                    />
+                    <Label
+                      className="font-normal leading-6"
+                      htmlFor="billing-same-as-shipping"
                     >
-                      <option value="">Same as shipping address</option>
-                      {billingAddresses.map((address) => (
-                        <option key={address.id} value={address.id}>
-                          {[
-                            address.label || address.name,
-                            address.line1,
-                            address.city,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </option>
-                      ))}
-                    </select>
+                      My billing address is the same as my shipping address
+                    </Label>
                   </div>
-                ) : null}
+
+                  {billingSameAsShipping ? null : billingAddresses.length ===
+                    0 ? (
+                    <Alert>
+                      <AlertTitle>Add a billing address</AlertTitle>
+                      <AlertDescription>
+                        <Link
+                          className="underline underline-offset-4"
+                          href="/account/addresses"
+                        >
+                          Add a billing address
+                        </Link>{" "}
+                        and come back, or tick the box above to bill the card to
+                        your shipping address.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-3">
+                      <Label htmlFor="checkout-billing-address">Bill to</Label>
+                      <select
+                        className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                        id="checkout-billing-address"
+                        onChange={(event) =>
+                          setBillingAddressId(event.target.value || null)
+                        }
+                        value={billingAddressId ?? ""}
+                      >
+                        {billingAddresses.map((address) => (
+                          <option key={address.id} value={address.id}>
+                            {[
+                              address.label || address.name,
+                              address.line1,
+                              address.city,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </option>
+                        ))}
+                      </select>
+                      {billingAddress ? (
+                        <address className="text-sm not-italic leading-6 text-muted-foreground">
+                          {formatAddressLines(billingAddress).map((line) => (
+                            <span key={line} className="block">
+                              {line}
+                            </span>
+                          ))}
+                        </address>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/40 p-4">
                   <Checkbox
@@ -398,7 +455,10 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                 <Button
                   className="mt-6 w-full"
                   disabled={
-                    items.length === 0 || redirecting || !shippingAddressId
+                    items.length === 0 ||
+                    redirecting ||
+                    !shippingAddressId ||
+                    (!billingSameAsShipping && !billingAddressId)
                   }
                   onClick={() => void pay()}
                   size="lg"
