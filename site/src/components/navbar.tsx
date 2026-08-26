@@ -236,8 +236,12 @@ export function Navbar() {
 
   return (
     <nav
+      // Radix overlays (select, dialog, drawer) lock body scroll and hide the
+      // scrollbar, which would let this fixed bar stretch into the reclaimed
+      // gutter and shove its right-hand controls sideways. Inset it by the
+      // width Radix removed so the bar stays put while a menu is open.
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 left-0 right-[var(--removed-body-scroll-bar-size,0px)] z-50 transition-all duration-300",
         isScrolled
           ? "border-b border-border/50 bg-background/90 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl"
           : "bg-transparent"
