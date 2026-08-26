@@ -56,7 +56,8 @@ export default function ForArtistsPage() {
                 Exhibit at EduthArt
               </p>
               <Heading variant="h1" className="max-w-3xl text-foreground">
-                We represent emerging and mid-career artists with a distinctive point of view.
+                We represent emerging and mid-career artists with a distinctive
+                point of view.
               </Heading>
               <p className="max-w-2xl text-lg text-muted-foreground">
                 We are always looking for talented artists with strong work,
@@ -65,7 +66,9 @@ export default function ForArtistsPage() {
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Button asChild size="xl">
-                  <Link href="/apply-to-be-an-artist">Start Your Application</Link>
+                  <Link href="/apply-to-be-an-artist">
+                    Start Your Application
+                  </Link>
                 </Button>
                 <Button asChild size="xl" variant="outline">
                   <Link href="/contact">Ask a Question</Link>
@@ -102,7 +105,10 @@ export default function ForArtistsPage() {
         </div>
       </section>
 
-      <section id="application" className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <section
+        id="application"
+        className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
+      >
         <MotionFade>
           <div className="mb-12 max-w-3xl">
             <Heading variant="h2" className="text-foreground">
@@ -144,8 +150,9 @@ export default function ForArtistsPage() {
                 Completing the online application is your first step.
               </Heading>
               <p className="text-lg text-muted-foreground">
-                If accepted, we want the next phase to feel welcoming, practical,
-                and genuinely useful for building a long-term relationship.
+                If accepted, we want the next phase to feel welcoming,
+                practical, and genuinely useful for building a long-term
+                relationship.
               </p>
               <ul className="mt-6 space-y-4 text-muted-foreground">
                 {acceptedBenefits.map((benefit) => (
@@ -184,7 +191,9 @@ export default function ForArtistsPage() {
               </div>
               <div className="mt-6">
                 <Button asChild className="w-full" size="lg">
-                  <Link href="/apply-to-be-an-artist">Continue to Application</Link>
+                  <Link href="/apply-to-be-an-artist">
+                    Continue to Application
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -199,7 +208,8 @@ export default function ForArtistsPage() {
               You&apos;re Invited
             </p>
             <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.035em]">
-              Stay up to date with new art releases, artist stories, and opportunities.
+              Stay up to date with new art releases, artist stories, and
+              opportunities.
             </h2>
             <p className="mt-4 max-w-2xl text-white/85">
               Join the list for weekly updates, artist resources, and curated
@@ -232,7 +242,10 @@ export default function ForArtistsPage() {
                   </Label>
                 </div>
               </div>
-              <Button className="w-full bg-white text-primary hover:bg-white/90" size="lg">
+              <Button
+                className="w-full bg-white text-primary hover:bg-white/90"
+                size="lg"
+              >
                 Submit
               </Button>
             </div>

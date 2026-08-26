@@ -13,10 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  listRefundRequests,
-  updateRefundRequestStatus,
-} from "@/lib/admin/api";
+import { listRefundRequests, updateRefundRequestStatus } from "@/lib/admin/api";
 import { formatDateTime } from "@/lib/admin/format";
 import type { RefundRequestRecord } from "@/lib/admin/types";
 
@@ -41,13 +38,17 @@ export default function AdminRefundsPage() {
       const nextItems = await listRefundRequests();
       setItems(nextItems);
       setDraftStatus(
-        Object.fromEntries(nextItems.map((item) => [item.id, item.status])),
+        Object.fromEntries(nextItems.map((item) => [item.id, item.status]))
       );
       setDraftNotes(
-        Object.fromEntries(nextItems.map((item) => [item.id, item.adminNotes ?? ""])),
+        Object.fromEntries(
+          nextItems.map((item) => [item.id, item.adminNotes ?? ""])
+        )
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Refunds failed to load.");
+      toast.error(
+        error instanceof Error ? error.message : "Refunds failed to load."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,12 +64,14 @@ export default function AdminRefundsPage() {
       await updateRefundRequestStatus(
         request.id,
         draftStatus[request.id] ?? request.status,
-        draftNotes[request.id] ?? request.adminNotes ?? "",
+        draftNotes[request.id] ?? request.adminNotes ?? ""
       );
       toast.success("Refund request updated.");
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Refund update failed.");
+      toast.error(
+        error instanceof Error ? error.message : "Refund update failed."
+      );
     } finally {
       setSavingId(null);
     }
@@ -79,7 +82,11 @@ export default function AdminRefundsPage() {
       title="Refund requests"
       description="Review in-app refund requests, record admin notes, and track the current state of each case."
       actions={
-        <Button variant="outline" onClick={() => void load()} disabled={loading}>
+        <Button
+          variant="outline"
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
       }
@@ -88,7 +95,9 @@ export default function AdminRefundsPage() {
         {items.length === 0 ? (
           <AdminCard>
             <p className="text-sm text-muted-foreground">
-              {loading ? "Loading refund requests..." : "No refund requests yet."}
+              {loading
+                ? "Loading refund requests..."
+                : "No refund requests yet."}
             </p>
           </AdminCard>
         ) : (
@@ -100,7 +109,11 @@ export default function AdminRefundsPage() {
                     {request.userEmail ?? request.uid}
                   </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {[request.reason, request.currentPriceDisplay, request.currentTier]
+                    {[
+                      request.reason,
+                      request.currentPriceDisplay,
+                      request.currentTier,
+                    ]
                       .filter(Boolean)
                       .join(" • ")}
                   </p>
@@ -120,7 +133,10 @@ export default function AdminRefundsPage() {
                 <Select
                   value={draftStatus[request.id] ?? request.status}
                   onValueChange={(value) =>
-                    setDraftStatus((current) => ({ ...current, [request.id]: value }))
+                    setDraftStatus((current) => ({
+                      ...current,
+                      [request.id]: value,
+                    }))
                   }
                 >
                   <SelectTrigger className="w-full bg-white">

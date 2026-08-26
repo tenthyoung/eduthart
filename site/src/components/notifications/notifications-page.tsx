@@ -1,8 +1,22 @@
 "use client";
 
-import { Bell, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  CheckCheck,
+  Circle,
+  ImageIcon,
+  KeyRound,
+  Loader2,
+  Mail,
+  Receipt,
+  Tag,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { UsernameDialog } from "@/components/account/username-dialog";
@@ -11,80 +25,71 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
+import {
+  clearNotifications,
+  dismissNotification,
+  fetchNotifications,
+  markEveryNotificationRead,
+  notifyNotificationsChanged,
+  setNotificationReadState,
+} from "@/lib/notifications/client";
+import type {
+  NotificationKind,
+  UserNotification,
+} from "@/lib/notifications/types";
+import { cn } from "@/lib/utils";
 
-const NOTIFICATION_STORAGE_PREFIX = "eduthart:notifications";
+const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
+  artwork_sold: Receipt,
+  choose_username: UserRound,
+  email_changed: Mail,
+  followed_artist_listed: ImageIcon,
+  followed_artist_price_drop: Tag,
+  order_confirmed: Receipt,
+  password_changed: KeyRound,
+  saved_artwork_sold: ImageIcon,
+};
 
 async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: string };
+  } | null;
 
   return payload?.error?.message ?? fallbackMessage;
 }
 
-function getNotificationStorageKey(uid: string) {
-  return `${NOTIFICATION_STORAGE_PREFIX}:${uid}`;
-}
+function formatNotificationDate(value: string) {
+  const date = new Date(value);
 
-function readNotificationState(uid: string) {
-  if (typeof window === "undefined") {
-    return { chooseUsernameRead: false };
+  if (Number.isNaN(date.getTime())) {
+    return "";
   }
 
-  try {
-    const raw = window.localStorage.getItem(getNotificationStorageKey(uid));
-    if (!raw) {
-      return { chooseUsernameRead: false };
-    }
-
-    const parsed = JSON.parse(raw) as { chooseUsernameRead?: boolean };
-    return {
-      chooseUsernameRead: parsed.chooseUsernameRead === true,
-    };
-  } catch {
-    return { chooseUsernameRead: false };
-  }
-}
-
-function writeNotificationState(uid: string, next: { chooseUsernameRead: boolean }) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(getNotificationStorageKey(uid), JSON.stringify(next));
-}
-
-function buildFallbackProfile(
-  user: NonNullable<ReturnType<typeof useAuth>["user"]>,
-): AccountProfile {
-  return {
-    authProviders: user.providerIds,
-    bannerURL: null,
-    createdAt: null,
-    displayName: user.displayName ?? user.email ?? "EduthArt Collector",
-    email: user.email ?? null,
-    firstName: null,
-    lastLoginAt: null,
-    lastName: null,
-    legal: null,
-    photoURL: user.photoURL ?? null,
-    shippingOriginAddress: null,
-    uid: user.uid,
-    updatedAt: null,
-    username: null,
-  };
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
 export function NotificationsPage() {
   const router = useRouter();
   const { status, user } = useAuth();
-  const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
   const [usernameDraft, setUsernameDraft] = useState("");
-  const [chooseUsernameRead, setChooseUsernameRead] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const applyPayload = useCallback(
+    (payload: { notifications: UserNotification[]; unreadCount: number }) => {
+      setNotifications(payload.notifications);
+      setUnreadCount(payload.unreadCount);
+      notifyNotificationsChanged();
+    },
+    []
+  );
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -98,40 +103,23 @@ export function NotificationsPage() {
 
     let cancelled = false;
 
-    const loadProfile = async () => {
+    const load = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const token = await user.getIdToken();
-        const response = await fetch("/api/auth/profile", {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        });
+        const payload = await fetchNotifications(await user.getIdToken());
 
-        if (!response.ok) {
-          throw new Error(await parseApiError(response, "Unable to load your notifications."));
+        if (!cancelled) {
+          applyPayload(payload);
         }
-
-        const payload = (await response.json()) as { profile: AccountProfile };
-
-        if (cancelled) {
-          return;
-        }
-
-        setProfile(payload.profile);
-        setUsernameDraft(payload.profile.username ?? "");
-        const notificationState = readNotificationState(payload.profile.uid);
-        setChooseUsernameRead(notificationState.chooseUsernameRead);
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : "Unable to load your notifications.");
-          const fallbackProfile = buildFallbackProfile(user);
-          setProfile(fallbackProfile);
-          setUsernameDraft(fallbackProfile.username ?? "");
-          const notificationState = readNotificationState(fallbackProfile.uid);
-          setChooseUsernameRead(notificationState.chooseUsernameRead);
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load your notifications."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -140,23 +128,30 @@ export function NotificationsPage() {
       }
     };
 
-    void loadProfile();
+    void load();
 
     return () => {
       cancelled = true;
     };
-  }, [router, status, user]);
+  }, [applyPayload, router, status, user]);
 
-  const isChooseUsernameComplete = Boolean(profile?.username);
-  const unreadCount = useMemo(() => (chooseUsernameRead ? 0 : 1), [chooseUsernameRead]);
-
-  const handleNotificationStatusChange = (read: boolean) => {
-    if (!profile) {
+  const runAction = async (
+    action: (
+      token: string
+    ) => Promise<{ notifications: UserNotification[]; unreadCount: number }>,
+    fallbackMessage: string
+  ) => {
+    if (!user) {
       return;
     }
 
-    setChooseUsernameRead(read);
-    writeNotificationState(profile.uid, { chooseUsernameRead: read });
+    try {
+      applyPayload(await action(await user.getIdToken()));
+    } catch (actionError) {
+      toast.error(
+        actionError instanceof Error ? actionError.message : fallbackMessage
+      );
+    }
   };
 
   const handleSaveUsername = async (event: FormEvent<HTMLFormElement>) => {
@@ -177,24 +172,26 @@ export function NotificationsPage() {
           "Content-Type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          username: usernameDraft,
-        }),
+        body: JSON.stringify({ username: usernameDraft }),
       });
 
       if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to save your username."));
+        throw new Error(
+          await parseApiError(response, "Unable to save your username.")
+        );
       }
 
       const payload = (await response.json()) as { profile: AccountProfile };
-      setProfile(payload.profile);
-      setUsernameDraft(payload.profile.username ?? "");
       notifyUsernameUpdated(payload.profile.username ?? null);
+      setUsernameDraft(payload.profile.username ?? "");
       setIsUsernameDialogOpen(false);
-      handleNotificationStatusChange(true);
+      applyPayload(await fetchNotifications(token));
       toast.success("Your username has been updated.");
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : "Unable to save your username.";
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save your username.";
       setError(message);
       toast.error(message);
     } finally {
@@ -229,14 +226,50 @@ export function NotificationsPage() {
                 <Bell className="size-3.5" />
                 Notifications
               </div>
-              <h1 className="text-4xl text-foreground sm:text-5xl">Your notification center</h1>
+              <h1 className="text-4xl text-foreground sm:text-5xl">
+                Your notification center
+              </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                Keep track of gallery setup tasks and account reminders in one place.
+                Account activity, orders, and updates from the artists you
+                follow.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-foreground">
-              {unreadCount} unread
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-foreground">
+                {unreadCount} unread
+              </div>
+              {notifications.length > 0 ? (
+                <>
+                  <Button
+                    disabled={unreadCount === 0}
+                    onClick={() =>
+                      void runAction(
+                        markEveryNotificationRead,
+                        "Unable to update your notifications."
+                      )
+                    }
+                    type="button"
+                    variant="outline"
+                  >
+                    <CheckCheck />
+                    Mark all read
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      void runAction(
+                        clearNotifications,
+                        "Unable to clear your notifications."
+                      )
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 />
+                    Clear all
+                  </Button>
+                </>
+              ) : null}
             </div>
           </div>
         </div>
@@ -248,61 +281,119 @@ export function NotificationsPage() {
           </Alert>
         ) : null}
 
-        <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
-          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                {isChooseUsernameComplete ? (
-                  <CheckCircle2 className="size-5" />
-                ) : (
-                  <Bell className="size-5" />
-                )}
-              </div>
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl text-foreground">Choose a username</h2>
-                  <span
-                    className={[
-                      "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                      chooseUsernameRead
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-amber-100 text-amber-900",
-                    ].join(" ")}
-                  >
-                    {chooseUsernameRead ? "Read" : "Unread"}
-                  </span>
-                  {isChooseUsernameComplete ? (
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-800">
-                      Completed
-                    </span>
-                  ) : null}
-                </div>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Choose your username so people can visit your gallery page and you can start building your public artist presence. This reminder stays in your notifications so you can always revisit it later.
-                </p>
-                <p className="text-sm text-foreground">
-                  Current username:
-                  {" "}
-                  <span className="font-medium">{profile?.username ? `@${profile.username}` : "Not set yet"}</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-              <Button onClick={() => setIsUsernameDialogOpen(true)} size="lg">
-                {profile?.username ? "Update username" : "Choose username"}
-              </Button>
-              <Button
-                onClick={() => handleNotificationStatusChange(!chooseUsernameRead)}
-                size="lg"
-                variant="outline"
-              >
-                <Circle className="size-4" />
-                Mark as {chooseUsernameRead ? "unread" : "read"}
-              </Button>
-            </div>
+        {notifications.length === 0 ? (
+          <div className="rounded-[2rem] border border-dashed border-border bg-white/70 px-6 py-16 text-center">
+            <BellOff className="mx-auto size-8 text-primary/60" />
+            <p className="mt-4 text-lg text-foreground">
+              You are all caught up
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Follow artists and save artwork to hear about new listings, price
+              drops, and sales.
+            </p>
           </div>
-        </div>
+        ) : (
+          <ul className="space-y-4">
+            {notifications.map((notification) => {
+              const Icon = KIND_ICONS[notification.kind] ?? Bell;
+              const isRead = notification.readAt !== null;
+              const isUsernameReminder =
+                notification.kind === "choose_username";
+
+              return (
+                <li
+                  key={notification.id}
+                  className={cn(
+                    "rounded-[2rem] border bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]",
+                    isRead ? "border-white/70" : "border-primary/25"
+                  )}
+                >
+                  <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="size-5" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-2xl text-foreground">
+                            {notification.title}
+                          </h2>
+                          <span
+                            className={cn(
+                              "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                              isRead
+                                ? "bg-muted text-muted-foreground"
+                                : "bg-amber-100 text-amber-900"
+                            )}
+                          >
+                            {isRead ? "Read" : "Unread"}
+                          </span>
+                        </div>
+                        <p className="max-w-2xl whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                          {notification.body}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatNotificationDate(notification.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
+                      {isUsernameReminder ? (
+                        <Button
+                          onClick={() => setIsUsernameDialogOpen(true)}
+                          type="button"
+                        >
+                          Choose username
+                        </Button>
+                      ) : notification.actionHref &&
+                        notification.actionLabel ? (
+                        <Button asChild>
+                          <Link href={notification.actionHref}>
+                            {notification.actionLabel}
+                          </Link>
+                        </Button>
+                      ) : null}
+                      <Button
+                        onClick={() =>
+                          void runAction(
+                            (token) =>
+                              setNotificationReadState(
+                                token,
+                                notification.id,
+                                !isRead
+                              ),
+                            "Unable to update this notification."
+                          )
+                        }
+                        type="button"
+                        variant="outline"
+                      >
+                        <Circle className="size-4" />
+                        Mark as {isRead ? "unread" : "read"}
+                      </Button>
+                      <Button
+                        aria-label={`Dismiss ${notification.title}`}
+                        onClick={() =>
+                          void runAction(
+                            (token) =>
+                              dismissNotification(token, notification.id),
+                            "Unable to dismiss this notification."
+                          )
+                        }
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Trash2 />
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
         <UsernameDialog
           description="Pick the tag that will be used for your public gallery page."

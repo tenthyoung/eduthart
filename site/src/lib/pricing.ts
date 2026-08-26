@@ -72,7 +72,11 @@ export const pricingPlans: PricingPlan[] = [
       monthly: "billed monthly",
       annual: "$59.99 billed yearly",
     },
-    highlightPills: ["Preview access", "Private-view windows", "Priority notices"],
+    highlightPills: [
+      "Preview access",
+      "Private-view windows",
+      "Priority notices",
+    ],
     features: [
       {
         title: "Preview invitations",
@@ -81,11 +85,13 @@ export const pricingPlans: PricingPlan[] = [
       },
       {
         title: "Priority viewing requests",
-        description: "Request private appointments with faster scheduling support.",
+        description:
+          "Request private appointments with faster scheduling support.",
       },
       {
         title: "Member-only updates",
-        description: "Receive early notice when notable new works become available.",
+        description:
+          "Receive early notice when notable new works become available.",
       },
     ],
     ctaLabel: "Choose Patron Circle",
@@ -118,11 +124,13 @@ export const pricingPlans: PricingPlan[] = [
       },
       {
         title: "Concierge-style support",
-        description: "Receive more tailored guidance on acquisitions, placement, and follow-up.",
+        description:
+          "Receive more tailored guidance on acquisitions, placement, and follow-up.",
       },
       {
         title: "Invitation-only programming",
-        description: "Access select events and collector-facing conversations beyond public openings.",
+        description:
+          "Access select events and collector-facing conversations beyond public openings.",
       },
     ],
     ctaLabel: "Choose Collector Circle",

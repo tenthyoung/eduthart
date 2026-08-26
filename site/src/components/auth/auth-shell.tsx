@@ -38,16 +38,23 @@ export function AuthShell({
               Email and password with Firebase-backed sessions.
             </div>
             <div className="rounded-2xl border border-border/60 bg-card/65 p-4 shadow-[0_18px_40px_-34px_rgba(47,36,28,0.35)] backdrop-blur-sm">
-              Google sign-in plus privacy and terms acceptance on sign up.
+              Google and Apple sign-in plus privacy and terms acceptance on sign
+              up.
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Need to review the legal terms first? Visit{" "}
-            <Link className="font-medium text-primary hover:underline" href="/legal/terms-of-service">
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/legal/terms-of-service"
+            >
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link className="font-medium text-primary hover:underline" href="/legal/privacy-policy">
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/legal/privacy-policy"
+            >
               Privacy Policy
             </Link>
             .
@@ -56,7 +63,7 @@ export function AuthShell({
 
         <div
           className={cn(
-            "rounded-[2rem] border border-border/70 bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8",
+            "rounded-[2rem] border border-border/70 bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8"
           )}
         >
           {children}

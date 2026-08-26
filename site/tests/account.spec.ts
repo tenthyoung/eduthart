@@ -1,102 +1,40 @@
-import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const E2E_STORAGE_KEY = "eduthart:e2e-user";
-const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
+import { seedAccount, TINY_PNG } from "./support/accounts";
 
-type TestAccountOptions = {
-  authProviders?: string[];
-  bannerURL?: string | null;
-  displayName?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  photoURL?: string | null;
-  shippingOriginAddress?: ShippingOriginAddress | null;
-  uid: string;
-  username?: string | null;
-};
-
-async function seedAccount(page: Page, options: TestAccountOptions) {
-  const displayName = options.displayName ?? "Jordan Collector";
-  const defaultNameParts = displayName.trim().split(/\s+/);
-  const defaultFirstName = defaultNameParts[0] ?? "Jordan";
-  const defaultLastName = defaultNameParts.slice(1).join(" ") || "Collector";
-  const profilePayload = {
-    authProviders: options.authProviders ?? ["password"],
-    bannerURL: options.bannerURL ?? null,
-    displayName,
-    email: options.email ?? `${options.uid}@example.com`,
-    firstName: options.firstName ?? defaultFirstName,
-    lastName: options.lastName ?? defaultLastName,
-    photoURL: options.photoURL ?? null,
-    shippingOriginAddress: options.shippingOriginAddress ?? null,
-    uid: options.uid,
-    username: options.username ?? null,
-  };
-
-  const response = await page.request.post("/api/test/e2e-auth", {
-    data: profilePayload,
-  });
-  expect(response.ok()).toBeTruthy();
-
-  await page.goto("/");
-  await page.evaluate(
-    ({ authEventName, storageKey, user }) => {
-      window.localStorage.setItem(storageKey, JSON.stringify(user));
-      window.dispatchEvent(new Event(authEventName));
-    },
-    {
-      authEventName: E2E_AUTH_EVENT,
-      storageKey: E2E_STORAGE_KEY,
-      user: {
-        displayName: profilePayload.displayName,
-        email: profilePayload.email,
-        photoURL: profilePayload.photoURL,
-        providerIds: profilePayload.authProviders,
-        uid: profilePayload.uid,
-      },
-    },
-  );
-
-  await page.waitForFunction(
-    ({ storageKey, expectedUid }) => {
-      const raw = window.localStorage.getItem(storageKey);
-
-      if (!raw) {
-        return false;
-      }
-
-      const parsed = JSON.parse(raw) as { uid?: string };
-      return parsed.uid === expectedUid;
-    },
-    {
-      storageKey: E2E_STORAGE_KEY,
-      expectedUid: profilePayload.uid,
-    },
-  );
-}
-
-test("redirects unauthenticated visitors away from account settings", async ({ page }) => {
+test("redirects unauthenticated visitors away from account settings", async ({
+  page,
+}) => {
   await page.goto("/account");
 
   await expect(page).toHaveURL(/\/login\?next=\/account$/);
-  await expect(page.getByRole("heading", { name: "Log in to EduthArt" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Log in to EduthArt" })
+  ).toBeVisible();
 });
 
-test("opens account settings from the desktop profile controls", async ({ page }) => {
+test("opens account settings from the desktop profile controls", async ({
+  page,
+}) => {
   await seedAccount(page, { uid: "desktop-user" });
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Account" }).click();
+  await page.getByRole("link", { name: "Jordan Collector" }).click();
 
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole("heading", { name: "Jordan Collector" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Jordan Collector" })
+  ).toBeVisible();
   await expect(page.getByText("Sign-in method")).toBeVisible();
 });
 
-test("opens account settings from the mobile menu profile entry", async ({ page }) => {
-  await seedAccount(page, { uid: "mobile-user", displayName: "Mobile Collector" });
+test("opens account settings from the mobile menu profile entry", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "mobile-user",
+    displayName: "Mobile Collector",
+  });
   await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto("/");
@@ -104,7 +42,9 @@ test("opens account settings from the mobile menu profile entry", async ({ page 
   await page.getByRole("link", { name: /account settings/i }).click();
 
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole("heading", { name: "Mobile Collector" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Mobile Collector" })
+  ).toBeVisible();
 });
 
 test("persists profile edits across a fresh visit", async ({ page }) => {
@@ -114,21 +54,39 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await page.getByRole("button", { name: "Edit profile" }).click();
   await page.getByLabel("First name").fill("Avery");
   await page.getByLabel("Last name").fill("Curator");
-  await page.getByLabel("Username tag").fill("@avery-curator");
+  await page.getByLabel("Location").fill("Brooklyn, New York");
+  await page
+    .getByLabel("Biography")
+    .fill("Collecting coastal light since 2019.");
   await page.getByRole("button", { name: "Save profile" }).click();
 
   await expect(page.getByLabel("First name")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Choose username" }).click();
+  await page.getByRole("textbox", { name: "Username" }).fill("@avery-curator");
+  await page.getByRole("button", { name: "Save username" }).click();
+  await expect(page.getByText("Your username has been updated.")).toBeVisible();
+
   await page.reload();
 
-  await expect(page.getByRole("heading", { name: "Avery Curator" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "View your personal art page" })).toHaveAttribute("href", "/artists/avery-curator");
+  await expect(
+    page.getByRole("heading", { name: "Avery Curator" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "View your personal art page" })
+  ).toHaveAttribute("href", "/artists/avery-curator");
+  await expect(page.getByText("Brooklyn, New York").first()).toBeVisible();
+  await expect(
+    page.getByText("Collecting coastal light since 2019.")
+  ).toBeVisible();
   await page.getByRole("button", { name: "Edit profile" }).click();
   await expect(page.getByLabel("First name")).toHaveValue("Avery");
   await expect(page.getByLabel("Last name")).toHaveValue("Curator");
-  await expect(page.getByLabel("Username tag")).toHaveValue("avery-curator");
 });
 
-test("shows a navbar link to the personal art page using the chosen username", async ({ page }) => {
+test("shows a navbar link to the personal art page using the chosen username", async ({
+  page,
+}) => {
   await seedAccount(page, {
     uid: "artist-link-user",
     displayName: "Maya Studio",
@@ -136,15 +94,21 @@ test("shows a navbar link to the personal art page using the chosen username", a
   });
 
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "@maya-studio" })).toHaveAttribute("href", "/artists/maya-studio");
+  await expect(
+    page.getByRole("link", { name: "@maya-studio" })
+  ).toHaveAttribute("href", "/artists/maya-studio");
 
   await page.getByRole("link", { name: "@maya-studio" }).click();
   await expect(page).toHaveURL(/\/artists\/maya-studio$/);
-  await expect(page.getByRole("heading", { name: "Maya Studio" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Maya Studio" })
+  ).toBeVisible();
   await expect(page.getByText("Personal art page URL:")).toBeVisible();
 });
 
-test("crops, uploads, and removes a profile banner from account settings", async ({ page }) => {
+test("crops, uploads, and removes a profile banner from account settings", async ({
+  page,
+}) => {
   await seedAccount(page, { uid: "banner-user" });
 
   await page.goto("/account");
@@ -153,34 +117,50 @@ test("crops, uploads, and removes a profile banner from account settings", async
   await page.getByLabel("Upload profile banner").setInputFiles({
     mimeType: "image/png",
     name: "banner.png",
-    buffer: Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==",
-      "base64",
-    ),
+    buffer: TINY_PNG,
   });
 
-  await expect(page.getByRole("heading", { name: "Position your banner" })).toBeVisible();
-  await expect(page.getByText("Banners are saved at 1500 × 500 pixels (3:1).")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Position your banner" })
+  ).toBeVisible();
+  await expect(
+    page.getByText("Banners are saved at 1500 × 500 pixels (3:1).").last()
+  ).toBeVisible();
   await page.getByRole("button", { name: "Save banner" }).click();
 
-  await expect(page.getByText("Your profile banner has been updated.")).toBeVisible();
-  await expect(page.getByRole("img", { name: "Jordan Collector banner", exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Your profile banner has been updated.")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Jordan Collector banner", exact: true })
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Remove banner" }).click();
-  await expect(page.getByText("Your profile banner has been removed.")).toBeVisible();
+  await expect(
+    page.getByText("Your profile banner has been removed.")
+  ).toBeVisible();
   await expect(page.getByText("No banner uploaded yet.")).toBeVisible();
 });
 
 test("sends a password reset action for password users", async ({ page }) => {
-  await seedAccount(page, { uid: "password-user", email: "password.user@example.com" });
+  await seedAccount(page, {
+    uid: "password-user",
+    email: "password.user@example.com",
+  });
 
   await page.goto("/account");
   await page.getByRole("button", { name: "Send password reset email" }).click();
 
-  await expect(page.getByText("A password reset link has been sent to password.user@example.com.")).toBeVisible();
+  await expect(
+    page.getByText(
+      "A password reset link has been sent to password.user@example.com."
+    )
+  ).toBeVisible();
 });
 
-test("shows provider-aware security messaging for google-only users", async ({ page }) => {
+test("shows provider-aware security messaging for google-only users", async ({
+  page,
+}) => {
   await seedAccount(page, {
     uid: "google-user",
     authProviders: ["google.com"],
@@ -189,19 +169,35 @@ test("shows provider-aware security messaging for google-only users", async ({ p
 
   await page.goto("/account");
 
-  await expect(page.getByText("This account signs in with Google, so there is no EduthArt password reset to send.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send password reset email" })).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "This account signs in with Google, so there is no EduthArt password to change or reset."
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Send password reset email" })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Change password" })
+  ).toHaveCount(0);
 });
 
-test("updates the account email from account settings and persists it across reload", async ({ page }) => {
-  await seedAccount(page, { uid: "email-user", email: "old.address@example.com" });
+test("updates the account email from account settings and persists it across reload", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "email-user",
+    email: "old.address@example.com",
+  });
 
   await page.goto("/account");
   await page.getByRole("button", { name: "Change email address" }).click();
   await page.getByLabel("New email address").fill("new.address@example.com");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page.getByText("Your email address has been updated.")).toBeVisible();
+  await expect(
+    page.getByText("Your email address has been updated.")
+  ).toBeVisible();
   await expect(page.getByLabel("New email address")).toHaveCount(0);
   await expect(page.getByText("new.address@example.com")).toHaveCount(2);
 
@@ -209,15 +205,21 @@ test("updates the account email from account settings and persists it across rel
 
   await page.getByRole("button", { name: "Change email address" }).click();
   await expect(page.getByText("new.address@example.com")).toHaveCount(2);
-  await expect(page.getByLabel("New email address")).toHaveValue("new.address@example.com");
+  await expect(page.getByLabel("New email address")).toHaveValue(
+    "new.address@example.com"
+  );
 });
 
-test("deletes the account after explicit confirmation and blocks account access afterward", async ({ page }) => {
+test("deletes the account after explicit confirmation and blocks account access afterward", async ({
+  page,
+}) => {
   await seedAccount(page, { uid: "delete-user", displayName: "Delete Me" });
 
   await page.goto("/account");
   await page.getByLabel("Confirmation text").fill("DELETE");
-  await page.getByRole("button", { name: "Delete account permanently" }).click();
+  await page
+    .getByRole("button", { name: "Delete account permanently" })
+    .click();
 
   await expect(page).toHaveURL("http://127.0.0.1:3005/");
   await page.goto("/account");

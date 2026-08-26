@@ -1,7 +1,15 @@
 import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
 import { NextResponse } from "next/server";
 
-import { clearE2EAccountProfiles, isE2EAuthEnabled, seedE2EAccountProfile } from "@/lib/auth/e2e-store";
+import {
+  clearE2EAccountProfiles,
+  isE2EAuthEnabled,
+  seedE2EAccountProfile,
+} from "@/lib/auth/e2e-store";
+import {
+  clearDocumentStore,
+  clearUserDocuments,
+} from "@/lib/store/document-store";
 
 type SeedBody = {
   authProviders?: string[];
@@ -27,7 +35,7 @@ function ensureE2EEnabled() {
           message: "Not found.",
         },
       },
-      { status: 404 },
+      { status: 404 }
     );
   }
 
@@ -51,9 +59,13 @@ export async function POST(request: Request) {
           message: "A uid is required.",
         },
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
+
+  // The file-backed store outlives a test run, so seeding an account has to
+  // start it from empty or one run's favorites and orders leak into the next.
+  await clearUserDocuments(body.uid.trim());
 
   const profile = await seedE2EAccountProfile({
     authProviders: body.authProviders,
@@ -81,5 +93,8 @@ export async function DELETE() {
   }
 
   await clearE2EAccountProfiles();
+  // Favorites, collections, carts, orders, and notifications all live in the
+  // shared document store, so a reset has to clear that too.
+  await clearDocumentStore();
   return NextResponse.json({ success: true });
 }

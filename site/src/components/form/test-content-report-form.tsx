@@ -31,7 +31,7 @@ const schema = z.object({
     .string()
     .min(
       20,
-      "Please provide a brief description with enough detail for review.",
+      "Please provide a brief description with enough detail for review."
     ),
   email: z.string().email("Please enter a valid email address."),
 });
@@ -125,12 +125,12 @@ export function TestContentReportForm({
       }
 
       toast.success(
-        "Report submitted. We will review the content as quickly as we can.",
+        "Report submitted. We will review the content as quickly as we can."
       );
       form.reset();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to submit report.",
+        error instanceof Error ? error.message : "Unable to submit report."
       );
     }
   };

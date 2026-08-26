@@ -28,7 +28,7 @@ export const InsightsSection = async () => {
   const posts = await client.fetch<SanityDocument[]>(
     INSIGHTS_QUERY,
     {},
-    { next: { revalidate: 30 } },
+    { next: { revalidate: 30 } }
   );
 
   return (

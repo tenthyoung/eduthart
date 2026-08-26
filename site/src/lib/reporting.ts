@@ -91,9 +91,9 @@ export async function createExternalDeckReports({
               : publicDeck.moderationStatus,
           updatedAt: new Date().toISOString(),
         },
-        { merge: true },
+        { merge: true }
       );
-    }),
+    })
   );
 
   return publicDeckIds;

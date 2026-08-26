@@ -112,7 +112,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "text-muted-foreground hover:bg-black/5 hover:text-foreground",
+                      : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
                   )}
                 >
                   <Icon className="size-4" />
@@ -174,7 +174,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     "rounded-full border px-3 py-1.5 text-sm",
                     pathname === href || pathname.startsWith(`${href}/`)
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background",
+                      : "border-border bg-background"
                   )}
                 >
                   {label}
@@ -235,7 +235,7 @@ export function AdminCard({
     <div
       className={cn(
         "rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-[0_18px_60px_rgba(91,64,182,0.08)] backdrop-blur",
-        className,
+        className
       )}
     >
       {children}
@@ -260,7 +260,7 @@ export function AdminStat({
       <p
         className={cn(
           "text-3xl font-semibold tracking-[-0.05em]",
-          tone === "danger" && "text-destructive",
+          tone === "danger" && "text-destructive"
         )}
       >
         {value}

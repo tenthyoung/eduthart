@@ -39,7 +39,7 @@ export const useTilt = (config: TiltConfig = {}) => {
 
       setTilt({ x: rotateX, y: rotateY });
     },
-    [maxTilt],
+    [maxTilt]
   );
 
   const handleMouseLeave = useCallback(() => {

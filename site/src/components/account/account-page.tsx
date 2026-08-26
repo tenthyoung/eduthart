@@ -1,12 +1,27 @@
 "use client";
 
-import { AlertTriangle, BadgeCheck, ImagePlus, Loader2, LogOut, Mail, RefreshCw, ShieldAlert, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Loader2,
+  LogOut,
+  Mail,
+  MapPin,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 
-import { BannerCropDialog } from "@/components/account/banner-crop-dialog";
+import { AccountSectionNav } from "@/components/account/account-shell";
+import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
+import { ImageCropDialog } from "@/components/account/image-crop-dialog";
+import { ProfileImageField } from "@/components/account/profile-image-field";
 import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,19 +37,30 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { buildArtistPageHref, buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
-import { notifyUsernameUpdated } from "@/lib/auth/username-events";
-import { getFirebaseStorage } from "@/lib/firebase/client";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  ACCEPTED_BANNER_TYPES_ATTRIBUTE,
+  buildArtistPageHref,
+  buildDisplayName,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
+import { notifyUsernameUpdated } from "@/lib/auth/username-events";
+import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
+import {
+  AVATAR_CROP_SPEC,
+  AVATAR_DIMENSIONS_LABEL,
+  BANNER_CROP_SPEC,
   BANNER_DIMENSIONS_LABEL,
-  isAcceptedBannerType,
-  MAX_BANNER_FILE_SIZE,
-} from "@/lib/profile/banner";
+} from "@/lib/profile/images";
+import { uploadProfileImage } from "@/lib/profile/upload";
 import { cn } from "@/lib/utils";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
-const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
+const PROVIDER_LABELS: Record<string, string> = {
+  "apple.com": "Apple",
+  "google.com": "Google",
+  password: "Email and password",
+};
+
+type PendingImage = { file: File; kind: "avatar" | "banner" };
 
 function formatAccountDate(value: string | null) {
   if (!value) {
@@ -53,7 +79,10 @@ function formatAccountDate(value: string | null) {
   }).format(date);
 }
 
-function initialsForProfile(profile: AccountProfile | null, fallbackEmail?: string | null) {
+function initialsForProfile(
+  profile: AccountProfile | null,
+  fallbackEmail?: string | null
+) {
   const first = profile?.firstName?.trim()?.[0] ?? "";
   const last = profile?.lastName?.trim()?.[0] ?? "";
   const email = fallbackEmail?.trim()?.[0] ?? "";
@@ -61,41 +90,30 @@ function initialsForProfile(profile: AccountProfile | null, fallbackEmail?: stri
 }
 
 async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: string };
+  } | null;
 
   return payload?.error?.message ?? fallbackMessage;
 }
 
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error("Unable to read the selected image."));
-    };
-
-    reader.onerror = () => {
-      reject(new Error("Unable to read the selected image."));
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-
 export function AccountPage() {
   const router = useRouter();
-  const { refreshUser, requestEmailChange, sendResetLink, sendVerificationEmail, signOut, status, user } = useAuth();
-  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    changePassword,
+    refreshUser,
+    requestEmailChange,
+    sendResetLink,
+    sendVerificationEmail,
+    signOut,
+    status,
+    user,
+  } = useAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
   const [usernameDraft, setUsernameDraft] = useState("");
   const [nextEmail, setNextEmail] = useState("");
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
@@ -105,8 +123,10 @@ export function AccountPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingUsername, setSavingUsername] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<
+    "avatar" | "banner" | null
+  >(null);
+  const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [refreshingVerification, setRefreshingVerification] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -118,7 +138,11 @@ export function AccountPage() {
 
   const hasPasswordProvider = user?.providerIds.includes("password") ?? false;
   const isEmailVerified = user?.emailVerified ?? false;
-  const displayNamePreview = buildDisplayName(firstName, lastName) || profile?.displayName || user?.displayName || "EduthArt Collector";
+  const displayNamePreview =
+    buildDisplayName(firstName, lastName) ||
+    profile?.displayName ||
+    user?.displayName ||
+    "EduthArt Collector";
   const currentEmail = user?.email ?? profile?.email ?? null;
 
   useEffect(() => {
@@ -142,13 +166,16 @@ export function AccountPage() {
       try {
         const token = await user.getIdToken();
         const response = await fetch("/api/auth/profile", {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
+          headers: { authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
-          throw new Error(await parseApiError(response, "Unable to load your account settings."));
+          throw new Error(
+            await parseApiError(
+              response,
+              "Unable to load your account settings."
+            )
+          );
         }
 
         const payload = (await response.json()) as { profile: AccountProfile };
@@ -160,12 +187,16 @@ export function AccountPage() {
         setProfile(payload.profile);
         setFirstName(payload.profile.firstName ?? "");
         setLastName(payload.profile.lastName ?? "");
+        setLocation(payload.profile.location ?? "");
+        setBio(payload.profile.bio ?? "");
         setUsernameDraft(payload.profile.username ?? "");
         setNextEmail(payload.profile.email ?? user.email ?? "");
-      } catch (error) {
+      } catch (loadError) {
         if (!cancelled) {
           const message =
-            error instanceof Error ? error.message : "Unable to load your account settings.";
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load your account settings.";
           setError(message);
         }
       } finally {
@@ -183,35 +214,30 @@ export function AccountPage() {
   }, [deletingAccount, router, signingOut, status, suppressAuthRedirect, user]);
 
   const providerLabel = useMemo(() => {
-    const providers = profile?.authProviders.length ? profile.authProviders : user?.providerIds ?? [];
+    const providers = profile?.authProviders.length
+      ? profile.authProviders
+      : (user?.providerIds ?? []);
 
     if (providers.length === 0) {
       return "Not available";
     }
 
     return providers
-      .map((provider) => {
-        if (provider === "password") {
-          return "Email and password";
-        }
-
-        if (provider === "google.com") {
-          return "Google";
-        }
-
-        return provider;
-      })
+      .map((provider) => PROVIDER_LABELS[provider] ?? provider)
       .join(", ");
   }, [profile?.authProviders, user?.providerIds]);
 
-  const updateProfileBanner = async (bannerURL: string | null, successMessage: string) => {
+  const patchProfile = async (
+    body: Record<string, unknown>,
+    successMessage: string
+  ) => {
     if (!user) {
-      return;
+      return null;
     }
 
     const token = await user.getIdToken();
     const response = await fetch("/api/auth/profile", {
-      body: JSON.stringify({ bannerURL }),
+      body: JSON.stringify(body),
       headers: {
         "Content-Type": "application/json",
         authorization: `Bearer ${token}`,
@@ -220,51 +246,41 @@ export function AccountPage() {
     });
 
     if (!response.ok) {
-      throw new Error(await parseApiError(response, "Unable to update your profile banner."));
+      throw new Error(
+        await parseApiError(response, "Unable to update your profile.")
+      );
     }
 
     const payload = (await response.json()) as { profile: AccountProfile };
     setProfile(payload.profile);
     toast.success(successMessage);
+    return payload.profile;
   };
 
   const handleSaveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (!user) {
-      return;
-    }
-
     setSavingProfile(true);
     setError(null);
 
     try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/auth/profile", {
-        body: JSON.stringify({
-          firstName,
-          lastName,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        method: "PATCH",
-      });
+      const updated = await patchProfile(
+        { bio, firstName, lastName, location },
+        "Your account profile has been updated."
+      );
 
-      if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to save your profile."));
+      if (updated) {
+        setFirstName(updated.firstName ?? "");
+        setLastName(updated.lastName ?? "");
+        setLocation(updated.location ?? "");
+        setBio(updated.bio ?? "");
       }
 
-      const payload = (await response.json()) as { profile: AccountProfile };
-      setProfile(payload.profile);
-      setFirstName(payload.profile.firstName ?? "");
-      setLastName(payload.profile.lastName ?? "");
       setIsProfileDialogOpen(false);
-      toast.success("Your account profile has been updated.");
-    } catch (error) {
+    } catch (saveError) {
       const message =
-        error instanceof Error ? error.message : "Unable to save your profile.";
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save your profile.";
       setError(message);
       toast.error(message);
     } finally {
@@ -274,40 +290,26 @@ export function AccountPage() {
 
   const handleSaveUsername = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (!user) {
-      return;
-    }
-
     setSavingUsername(true);
     setError(null);
 
     try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/auth/profile", {
-        body: JSON.stringify({
-          username: usernameDraft,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        method: "PATCH",
-      });
+      const updated = await patchProfile(
+        { username: usernameDraft },
+        "Your username has been updated."
+      );
 
-      if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to save your username."));
+      if (updated) {
+        setUsernameDraft(updated.username ?? "");
+        notifyUsernameUpdated(updated.username ?? null);
       }
 
-      const payload = (await response.json()) as { profile: AccountProfile };
-      setProfile(payload.profile);
-      setUsernameDraft(payload.profile.username ?? "");
-      notifyUsernameUpdated(payload.profile.username ?? null);
       setIsUsernameDialogOpen(false);
-      toast.success("Your username has been updated.");
-    } catch (error) {
+    } catch (saveError) {
       const message =
-        error instanceof Error ? error.message : "Unable to save your username.";
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save your username.";
       setError(message);
       toast.error(message);
     } finally {
@@ -315,103 +317,94 @@ export function AccountPage() {
     }
   };
 
-  const handleBannerFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    event.target.value = "";
-
-    if (!file || !user) {
+  const handleCroppedImage = async (file: File) => {
+    if (!user || !pendingImage) {
       return;
     }
 
-    if (!isAcceptedBannerType(file.type)) {
-      const message = "Please upload a JPG, PNG, or WebP image for your banner.";
-      setError(message);
-      toast.error(message);
-      return;
-    }
-
-    if (file.size > MAX_BANNER_FILE_SIZE) {
-      const message = "Please choose an image smaller than 5 MB.";
-      setError(message);
-      toast.error(message);
-      return;
-    }
-
-    setError(null);
-    setPendingBannerFile(file);
-  };
-
-  const handleCroppedBanner = async (file: File) => {
-    if (!user) {
-      return;
-    }
-
-    setUploadingBanner(true);
+    const { kind } = pendingImage;
+    setUploadingImage(kind);
     setError(null);
 
     try {
-      let bannerURL: string;
+      const url = await uploadProfileImage({
+        file,
+        folder: kind === "banner" ? "profile-banners" : "profile-pictures",
+        uid: user.uid,
+      });
 
-      if (E2E_AUTH_ENABLED) {
-        bannerURL = await readFileAsDataUrl(file);
-      } else {
-        const storage = getFirebaseStorage();
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
-        const bannerRef = ref(storage, `profile-banners/${user.uid}/${Date.now()}-${safeName}`);
-        await uploadBytes(bannerRef, file, {
-          cacheControl: "public,max-age=31536000,immutable",
-          contentType: file.type,
-        });
-        bannerURL = await getDownloadURL(bannerRef);
-      }
-
-      await updateProfileBanner(bannerURL, "Your profile banner has been updated.");
-      setPendingBannerFile(null);
-    } catch (error) {
+      await patchProfile(
+        kind === "banner" ? { bannerURL: url } : { photoURL: url },
+        kind === "banner"
+          ? "Your profile banner has been updated."
+          : "Your profile picture has been updated."
+      );
+      setPendingImage(null);
+    } catch (uploadError) {
       const message =
-        error instanceof Error ? error.message : "Unable to upload your profile banner.";
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Unable to upload your image.";
       setError(message);
       toast.error(message);
     } finally {
-      setUploadingBanner(false);
+      setUploadingImage(null);
     }
   };
 
-  const handleRemoveBanner = async () => {
-    setUploadingBanner(true);
+  const handleRemoveImage = async (kind: "avatar" | "banner") => {
+    setUploadingImage(kind);
     setError(null);
 
     try {
-      await updateProfileBanner(null, "Your profile banner has been removed.");
-    } catch (error) {
+      await patchProfile(
+        kind === "banner" ? { bannerURL: null } : { photoURL: null },
+        kind === "banner"
+          ? "Your profile banner has been removed."
+          : "Your profile picture has been removed."
+      );
+    } catch (removeError) {
       const message =
-        error instanceof Error ? error.message : "Unable to remove your profile banner.";
+        removeError instanceof Error
+          ? removeError.message
+          : "Unable to remove your image.";
       setError(message);
       toast.error(message);
     } finally {
-      setUploadingBanner(false);
-      if (bannerInputRef.current) {
-        bannerInputRef.current.value = "";
-      }
+      setUploadingImage(null);
     }
+  };
+
+  const handleImageError = (message: string) => {
+    setError(message);
+    toast.error(message);
+  };
+
+  const handleChangePassword = async (
+    currentPassword: string,
+    nextPassword: string
+  ) => {
+    await changePassword(currentPassword, nextPassword);
+    toast.success(
+      "Your password has been changed. We sent a confirmation to your email."
+    );
   };
 
   const handlePasswordReset = async () => {
-    const email = currentEmail;
-
-    if (!email) {
+    if (!currentEmail) {
       return;
     }
 
     setResettingPassword(true);
 
     try {
-      await sendResetLink(email);
-      toast.success(`A password reset link has been sent to ${email}.`);
-    } catch (error) {
+      await sendResetLink(currentEmail);
+      toast.success(`A password reset link has been sent to ${currentEmail}.`);
+    } catch (resetError) {
       const message =
-        error instanceof Error ? error.message : "Unable to send a password reset link.";
+        resetError instanceof Error
+          ? resetError.message
+          : "Unable to send a password reset link.";
       setError(message);
       toast.error(message);
     } finally {
@@ -421,7 +414,6 @@ export function AccountPage() {
 
   const handleEmailChange = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     setChangingEmail(true);
     setError(null);
 
@@ -430,16 +422,22 @@ export function AccountPage() {
 
       if (result.requiresVerification) {
         setIsEmailDialogOpen(false);
-        toast.success(`We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`);
+        toast.success(
+          `We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`
+        );
       } else {
-        setProfile((current) => (current ? { ...current, email: result.email } : current));
+        setProfile((current) =>
+          current ? { ...current, email: result.email } : current
+        );
         setNextEmail(result.email);
         setIsEmailDialogOpen(false);
         toast.success("Your email address has been updated.");
       }
-    } catch (error) {
+    } catch (emailError) {
       const message =
-        error instanceof Error ? error.message : "Unable to change your email address.";
+        emailError instanceof Error
+          ? emailError.message
+          : "Unable to change your email address.";
       setError(message);
       toast.error(message);
     } finally {
@@ -457,9 +455,11 @@ export function AccountPage() {
     try {
       await sendVerificationEmail();
       toast.success(`A verification email has been sent to ${user.email}.`);
-    } catch (error) {
+    } catch (verificationError) {
       const message =
-        error instanceof Error ? error.message : "Unable to send a verification email.";
+        verificationError instanceof Error
+          ? verificationError.message
+          : "Unable to send a verification email.";
       setError(message);
       toast.error(message);
     } finally {
@@ -473,9 +473,11 @@ export function AccountPage() {
     try {
       await refreshUser();
       toast.success("Email verification status refreshed.");
-    } catch (error) {
+    } catch (refreshError) {
       const message =
-        error instanceof Error ? error.message : "Unable to refresh verification status.";
+        refreshError instanceof Error
+          ? refreshError.message
+          : "Unable to refresh verification status.";
       setError(message);
       toast.error(message);
     } finally {
@@ -507,22 +509,24 @@ export function AccountPage() {
     try {
       const token = await user.getIdToken();
       const response = await fetch("/api/auth/delete-account", {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
+        headers: { authorization: `Bearer ${token}` },
         method: "POST",
       });
 
       if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to delete your account."));
+        throw new Error(
+          await parseApiError(response, "Unable to delete your account.")
+        );
       }
 
       await signOut();
       toast.success("Your account has been deleted.");
       router.replace("/");
-    } catch (error) {
+    } catch (deleteError) {
       const message =
-        error instanceof Error ? error.message : "Unable to delete your account.";
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Unable to delete your account.";
       setError(message);
       toast.error(message);
     } finally {
@@ -550,11 +554,13 @@ export function AccountPage() {
   return (
     <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
+        <AccountSectionNav />
+
         <div className="space-y-4">
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
           </div>
-          <div className="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
             {profile?.bannerURL ? (
               <div className="relative aspect-[3/1] w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -564,43 +570,17 @@ export function AccountPage() {
                   src={profile.bannerURL}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
-                <Button
-                  className={cn(
-                    "absolute right-4 top-4 bg-white/85 opacity-0 backdrop-blur-sm transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
-                    uploadingBanner && "opacity-100",
-                  )}
-                  disabled={uploadingBanner}
-                  onClick={() => bannerInputRef.current?.click()}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {uploadingBanner ? <Loader2 className="animate-spin" /> : <ImagePlus />}
-                  {uploadingBanner ? "Uploading cover..." : "Change cover"}
-                </Button>
               </div>
-            ) : (
-              <div className="flex h-12 items-center px-4 pt-3 md:px-6">
-                <Button
-                  className={cn(
-                    "text-muted-foreground opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
-                    uploadingBanner && "opacity-100",
-                  )}
-                  disabled={uploadingBanner}
-                  onClick={() => bannerInputRef.current?.click()}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  {uploadingBanner ? <Loader2 className="animate-spin" /> : <ImagePlus />}
-                  {uploadingBanner ? "Uploading cover..." : "Add cover"}
-                </Button>
-              </div>
-            )}
+            ) : null}
 
             <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
               <div className="flex items-center gap-4">
-                <div className={cn("flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg", profile?.bannerURL && "-mt-16")}>
+                <div
+                  className={cn(
+                    "flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg",
+                    profile?.bannerURL && "-mt-16"
+                  )}
+                >
                   {profile?.photoURL ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -613,7 +593,15 @@ export function AccountPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  <h1 className="text-4xl text-foreground sm:text-5xl">{displayNamePreview}</h1>
+                  <h1 className="text-4xl text-foreground sm:text-5xl">
+                    {displayNamePreview}
+                  </h1>
+                  {profile?.location ? (
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="size-4" />
+                      {profile.location}
+                    </p>
+                  ) : null}
                   <p className="text-sm text-muted-foreground">
                     Review your profile, security settings, and account status.
                   </p>
@@ -625,13 +613,17 @@ export function AccountPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                     Account email
                   </p>
-                  <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
+                  <p className="mt-2 text-sm text-foreground">
+                    {currentEmail ?? "Not available"}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                     Sign-in method
                   </p>
-                  <p className="mt-2 text-sm text-foreground">{providerLabel}</p>
+                  <p className="mt-2 text-sm text-foreground">
+                    {providerLabel}
+                  </p>
                 </div>
               </div>
             </div>
@@ -653,7 +645,8 @@ export function AccountPage() {
                 <h2 className="text-2xl text-foreground">Profile</h2>
               </div>
               <p className="text-sm text-muted-foreground">
-                Keep your collector profile current so your account details stay consistent across EduthArt.
+                Keep your collector profile current so your account details stay
+                consistent across EduthArt.
               </p>
             </div>
 
@@ -662,14 +655,36 @@ export function AccountPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   First name
                 </p>
-                <p className="mt-2 text-sm text-foreground">{firstName || "Not set"}</p>
+                <p className="mt-2 text-sm text-foreground">
+                  {firstName || "Not set"}
+                </p>
               </div>
               <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Last name
                 </p>
-                <p className="mt-2 text-sm text-foreground">{lastName || "Not set"}</p>
+                <p className="mt-2 text-sm text-foreground">
+                  {lastName || "Not set"}
+                </p>
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Location
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                {location || "Not set"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Biography
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm text-foreground">
+                {bio || "Not set"}
+              </p>
             </div>
 
             <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
@@ -678,8 +693,13 @@ export function AccountPage() {
               </p>
               {profile?.username ? (
                 <div className="mt-2 space-y-1">
-                  <p className="text-base text-foreground">@{profile.username}</p>
-                  <Link className="text-sm text-primary underline decoration-primary/30 underline-offset-4" href={buildArtistPageHref(profile.username)}>
+                  <p className="text-base text-foreground">
+                    @{profile.username}
+                  </p>
+                  <Link
+                    className="text-sm text-primary underline decoration-primary/30 underline-offset-4"
+                    href={buildArtistPageHref(profile.username)}
+                  >
                     View your personal art page
                   </Link>
                   <Button
@@ -694,100 +714,58 @@ export function AccountPage() {
                 </div>
               ) : (
                 <div className="mt-2 space-y-3">
-                  <p className="text-sm text-muted-foreground">Choose a username to create your personal art page link.</p>
-                  <Button onClick={() => setIsUsernameDialogOpen(true)} size="sm" type="button" variant="outline">
+                  <p className="text-sm text-muted-foreground">
+                    Choose a username to create your personal art page link.
+                  </p>
+                  <Button
+                    onClick={() => setIsUsernameDialogOpen(true)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
                     Choose username
                   </Button>
                 </div>
               )}
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Display name preview
-              </p>
-              <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
-            </div>
+            <ProfileImageField
+              aspectClassName="aspect-square"
+              busy={uploadingImage === "avatar"}
+              circular
+              description="Your picture appears next to your name across EduthArt. You can reposition and zoom before saving."
+              emptyLabel="No profile picture yet."
+              helpText={`Use a JPG, PNG, or WebP image up to 5 MB, ideally at least ${AVATAR_DIMENSIONS_LABEL} pixels.`}
+              imageUrl={profile?.photoURL ?? null}
+              inputId="profile-picture-upload"
+              onError={handleImageError}
+              onRemove={() => void handleRemoveImage("avatar")}
+              onSelect={(file) => setPendingImage({ file, kind: "avatar" })}
+              removeLabel="Remove picture"
+              title="Profile picture"
+              uploadLabel="Upload profile picture"
+            />
 
-            <div className="space-y-4 rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Profile banner
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Add a wide image for the personal page where people can view your art. Banners are
-                  saved at {BANNER_DIMENSIONS_LABEL} pixels (3:1), and you can reposition and zoom
-                  before saving.
-                </p>
-              </div>
+            <ProfileImageField
+              aspectClassName="aspect-[3/1]"
+              busy={uploadingImage === "banner"}
+              description={`Add a wide image for the personal page where people can view your art. Banners are saved at ${BANNER_DIMENSIONS_LABEL} pixels (3:1).`}
+              emptyLabel="No banner uploaded yet."
+              helpText={`Use a JPG, PNG, or WebP image up to 5 MB. For the sharpest result, start from an image at least ${BANNER_DIMENSIONS_LABEL} pixels.`}
+              imageUrl={profile?.bannerURL ?? null}
+              inputId="profile-banner-upload"
+              onError={handleImageError}
+              onRemove={() => void handleRemoveImage("banner")}
+              onSelect={(file) => setPendingImage({ file, kind: "banner" })}
+              removeLabel="Remove banner"
+              title="Profile banner"
+              uploadLabel="Upload profile banner"
+            />
 
-              <div className="overflow-hidden rounded-2xl border border-dashed border-primary/20 bg-white/70">
-                {profile?.bannerURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={`${displayNamePreview} banner preview`}
-                    className="aspect-[3/1] w-full object-cover"
-                    src={profile.bannerURL}
-                  />
-                ) : (
-                  <div className="bg-profile-banner flex aspect-[3/1] flex-col items-center justify-center gap-3 px-6 text-center">
-                    <ImagePlus className="size-6 text-primary" />
-                    <p className="text-sm text-muted-foreground">No banner uploaded yet.</p>
-                  </div>
-                )}
-              </div>
-
-              <Label className="sr-only" htmlFor="profile-banner-upload">
-                Upload profile banner
-              </Label>
-              <input
-                ref={bannerInputRef}
-                accept={ACCEPTED_BANNER_TYPES_ATTRIBUTE}
-                className="sr-only"
-                id="profile-banner-upload"
-                onChange={handleBannerFileChange}
-                type="file"
-              />
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  disabled={uploadingBanner}
-                  onClick={() => bannerInputRef.current?.click()}
-                  type="button"
-                  variant="outline"
-                >
-                  {uploadingBanner ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Uploading banner...
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus />
-                      Upload profile banner
-                    </>
-                  )}
-                </Button>
-                {profile?.bannerURL ? (
-                  <Button
-                    disabled={uploadingBanner}
-                    onClick={handleRemoveBanner}
-                    type="button"
-                    variant="ghost"
-                  >
-                    <Trash2 />
-                    Remove banner
-                  </Button>
-                ) : null}
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Use a JPG, PNG, or WebP image up to 5 MB. For the sharpest result, start from an
-                image at least {BANNER_DIMENSIONS_LABEL} pixels.
-              </p>
-            </div>
-
-            <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+            <Dialog
+              open={isProfileDialogOpen}
+              onOpenChange={setIsProfileDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button size="lg" type="button" variant="outline">
                   <UserRound />
@@ -798,7 +776,8 @@ export function AccountPage() {
                 <DialogHeader>
                   <DialogTitle>Edit profile</DialogTitle>
                   <DialogDescription>
-                    Update your first and last name without keeping the full form visible on the account page.
+                    Update the details collectors and artists see, without
+                    keeping the full form visible on the account page.
                   </DialogDescription>
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={handleSaveProfile}>
@@ -820,11 +799,38 @@ export function AccountPage() {
                       />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="account-location">Location</Label>
+                    <Input
+                      id="account-location"
+                      autoComplete="address-level2"
+                      maxLength={MAX_LOCATION_LENGTH}
+                      onChange={(event) => setLocation(event.target.value)}
+                      placeholder="Brooklyn, New York"
+                      value={location}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="account-bio">Biography</Label>
+                    <Textarea
+                      id="account-bio"
+                      maxLength={MAX_BIO_LENGTH}
+                      onChange={(event) => setBio(event.target.value)}
+                      placeholder="Tell collectors what you make, collect, or care about."
+                      rows={4}
+                      value={bio}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {bio.length}/{MAX_BIO_LENGTH} characters
+                    </p>
+                  </div>
                   <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Display name preview
                     </p>
-                    <p className="mt-2 text-base text-foreground">{displayNamePreview}</p>
+                    <p className="mt-2 text-base text-foreground">
+                      {displayNamePreview}
+                    </p>
                   </div>
                   <DialogFooter>
                     <Button disabled={savingProfile} type="submit">
@@ -848,7 +854,11 @@ export function AccountPage() {
               open={isUsernameDialogOpen}
               onUsernameChange={setUsernameDraft}
               saving={savingUsername}
-              title={profile?.username ? "Change your username" : "Choose your username"}
+              title={
+                profile?.username
+                  ? "Change your username"
+                  : "Choose your username"
+              }
               username={usernameDraft}
             />
           </section>
@@ -863,16 +873,22 @@ export function AccountPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Email
                 </p>
-                <p className="mt-2 text-sm text-foreground">{currentEmail ?? "Not available"}</p>
+                <p className="mt-2 text-sm text-foreground">
+                  {currentEmail ?? "Not available"}
+                </p>
               </div>
-              <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+              <Dialog
+                open={isEmailDialogOpen}
+                onOpenChange={setIsEmailDialogOpen}
+              >
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
                   <div className="space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Change email
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Open the email update flow in a focused modal instead of keeping another form in this panel.
+                      Open the email update flow in a focused modal instead of
+                      keeping another form in this panel.
                     </p>
                   </div>
                   <DialogTrigger asChild>
@@ -886,12 +902,15 @@ export function AccountPage() {
                   <DialogHeader>
                     <DialogTitle>Change email address</DialogTitle>
                     <DialogDescription>
-                      Enter your new email address. We&apos;ll send a confirmation link before the change takes effect.
+                      Enter your new email address. We&apos;ll send a
+                      confirmation link before the change takes effect.
                     </DialogDescription>
                   </DialogHeader>
                   <form className="space-y-4" onSubmit={handleEmailChange}>
                     <div className="space-y-2">
-                      <Label htmlFor="account-next-email">New email address</Label>
+                      <Label htmlFor="account-next-email">
+                        New email address
+                      </Label>
                       <Input
                         id="account-next-email"
                         type="email"
@@ -902,7 +921,11 @@ export function AccountPage() {
                     </div>
                     <DialogFooter>
                       <Button
-                        disabled={changingEmail || nextEmail.trim().toLowerCase() === (currentEmail ?? "").trim().toLowerCase()}
+                        disabled={
+                          changingEmail ||
+                          nextEmail.trim().toLowerCase() ===
+                            (currentEmail ?? "").trim().toLowerCase()
+                        }
                         type="submit"
                       >
                         {changingEmail ? (
@@ -935,7 +958,8 @@ export function AccountPage() {
                       <div>
                         <p className="font-medium">Your email is verified.</p>
                         <p className="text-muted-foreground">
-                          This address has already been confirmed for your EduthArt account.
+                          This address has already been confirmed for your
+                          EduthArt account.
                         </p>
                       </div>
                     </>
@@ -943,7 +967,9 @@ export function AccountPage() {
                     <>
                       <ShieldAlert className="mt-0.5 size-4 text-destructive" />
                       <div>
-                        <p className="font-medium">Your email still needs verification.</p>
+                        <p className="font-medium">
+                          Your email still needs verification.
+                        </p>
                         <p className="text-muted-foreground">
                           Verify your inbox link, then refresh the status here.
                         </p>
@@ -952,8 +978,8 @@ export function AccountPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                {!isEmailVerified ? (
+              {!isEmailVerified ? (
+                <div className="flex flex-col gap-3">
                   <Button
                     disabled={sendingVerification}
                     onClick={handleSendVerificationEmail}
@@ -972,57 +998,64 @@ export function AccountPage() {
                       </>
                     )}
                   </Button>
-                ) : null}
-                {!isEmailVerified ? (
-<Button
-                  disabled={refreshingVerification}
-                  onClick={handleRefreshVerification}
-                  type="button"
-                  variant="outline"
-                >
-                  {refreshingVerification  ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Refreshing verification status...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw />
-                      Refresh verification status
-                    </>
-                  )}
-                </Button>
-                ) : null}
-              </div>
+                  <Button
+                    disabled={refreshingVerification}
+                    onClick={handleRefreshVerification}
+                    type="button"
+                    variant="outline"
+                  >
+                    {refreshingVerification ? (
+                      <>
+                        <Loader2 className="animate-spin" />
+                        Refreshing verification status...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw />
+                        Refresh verification status
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : null}
               {hasPasswordProvider ? (
-                <Button
-                  disabled={resettingPassword}
-                  onClick={handlePasswordReset}
-                  type="button"
-                  variant="outline"
-                >
-                  {resettingPassword ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Sending reset link...
-                    </>
-                  ) : (
-                    <>
-                      <Mail />
-                      Send password reset email
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <ChangePasswordDialog onSubmit={handleChangePassword} />
+                  <Button
+                    disabled={resettingPassword}
+                    onClick={handlePasswordReset}
+                    type="button"
+                    variant="outline"
+                  >
+                    {resettingPassword ? (
+                      <>
+                        <Loader2 className="animate-spin" />
+                        Sending reset link...
+                      </>
+                    ) : (
+                      <>
+                        <Mail />
+                        Send password reset email
+                      </>
+                    )}
+                  </Button>
+                </div>
               ) : (
                 <Alert>
                   <AlertTitle>Password reset is not available here</AlertTitle>
                   <AlertDescription>
-                    This account signs in with Google, so there is no EduthArt password reset to send.
+                    This account signs in with {providerLabel}, so there is no
+                    EduthArt password to change or reset.
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button disabled={signingOut} onClick={handleSignOut} type="button" variant="outline">
+              <Button
+                disabled={signingOut}
+                onClick={handleSignOut}
+                type="button"
+                variant="outline"
+              >
                 {signingOut ? (
                   <>
                     <Loader2 className="animate-spin" />
@@ -1040,23 +1073,29 @@ export function AccountPage() {
             <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="size-5 text-primary" />
-                <h2 className="text-2xl text-foreground">Account information</h2>
+                <h2 className="text-2xl text-foreground">
+                  Account information
+                </h2>
               </div>
               <div className="grid gap-3">
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
                   Created: {formatAccountDate(profile?.createdAt ?? null)}
                 </div>
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Last profile update: {formatAccountDate(profile?.updatedAt ?? null)}
+                  Last profile update:{" "}
+                  {formatAccountDate(profile?.updatedAt ?? null)}
                 </div>
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Last sign-in sync: {formatAccountDate(profile?.lastLoginAt ?? null)}
+                  Last sign-in sync:{" "}
+                  {formatAccountDate(profile?.lastLoginAt ?? null)}
                 </div>
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Legal acceptance: {formatAccountDate(profile?.legal?.acceptedAt ?? null)}
+                  Legal acceptance:{" "}
+                  {formatAccountDate(profile?.legal?.acceptedAt ?? null)}
                 </div>
                 <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Legal version: {profile?.legal?.acceptedVersion ?? "Not available"}
+                  Legal version:{" "}
+                  {profile?.legal?.acceptedVersion ?? "Not available"}
                 </div>
               </div>
             </section>
@@ -1069,11 +1108,14 @@ export function AccountPage() {
             <h2 className="text-2xl">Delete account</h2>
           </div>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Deleting your account permanently removes your EduthArt login and the account profile data currently managed by this site.
-            Type DELETE below before continuing.
+            Deleting your account permanently removes your EduthArt login and
+            the account profile data currently managed by this site. Type DELETE
+            below before continuing.
           </p>
           <div className="max-w-sm space-y-2">
-            <Label htmlFor="delete-account-confirmation">Confirmation text</Label>
+            <Label htmlFor="delete-account-confirmation">
+              Confirmation text
+            </Label>
             <Input
               id="delete-account-confirmation"
               onChange={(event) => setDeleteConfirmation(event.target.value)}
@@ -1102,10 +1144,13 @@ export function AccountPage() {
         </section>
       </div>
 
-      <BannerCropDialog
-        file={pendingBannerFile}
-        onCancel={() => setPendingBannerFile(null)}
-        onCropped={handleCroppedBanner}
+      <ImageCropDialog
+        file={pendingImage?.file ?? null}
+        onCancel={() => setPendingImage(null)}
+        onCropped={handleCroppedImage}
+        spec={
+          pendingImage?.kind === "avatar" ? AVATAR_CROP_SPEC : BANNER_CROP_SPEC
+        }
       />
     </section>
   );

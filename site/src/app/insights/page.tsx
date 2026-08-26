@@ -49,14 +49,14 @@ export default async function InsightsPage() {
   const featuredPost = await client.fetch<SanityDocument>(
     FEATURED_POST_QUERY,
     {},
-    { next: { revalidate: 30 } },
+    { next: { revalidate: 30 } }
   );
 
   // Fetch all other posts
   const allPosts = await client.fetch<SanityDocument[]>(
     ALL_POSTS_QUERY,
     {},
-    { next: { revalidate: 30 } },
+    { next: { revalidate: 30 } }
   );
 
   // const categories = [

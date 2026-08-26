@@ -36,7 +36,7 @@ async function parseError(response: Response): Promise<AdminApiError> {
     return new AdminApiError(
       body.error?.code ?? `${response.status}`,
       body.error?.message ?? "Admin request failed.",
-      body.error?.details,
+      body.error?.details
     );
   } catch {
     return new AdminApiError(`${response.status}`, "Admin request failed.");
@@ -45,7 +45,7 @@ async function parseError(response: Response): Promise<AdminApiError> {
 
 async function adminRequest<TResponse>(
   input: string,
-  init?: RequestInit,
+  init?: RequestInit
 ): Promise<TResponse> {
   const response = await fetch(input, {
     credentials: "include",
@@ -67,13 +67,15 @@ async function adminRequest<TResponse>(
   return (await response.json()) as TResponse;
 }
 
-export async function createAdminSession(idToken: string): Promise<AdminAccess> {
+export async function createAdminSession(
+  idToken: string
+): Promise<AdminAccess> {
   const response = await adminRequest<{ access: AdminAccess }>(
     "/api/admin/session",
     {
       method: "POST",
       body: JSON.stringify({ idToken }),
-    },
+    }
   );
   return response.access;
 }
@@ -90,23 +92,28 @@ export async function getAdminAccessStatus(): Promise<AdminAccess> {
 
 export async function searchUsers(query: string): Promise<AdminUserSummary[]> {
   const response = await adminRequest<{ items?: AdminUserSummary[] }>(
-    `/api/admin/users?query=${encodeURIComponent(query)}`,
+    `/api/admin/users?query=${encodeURIComponent(query)}`
   );
   return response.items ?? [];
 }
 
-export async function getAdminUserDetails(uid: string): Promise<AdminUserDetail> {
+export async function getAdminUserDetails(
+  uid: string
+): Promise<AdminUserDetail> {
   return adminRequest<AdminUserDetail>(`/api/admin/users/${uid}`);
 }
 
 export async function listAdminRoles(): Promise<AdminRoleRecord[]> {
   const response = await adminRequest<{ items?: AdminRoleRecord[] }>(
-    "/api/admin/roles",
+    "/api/admin/roles"
   );
   return response.items ?? [];
 }
 
-export async function grantAdminRole(email: string, role: "admin" | "super_admin") {
+export async function grantAdminRole(
+  email: string,
+  role: "admin" | "super_admin"
+) {
   return adminRequest("/api/admin/roles", {
     method: "POST",
     body: JSON.stringify({ email, role }),
@@ -122,7 +129,7 @@ export async function revokeAdminRole(uid: string) {
 export async function updateUserModerationState(
   uid: string,
   action: string,
-  reason: string,
+  reason: string
 ) {
   return adminRequest(`/api/admin/users/${uid}/moderation`, {
     method: "POST",
@@ -132,7 +139,7 @@ export async function updateUserModerationState(
 
 export async function listModerationQueue(): Promise<ModerationQueueItem[]> {
   const response = await adminRequest<{ items?: ModerationQueueItem[] }>(
-    "/api/admin/moderation",
+    "/api/admin/moderation"
   );
   return response.items ?? [];
 }
@@ -140,7 +147,7 @@ export async function listModerationQueue(): Promise<ModerationQueueItem[]> {
 export async function moderateDeck(
   publicDeckId: string,
   action: "warn" | "hide" | "remove",
-  reason: string,
+  reason: string
 ) {
   return adminRequest(`/api/admin/public-decks/${publicDeckId}/moderation`, {
     method: "POST",
@@ -149,16 +156,16 @@ export async function moderateDeck(
 }
 
 export async function getPublicDeckDetails(
-  publicDeckId: string,
+  publicDeckId: string
 ): Promise<PublicDeckSummary | null> {
   return adminRequest<PublicDeckSummary | null>(
-    `/api/admin/public-decks/${publicDeckId}`,
+    `/api/admin/public-decks/${publicDeckId}`
   );
 }
 
 export async function listRefundRequests(): Promise<RefundRequestRecord[]> {
   const response = await adminRequest<{ items?: RefundRequestRecord[] }>(
-    "/api/admin/refunds",
+    "/api/admin/refunds"
   );
   return response.items ?? [];
 }
@@ -166,7 +173,7 @@ export async function listRefundRequests(): Promise<RefundRequestRecord[]> {
 export async function updateRefundRequestStatus(
   refundRequestId: string,
   status: string,
-  adminNotes: string,
+  adminNotes: string
 ) {
   return adminRequest(`/api/admin/refunds/${refundRequestId}`, {
     method: "POST",

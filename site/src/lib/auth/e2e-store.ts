@@ -2,12 +2,20 @@ import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { createEmptyListingStudio, type ListingStudioDraft, type ShippingOriginAddress } from "@/lib/artists/listing-flow";
-import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
+import {
+  createEmptyListingStudio,
+  type ListingStudioDraft,
+  type ShippingOriginAddress,
+} from "@/lib/artists/listing-flow";
+import {
+  buildDisplayName,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
 
 type SeedProfileArgs = {
   authProviders?: string[];
   bannerURL?: string | null;
+  bio?: string | null;
   createdAt?: string | null;
   displayName?: string | null;
   email?: string | null;
@@ -15,7 +23,9 @@ type SeedProfileArgs = {
   lastLoginAt?: string | null;
   lastName?: string | null;
   legal?: AccountProfile["legal"];
+  location?: string | null;
   photoURL?: string | null;
+  photoURLManagedByUser?: boolean;
   shippingOriginAddress?: ShippingOriginAddress | null;
   uid: string;
   username?: string | null;
@@ -25,7 +35,9 @@ const E2E_STORE_DIR = join(tmpdir(), "eduthart-e2e-account-store");
 const E2E_LISTING_FLOW_DIR = join(tmpdir(), "eduthart-e2e-listing-flow-store");
 
 export function isE2EAuthEnabled() {
-  return process.env.E2E_AUTH === "1" || process.env.NEXT_PUBLIC_E2E_AUTH === "1";
+  return (
+    process.env.E2E_AUTH === "1" || process.env.NEXT_PUBLIC_E2E_AUTH === "1"
+  );
 }
 
 function getProfilePath(uid: string) {
@@ -39,6 +51,7 @@ async function ensureStoreDir() {
 export async function seedE2EAccountProfile({
   authProviders,
   bannerURL,
+  bio,
   createdAt,
   displayName,
   email,
@@ -46,7 +59,9 @@ export async function seedE2EAccountProfile({
   lastLoginAt,
   lastName,
   legal,
+  location,
   photoURL,
+  photoURLManagedByUser,
   shippingOriginAddress,
   uid,
   username,
@@ -58,6 +73,7 @@ export async function seedE2EAccountProfile({
   const profile: AccountProfile = {
     authProviders: authProviders?.length ? authProviders : ["password"],
     bannerURL: bannerURL ?? null,
+    bio: bio?.trim() || null,
     createdAt: createdAt ?? now,
     displayName:
       displayName?.trim() ||
@@ -73,13 +89,17 @@ export async function seedE2EAccountProfile({
       ({
         acceptedAt: now,
         acceptedVersion: "e2e",
-        acceptedVia: authProviders?.includes("google") ? "google" : "email_password",
+        acceptedVia: authProviders?.includes("google")
+          ? "google"
+          : "email_password",
         privacyPolicyAcceptedAt: now,
         privacyPolicyPath: "/legal/privacy-policy",
         termsOfServiceAcceptedAt: now,
         termsOfServicePath: "/legal/terms-of-service",
       } satisfies NonNullable<AccountProfile["legal"]>),
+    location: location?.trim() || null,
     photoURL: photoURL ?? null,
+    photoURLManagedByUser: photoURLManagedByUser ?? false,
     shippingOriginAddress: shippingOriginAddress ?? null,
     uid,
     updatedAt: now,
@@ -102,7 +122,7 @@ export async function getE2EAccountProfile(uid: string) {
 
 export async function updateE2EAccountProfile(
   uid: string,
-  updates: Partial<Pick<AccountProfile, "bannerURL" | "displayName" | "email" | "firstName" | "lastName" | "shippingOriginAddress" | "updatedAt" | "username">>,
+  updates: Partial<AccountProfile>
 ) {
   const current = await getE2EAccountProfile(uid);
 
@@ -138,14 +158,20 @@ export async function getE2EListingFlow(uid: string) {
   }
 }
 
-export async function seedE2EListingFlow(uid: string, address?: ShippingOriginAddress | null) {
+export async function seedE2EListingFlow(
+  uid: string,
+  address?: ShippingOriginAddress | null
+) {
   const flow = createEmptyListingStudio({ existingAddress: address ?? null });
   await ensureListingFlowDir();
   await fs.writeFile(getListingFlowPath(uid), JSON.stringify(flow), "utf8");
   return flow;
 }
 
-export async function updateE2EListingFlow(uid: string, flow: ListingStudioDraft) {
+export async function updateE2EListingFlow(
+  uid: string,
+  flow: ListingStudioDraft
+) {
   await ensureListingFlowDir();
   await fs.writeFile(getListingFlowPath(uid), JSON.stringify(flow), "utf8");
   return flow;

@@ -38,7 +38,9 @@ export function UsernameDialog({
   onUsernameChange,
 }: UsernameDialogProps) {
   const normalizedUsername = username.trim().replace(/^@+/, "").toLowerCase();
-  const previewHref = normalizedUsername ? buildArtistPageHref(normalizedUsername) : "/artists/yourname";
+  const previewHref = normalizedUsername
+    ? buildArtistPageHref(normalizedUsername)
+    : "/artists/yourname";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,8 +61,8 @@ export function UsernameDialog({
               onChange={(event) => onUsernameChange(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              This creates your public page at {previewHref}. Use 3-24 letters, numbers,
-              hyphens, or underscores.
+              This creates your public page at {previewHref}. Use 3-24 letters,
+              numbers, hyphens, or underscores.
             </p>
           </div>
           <DialogFooter>

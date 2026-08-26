@@ -21,7 +21,9 @@ export default function AdminUsersPage() {
     try {
       setUsers(await searchUsers(query));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "User search failed.");
+      toast.error(
+        error instanceof Error ? error.message : "User search failed."
+      );
     } finally {
       setLoading(false);
     }
@@ -66,13 +68,18 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="font-medium">{user.displayName}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {[user.email ?? user.username ?? user.uid, `status: ${user.accountStatus}`]
+                    {[
+                      user.email ?? user.username ?? user.uid,
+                      `status: ${user.accountStatus}`,
+                    ]
                       .filter(Boolean)
                       .join(" • ")}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {[
-                      user.publishingDisabled ? "publishing disabled" : "publishing enabled",
+                      user.publishingDisabled
+                        ? "publishing disabled"
+                        : "publishing enabled",
                       `${user.tier} tier`,
                       `updated ${formatDateTime(user.updatedAt)}`,
                     ].join(" • ")}

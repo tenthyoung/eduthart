@@ -96,7 +96,7 @@ const ScrollVelocity = ({
             {brand}
           </span>
         ))}
-      </div>,
+      </div>
     );
   }
 

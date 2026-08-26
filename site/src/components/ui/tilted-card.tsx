@@ -76,7 +76,7 @@ export default function TiltedCard({
       className={cn(
         "relative w-full h-full transform-gpu transition-transform will-change-transform",
         !isEffectDisabled && "[perspective:800px]",
-        className,
+        className
       )}
       style={{
         height: containerHeight,

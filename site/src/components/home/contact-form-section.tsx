@@ -13,7 +13,8 @@ export const ContactFormSection = () => {
         <div className="text-center mb-16">
           <MotionFade>
             <Heading variant="h2" className="mb-4">
-              Ready to continue the <span className="text-primary">conversation?</span>
+              Ready to continue the{" "}
+              <span className="text-primary">conversation?</span>
             </Heading>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Reach out for private viewings, acquisition inquiries, and

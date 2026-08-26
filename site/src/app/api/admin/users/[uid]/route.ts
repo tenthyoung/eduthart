@@ -5,7 +5,7 @@ import { getAdminUserDetails, requireAdmin } from "@/lib/admin/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ uid: string }> },
+  { params }: { params: Promise<{ uid: string }> }
 ) {
   try {
     const decodedToken = await requireAdminSession();

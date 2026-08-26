@@ -92,6 +92,23 @@ email template:
 The handler expects Firebase's standard `mode`, `oobCode`, `apiKey`, `lang`,
 and optional `continueUrl` query parameters.
 
+## Commerce and notifications
+
+Buying an artwork uses Stripe-hosted Checkout, and account and marketplace
+activity is delivered through an in-app notification centre plus Resend email.
+Both need environment configuration before they work outside the test suite —
+see [docs/commerce-setup.md](./docs/commerce-setup.md) for the keys, the webhook
+endpoint, and how a purchase is recorded.
+
+Without Stripe keys the rest of the site runs normally; checkout reports that
+payments are not configured.
+
+## Sign in with Apple
+
+The sign-in and sign-up pages offer Google and Apple. Apple has to be enabled in
+the Firebase console before the button works — see
+[docs/commerce-setup.md](./docs/commerce-setup.md#apple-sign-in).
+
 ## How do we get the animations?
 
 1. GSAP

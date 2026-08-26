@@ -12,8 +12,16 @@ import type { PublicDeckReport, PublicDeckSummary } from "@/lib/admin/types";
 
 const moderationActions = [
   { action: "warn", label: "Warn owner", variant: "outline" as const },
-  { action: "hide", label: "Hide from browse", variant: "destructive" as const },
-  { action: "remove", label: "Remove publication", variant: "destructive" as const },
+  {
+    action: "hide",
+    label: "Hide from browse",
+    variant: "destructive" as const,
+  },
+  {
+    action: "remove",
+    label: "Remove publication",
+    variant: "destructive" as const,
+  },
 ] as const;
 
 function formatReportDate(value: string | null | undefined) {
@@ -45,7 +53,9 @@ function ReportCard({ report }: { report: PublicDeckReport }) {
       ) : null}
       {report.reporterUid || report.reporterEmail ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          {[report.reporterUid, report.reporterEmail].filter(Boolean).join(" • ")}
+          {[report.reporterUid, report.reporterEmail]
+            .filter(Boolean)
+            .join(" • ")}
         </p>
       ) : null}
     </div>
@@ -65,7 +75,9 @@ export default function AdminModerationDetailPage() {
     try {
       setDeck(await getPublicDeckDetails(publicDeckId));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Deck failed to load.");
+      toast.error(
+        error instanceof Error ? error.message : "Deck failed to load."
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +96,9 @@ export default function AdminModerationDetailPage() {
       setReason("");
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Moderation failed.");
+      toast.error(
+        error instanceof Error ? error.message : "Moderation failed."
+      );
     } finally {
       setSubmittingAction(null);
     }
@@ -95,7 +109,11 @@ export default function AdminModerationDetailPage() {
       title={deck?.deckSnapshot?.name ?? "Moderation detail"}
       description="Review current publication state and apply a moderation action that resolves all open reports for this deck."
       actions={
-        <Button variant="outline" onClick={() => void load()} disabled={loading}>
+        <Button
+          variant="outline"
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
       }
@@ -115,12 +133,15 @@ export default function AdminModerationDetailPage() {
             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
               <span>{deck.visibility ?? "unknown visibility"}</span>
               <span>•</span>
-              <span>{deck.publicationStatus ?? "unknown publication state"}</span>
+              <span>
+                {deck.publicationStatus ?? "unknown publication state"}
+              </span>
               <span>•</span>
               <span>{deck.moderationStatus ?? "unknown moderation state"}</span>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
-              {deck.deckSnapshot?.description || "No description on this deck snapshot."}
+              {deck.deckSnapshot?.description ||
+                "No description on this deck snapshot."}
             </p>
             {deck.moderationReason ? (
               <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4 text-sm text-muted-foreground">
@@ -149,7 +170,8 @@ export default function AdminModerationDetailPage() {
                 Take action
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Reason text is required and will be stored on the deck and moderation history.
+                Reason text is required and will be stored on the deck and
+                moderation history.
               </p>
             </div>
             <Textarea

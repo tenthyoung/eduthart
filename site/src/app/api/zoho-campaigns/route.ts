@@ -34,7 +34,7 @@ async function getAccessToken(): Promise<string> {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
-    },
+    }
   );
 
   const data = await res.json();
@@ -61,13 +61,13 @@ export async function POST(req: Request) {
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
       return NextResponse.json(
         { error: "Emails array is required and must not be empty" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (!listKey) {
       return NextResponse.json(
         { error: "List key is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -76,14 +76,14 @@ export async function POST(req: Request) {
     if (invalid.length) {
       return NextResponse.json(
         { error: `Invalid email addresses: ${invalid.join(", ")}` },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (emails.length > 10) {
       return NextResponse.json(
         { error: "Maximum 10 emails per request" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     // ---------- call Zoho ----------
     const emailIds = emails.join(",");
     const url = `https://campaigns.zoho.${process.env.ZOHO_DC}/api/v1.1/addlistsubscribersinbulk?listkey=${listKey}&emailids=${encodeURIComponent(
-      emailIds,
+      emailIds
     )}&resfmt=JSON`;
 
     const zohoRes = await fetch(url, {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
           error: "Failed to add contacts to Zoho Campaigns",
           details: zohoData,
         },
-        { status: zohoRes.status || 500 },
+        { status: zohoRes.status || 500 }
       );
     }
 
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         listkey: zohoData.listkey,
         listname: zohoData.listname,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error("Zoho bulk API error:", error);
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
         error: "Failed to process request",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 const artistApplicationSteps = [
   {
     title: "Preparation",
-    summary: "Review the requirements and gather everything you need before you begin.",
+    summary:
+      "Review the requirements and gather everything you need before you begin.",
     status: "current",
   },
   {
@@ -49,8 +50,16 @@ const preparationChecklist = [
 const applicationFields = [
   { id: "artist-name", label: "Full name", placeholder: "Your full name" },
   { id: "artist-email", label: "Email", placeholder: "you@example.com" },
-  { id: "artist-location", label: "Location", placeholder: "City, State / Country" },
-  { id: "artist-website", label: "Portfolio or website", placeholder: "https://yourportfolio.com" },
+  {
+    id: "artist-location",
+    label: "Location",
+    placeholder: "City, State / Country",
+  },
+  {
+    id: "artist-website",
+    label: "Portfolio or website",
+    placeholder: "https://yourportfolio.com",
+  },
 ] as const;
 
 const progressPercentage = 20;
@@ -71,7 +80,8 @@ export default function ApplyToBeAnArtistPage() {
                 </Heading>
                 <p className="text-lg text-muted-foreground">
                   This page is your application workspace. Start by confirming
-                  you have everything prepared, then move through each step in order.
+                  you have everything prepared, then move through each step in
+                  order.
                 </p>
               </div>
 
@@ -95,11 +105,14 @@ export default function ApplyToBeAnArtistPage() {
                   Step 1 of {artistApplicationSteps.length}: Preparation
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Confirm your materials before you start entering application details.
+                  Confirm your materials before you start entering application
+                  details.
                 </p>
               </div>
               <div className="min-w-[8rem] text-left lg:text-right">
-                <p className="text-3xl font-semibold text-primary">{progressPercentage}%</p>
+                <p className="text-3xl font-semibold text-primary">
+                  {progressPercentage}%
+                </p>
                 <p className="text-sm text-muted-foreground">Complete</p>
               </div>
             </div>
@@ -160,8 +173,9 @@ export default function ApplyToBeAnArtistPage() {
                 Have these ready before you begin
               </Heading>
               <p className="text-sm leading-6 text-muted-foreground">
-                The application works best when you can finish it in one sitting.
-                These are the items you should have prepared before moving to the next step.
+                The application works best when you can finish it in one
+                sitting. These are the items you should have prepared before
+                moving to the next step.
               </p>
 
               <div className="mt-6 rounded-[1.5rem] border border-border/70 bg-muted/35 p-5">
@@ -169,7 +183,10 @@ export default function ApplyToBeAnArtistPage() {
                   {preparationChecklist.map((item) => (
                     <div key={item} className="flex items-center gap-3">
                       <Checkbox checked id={item} />
-                      <Label className="block font-normal leading-6" htmlFor={item}>
+                      <Label
+                        className="block font-normal leading-6"
+                        htmlFor={item}
+                      >
                         {item}
                       </Label>
                     </div>
@@ -180,7 +197,8 @@ export default function ApplyToBeAnArtistPage() {
               <div className="mt-8">
                 <h3 className="text-xl text-foreground">Application preview</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Next, the artist will fill out profile details before moving into artwork uploads and final review.
+                  Next, the artist will fill out profile details before moving
+                  into artwork uploads and final review.
                 </p>
               </div>
 

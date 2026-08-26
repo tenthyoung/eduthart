@@ -1,6 +1,14 @@
-import { normalizeListingStudio, type ListingItemDraft, type ListingStudioDraft } from "@/lib/artists/listing-flow";
-import { findE2EAccountProfileByUsername, getE2EListingFlow, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
-import { getFirebaseAdminDb } from "@/lib/firebase/admin";
+import type { ListingItemDraft } from "@/lib/artists/listing-flow";
+import {
+  isPubliclyListed,
+  loadListingStudio,
+} from "@/lib/artists/listing-store";
+import {
+  buildProfileDisplayName,
+  findAccountProfileByUsername,
+  loadAccountProfile,
+} from "@/lib/auth/profile-store";
+import { normalizeCurrency } from "@/lib/commerce/money";
 
 export type PublicArtworkRecord = {
   artistName: string;
@@ -9,51 +17,78 @@ export type PublicArtworkRecord = {
   item: ListingItemDraft;
 };
 
-export async function getPublicArtwork(username: string, itemId: string): Promise<PublicArtworkRecord | null> {
-  const normalizedUsername = username.trim().toLowerCase();
+export function buildArtworkHref(username: string, itemId: string) {
+  return `/artists/${username}/art/${itemId}`;
+}
 
-  if (isE2EAuthEnabled()) {
-    const profile = await findE2EAccountProfileByUsername(normalizedUsername);
-    if (!profile) return null;
-    const studio = await getE2EListingFlow(profile.uid);
-    const item = studio ? normalizeListingStudio(studio).items.find((candidate) => candidate.id === itemId) : null;
-    if (!item?.salesVisibility.public || item.salesVisibility.draft) return null;
-    return {
-      artistName: profile.displayName || [profile.firstName, profile.lastName].filter(Boolean).join(" ") || `@${profile.username}`,
-      artistUid: profile.uid,
-      artistUsername: profile.username ?? normalizedUsername,
-      item,
-    };
+export async function getPublicArtwork(
+  username: string,
+  itemId: string
+): Promise<PublicArtworkRecord | null> {
+  const profile = await findAccountProfileByUsername(username);
+
+  if (!profile) {
+    return null;
   }
 
-  const db = getFirebaseAdminDb();
-  const profileSnapshot = await db.collection("users").where("usernameLower", "==", normalizedUsername).limit(1).get();
-  const profileDocument = profileSnapshot.docs[0];
-  if (!profileDocument) return null;
-  const studioSnapshot = await profileDocument.ref.collection("seller").doc("listing_flow").get();
-  if (!studioSnapshot.exists) return null;
-  const item = normalizeListingStudio(studioSnapshot.data() as ListingStudioDraft).items.find((candidate) => candidate.id === itemId);
-  if (!item?.salesVisibility.public || item.salesVisibility.draft) return null;
-  const profile = profileDocument.data() as Record<string, unknown>;
-  const fullName = [profile.firstName, profile.lastName].filter((value) => typeof value === "string" && value).join(" ");
+  const studio = await loadListingStudio(profile.uid);
+  const item =
+    studio?.items.find((candidate) => candidate.id === itemId) ?? null;
+
+  if (!item || !isPubliclyListed(item)) {
+    return null;
+  }
+
   return {
-    artistName: (typeof profile.displayName === "string" && profile.displayName) || fullName || `@${normalizedUsername}`,
-    artistUid: profileDocument.id,
-    artistUsername: normalizedUsername,
+    artistName: buildProfileDisplayName(profile),
+    artistUid: profile.uid,
+    artistUsername: profile.username ?? username.trim().toLowerCase(),
+    item,
+  };
+}
+
+/** Look up a published artwork when only the seller's uid is known. */
+export async function getPublicArtworkByUid(
+  artistUid: string,
+  itemId: string
+): Promise<PublicArtworkRecord | null> {
+  const profile = await loadAccountProfile(artistUid);
+
+  if (!profile?.username) {
+    return null;
+  }
+
+  const studio = await loadListingStudio(artistUid);
+  const item =
+    studio?.items.find((candidate) => candidate.id === itemId) ?? null;
+
+  if (!item) {
+    return null;
+  }
+
+  return {
+    artistName: buildProfileDisplayName(profile),
+    artistUid,
+    artistUsername: profile.username,
     item,
   };
 }
 
 export function toCartArtwork(record: PublicArtworkRecord) {
   const { item } = record;
+
   return {
     artistName: record.artistName,
+    artistUid: record.artistUid,
     artistUsername: record.artistUsername,
     availability: item.pricingInventory.availability,
-    currency: item.pricingInventory.currency || "USD",
+    currency: normalizeCurrency(item.pricingInventory.currency),
+    href: buildArtworkHref(record.artistUsername, item.id),
     imageUrl: item.media.mainImageUrl,
     itemId: item.id,
     price: item.pricingInventory.price,
     title: item.artworkDetails.title || "Untitled artwork",
   };
 }
+
+export type CartArtwork = ReturnType<typeof toCartArtwork>;

@@ -5,7 +5,7 @@ import { requireAdmin, updateRefundRequestStatus } from "@/lib/admin/server";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ refundRequestId: string }> },
+  { params }: { params: Promise<{ refundRequestId: string }> }
 ) {
   try {
     const decodedToken = await requireAdminSession();
@@ -16,7 +16,7 @@ export async function POST(
       access.uid,
       refundRequestId,
       body?.status?.toString() ?? "",
-      body?.adminNotes?.toString().trim() ?? "",
+      body?.adminNotes?.toString().trim() ?? ""
     );
     return NextResponse.json(result);
   } catch (error) {

@@ -1,6 +1,6 @@
 # EduthArt marketplace commerce
 
-EduthArt will use a one-artist-per-checkout marketplace model built on Stripe Connect destination charges and Stripe-hosted Checkout. This document is an implementation and operations reference; it does not mean payment checkout is already enabled.
+EduthArt uses a one-artist-per-checkout marketplace model built on Stripe-hosted Checkout. This document is the implementation and operations reference for the model as a whole; see [Implementation status](#implementation-status) for what is built today, and [site/docs/commerce-setup.md](../site/docs/commerce-setup.md) for the keys and webhook endpoint it needs.
 
 ## Buyer flow
 
@@ -31,6 +31,23 @@ EduthArt will use a one-artist-per-checkout marketplace model built on Stripe Co
 - Reservation duration.
 - Supported seller and buyer countries.
 - Shipping insurance and signature thresholds.
+
+## Implementation status
+
+Built:
+
+- Persistent cart, one artist per checkout, and server-side reload of price, availability, and seller at checkout.
+- A thirty-minute reservation per original, taken before Stripe is involved and released when a checkout expires or is abandoned.
+- Stripe-hosted Checkout, plus saved cards through Checkout in setup mode.
+- Signature-verified webhook fulfilment, and an independent server-side verification from the success page. Both run the same idempotent path; the browser redirect is never accepted as proof of payment.
+- Immutable order snapshots, purchase history, printable invoices, and buyer, seller, and saved-artwork notifications.
+- Wishlist and cart writes require authentication, and aggregate save counts are updated atomically.
+
+Not built:
+
+- Stripe Connect destination charges. The platform is currently the merchant of record and there is no artist payout or application fee; artists are not onboarded as connected accounts.
+- Shippo. Shipping uses the artist's own stated domestic rate from their listing, not live rates, and no labels or tracking are created.
+- Tax calculation, refunds through Stripe, and dispute handling.
 
 ## Primary references
 

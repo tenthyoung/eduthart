@@ -10,12 +10,12 @@ export function notifyUsernameUpdated(username: string | null) {
   window.dispatchEvent(
     new CustomEvent<string | null>(USERNAME_UPDATED_EVENT, {
       detail: username,
-    }),
+    })
   );
 }
 
 export function subscribeToUsernameUpdates(
-  callback: (username: string | null) => void,
+  callback: (username: string | null) => void
 ) {
   if (typeof window === "undefined") {
     return () => undefined;

@@ -18,7 +18,9 @@ export default function AdminModerationPage() {
     try {
       setItems(await listModerationQueue());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Queue failed to load.");
+      toast.error(
+        error instanceof Error ? error.message : "Queue failed to load."
+      );
     } finally {
       setLoading(false);
     }
@@ -33,7 +35,11 @@ export default function AdminModerationPage() {
       title="Moderation queue"
       description="Review reported decks, inspect live publication state, and take warn, hide, or remove actions through the server-verified admin backend."
       actions={
-        <Button variant="outline" onClick={() => void load()} disabled={loading}>
+        <Button
+          variant="outline"
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
       }
@@ -42,7 +48,9 @@ export default function AdminModerationPage() {
         <div className="space-y-3">
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {loading ? "Loading moderation queue..." : "No reported decks right now."}
+              {loading
+                ? "Loading moderation queue..."
+                : "No reported decks right now."}
             </p>
           ) : (
             items.map((item) => (

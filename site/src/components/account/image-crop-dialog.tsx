@@ -19,14 +19,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import {
-  BANNER_ASPECT_RATIO,
-  BANNER_DIMENSIONS_LABEL,
-  BANNER_HEIGHT,
-  BANNER_OUTPUT_QUALITY,
-  BANNER_OUTPUT_TYPE,
-  BANNER_WIDTH,
-} from "@/lib/profile/banner";
+import { IMAGE_OUTPUT_QUALITY, IMAGE_OUTPUT_TYPE } from "@/lib/profile/images";
+import { cn } from "@/lib/utils";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
@@ -43,10 +37,22 @@ function loadImage(src: string) {
     const image = new Image();
 
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to read the selected image."));
+    image.onerror = () =>
+      reject(new Error("Unable to read the selected image."));
     image.src = src;
   });
 }
+
+export type ImageCropSpec = {
+  /** Rendered as a circle in the frame, for avatars. */
+  circular?: boolean;
+  description: string;
+  outputHeight: number;
+  outputWidth: number;
+  submitLabel: string;
+  submittingLabel: string;
+  title: string;
+};
 
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
@@ -59,26 +65,49 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
 
         reject(new Error("Unable to crop the selected image."));
       },
-      BANNER_OUTPUT_TYPE,
-      BANNER_OUTPUT_QUALITY,
+      IMAGE_OUTPUT_TYPE,
+      IMAGE_OUTPUT_QUALITY
     );
   });
 }
 
-function buildCroppedFileName(fileName: string) {
-  const base = fileName.replace(/\.[^./\\]+$/, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
-  return `${base || "banner"}-${BANNER_WIDTH}x${BANNER_HEIGHT}.jpg`;
+function buildCroppedFileName(fileName: string, width: number, height: number) {
+  const base = fileName
+    .replace(/\.[^./\\]+$/, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-");
+  return `${base || "image"}-${width}x${height}.jpg`;
 }
 
-export type BannerCropDialogProps = {
+export type ImageCropDialogProps = {
   file: File | null;
   onCancel: () => void;
   onCropped: (file: File) => void | Promise<void>;
+  spec: ImageCropSpec;
 };
 
-export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialogProps) {
+/**
+ * Drag-and-zoom cropper for any fixed-ratio profile image.
+ *
+ * The banner and the profile picture differ only in output size and framing,
+ * so the interaction lives here once and each caller supplies its own spec.
+ */
+export function ImageCropDialog({
+  file,
+  onCancel,
+  onCropped,
+  spec,
+}: ImageCropDialogProps) {
+  const outputWidth = spec.outputWidth;
+  const outputHeight = spec.outputHeight;
+  const aspectRatio = outputWidth / outputHeight;
+  const dimensionsLabel = `${outputWidth} × ${outputHeight}`;
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const dragStateRef = useRef<{ offset: Offset; pointerId: number; x: number; y: number } | null>(null);
+  const dragStateRef = useRef<{
+    offset: Offset;
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const hasCenteredRef = useRef(false);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -88,16 +117,20 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const frameHeight = frameWidth / BANNER_ASPECT_RATIO;
+  const frameHeight = frameWidth / aspectRatio;
   const coverScale =
     image && frameWidth > 0
-      ? Math.max(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight)
+      ? Math.max(
+          frameWidth / image.naturalWidth,
+          frameHeight / image.naturalHeight
+        )
       : 0;
   const renderScale = coverScale * zoom;
   const renderedWidth = image ? image.naturalWidth * renderScale : 0;
   const renderedHeight = image ? image.naturalHeight * renderScale : 0;
   const isLowResolution =
-    image !== null && (image.naturalWidth < BANNER_WIDTH || image.naturalHeight < BANNER_HEIGHT);
+    image !== null &&
+    (image.naturalWidth < outputWidth || image.naturalHeight < outputHeight);
 
   // The dialog body mounts after this component's effects run, so measure the
   // frame from a callback ref instead of a layout effect.
@@ -128,7 +161,7 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
       x: clamp(next.x, Math.min(0, frameWidth - renderedWidth), 0),
       y: clamp(next.y, Math.min(0, frameHeight - renderedHeight), 0),
     }),
-    [frameHeight, frameWidth, renderedHeight, renderedWidth],
+    [frameHeight, frameWidth, renderedHeight, renderedWidth]
   );
 
   useEffect(() => {
@@ -156,7 +189,9 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
       .catch((loadError: unknown) => {
         if (!cancelled) {
           setError(
-            loadError instanceof Error ? loadError.message : "Unable to read the selected image.",
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to read the selected image."
           );
         }
       });
@@ -175,12 +210,22 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
 
     if (!hasCenteredRef.current) {
       hasCenteredRef.current = true;
-      setOffset({ x: (frameWidth - renderedWidth) / 2, y: (frameHeight - renderedHeight) / 2 });
+      setOffset({
+        x: (frameWidth - renderedWidth) / 2,
+        y: (frameHeight - renderedHeight) / 2,
+      });
       return;
     }
 
     setOffset((current) => clampOffset(current));
-  }, [clampOffset, frameHeight, frameWidth, image, renderedHeight, renderedWidth]);
+  }, [
+    clampOffset,
+    frameHeight,
+    frameWidth,
+    image,
+    renderedHeight,
+    renderedWidth,
+  ]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!image) {
@@ -207,7 +252,7 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
       clampOffset({
         x: dragState.offset.x + (event.clientX - dragState.x),
         y: dragState.offset.y + (event.clientY - dragState.y),
-      }),
+      })
     );
   };
 
@@ -247,7 +292,10 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
     const baseHeight = image ? image.naturalHeight * coverScale : 0;
 
     setZoom(MIN_ZOOM);
-    setOffset({ x: (frameWidth - baseWidth) / 2, y: (frameHeight - baseHeight) / 2 });
+    setOffset({
+      x: (frameWidth - baseWidth) / 2,
+      y: (frameHeight - baseHeight) / 2,
+    });
   };
 
   const handleApply = async () => {
@@ -260,8 +308,8 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
 
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = BANNER_WIDTH;
-      canvas.height = BANNER_HEIGHT;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
 
       const context = canvas.getContext("2d");
 
@@ -271,7 +319,7 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
 
       context.imageSmoothingQuality = "high";
       context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, BANNER_WIDTH, BANNER_HEIGHT);
+      context.fillRect(0, 0, outputWidth, outputHeight);
       context.drawImage(
         image,
         -offset.x / renderScale,
@@ -280,17 +328,27 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
         frameHeight / renderScale,
         0,
         0,
-        BANNER_WIDTH,
-        BANNER_HEIGHT,
+        outputWidth,
+        outputHeight
       );
 
       const blob = await canvasToBlob(canvas);
 
       await onCropped(
-        new File([blob], buildCroppedFileName(file.name), { type: BANNER_OUTPUT_TYPE }),
+        new File(
+          [blob],
+          buildCroppedFileName(file.name, outputWidth, outputHeight),
+          {
+            type: IMAGE_OUTPUT_TYPE,
+          }
+        )
       );
     } catch (cropError: unknown) {
-      setError(cropError instanceof Error ? cropError.message : "Unable to crop the selected image.");
+      setError(
+        cropError instanceof Error
+          ? cropError.message
+          : "Unable to crop the selected image."
+      );
     } finally {
       setApplying(false);
     }
@@ -307,22 +365,22 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
     >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Position your banner</DialogTitle>
-          <DialogDescription>
-            Drag to reposition and zoom to frame your image. Banners are saved at{" "}
-            {BANNER_DIMENSIONS_LABEL} pixels (3:1).
-          </DialogDescription>
+          <DialogTitle>{spec.title}</DialogTitle>
+          <DialogDescription>{spec.description}</DialogDescription>
         </DialogHeader>
 
         <div
           ref={measureFrame}
-          className="relative w-full cursor-grab touch-none overflow-hidden rounded-2xl border border-border/80 bg-muted/45 active:cursor-grabbing"
-          data-testid="banner-crop-frame"
+          className={cn(
+            "relative w-full cursor-grab touch-none overflow-hidden border border-border/80 bg-muted/45 active:cursor-grabbing",
+            spec.circular ? "mx-auto max-w-xs rounded-full" : "rounded-2xl"
+          )}
+          data-testid="image-crop-frame"
           onPointerCancel={handlePointerUp}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          style={{ aspectRatio: `${BANNER_WIDTH} / ${BANNER_HEIGHT}` }}
+          style={{ aspectRatio: `${outputWidth} / ${outputHeight}` }}
         >
           {image && objectUrl ? (
             <>
@@ -352,7 +410,7 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
         </div>
 
         <div className="flex items-center gap-3">
-          <Label className="sr-only" htmlFor="banner-crop-zoom">
+          <Label className="sr-only" htmlFor="image-crop-zoom">
             Zoom
           </Label>
           <Button
@@ -368,7 +426,7 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
           <input
             className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-primary/20 accent-primary"
             disabled={!image}
-            id="banner-crop-zoom"
+            id="image-crop-zoom"
             max={MAX_ZOOM}
             min={MIN_ZOOM}
             onChange={(event) => applyZoom(Number(event.target.value))}
@@ -400,20 +458,29 @@ export function BannerCropDialog({ file, onCancel, onCropped }: BannerCropDialog
 
         {isLowResolution ? (
           <p className="text-xs text-muted-foreground">
-            This image is smaller than {BANNER_DIMENSIONS_LABEL} pixels, so it may look soft once
-            it is scaled up.
+            This image is smaller than {dimensionsLabel} pixels, so it may look
+            soft once it is scaled up.
           </p>
         ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         <DialogFooter>
-          <Button disabled={applying} onClick={onCancel} type="button" variant="ghost">
+          <Button
+            disabled={applying}
+            onClick={onCancel}
+            type="button"
+            variant="ghost"
+          >
             Cancel
           </Button>
-          <Button disabled={!image || applying} onClick={handleApply} type="button">
+          <Button
+            disabled={!image || applying}
+            onClick={handleApply}
+            type="button"
+          >
             {applying ? <Loader2 className="animate-spin" /> : <Check />}
-            {applying ? "Saving banner..." : "Save banner"}
+            {applying ? spec.submittingLabel : spec.submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

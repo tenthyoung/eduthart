@@ -91,9 +91,7 @@ export function DmcaReportForm({
       form.reset();
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to submit DMCA notice.",
+        error instanceof Error ? error.message : "Unable to submit DMCA notice."
       );
     }
   };

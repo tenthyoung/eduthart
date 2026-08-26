@@ -15,7 +15,7 @@ console.error(
     `Current version: ${process.versions.node}`,
     `Next 15 does not support Node 18.17.0, which can fail with low-level crashes instead of a clean startup error.`,
     `Switch to Node 20+ in /Users/izzyyoung/code/eduthart/site and try again.`,
-  ].join("\n"),
+  ].join("\n")
 );
 
 process.exit(1);

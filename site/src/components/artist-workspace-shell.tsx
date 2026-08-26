@@ -49,7 +49,8 @@ function buildArtistNavItems(username: string): ArtistNavItem[] {
     {
       href: listingsHref,
       icon: ImagePlus,
-      isActive: (pathname) => pathname.startsWith(`/artists/${username}/listings`),
+      isActive: (pathname) =>
+        pathname.startsWith(`/artists/${username}/listings`),
       label: "Listings",
     },
     {
@@ -113,21 +114,23 @@ export function ArtistWorkspaceShell({
           id="artist-dashboard-sidebar"
           className={cn(
             "fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border/40 bg-background transition-[transform,width] duration-200 lg:static lg:z-auto",
-            isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-            isSidebarCollapsed ? "lg:w-16 lg:overflow-hidden" : "lg:w-64",
+            isMobileSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0",
+            isSidebarCollapsed ? "lg:w-16 lg:overflow-hidden" : "lg:w-64"
           )}
         >
           <div
             className={cn(
               "flex h-16 shrink-0 items-center border-b border-border/40",
-              isSidebarCollapsed ? "lg:justify-center lg:px-2" : "px-6",
+              isSidebarCollapsed ? "lg:justify-center lg:px-2" : "px-6"
             )}
           >
             <Link
               href="/"
               className={cn(
                 "flex shrink-0 items-center gap-3",
-                isSidebarCollapsed && "lg:hidden",
+                isSidebarCollapsed && "lg:hidden"
               )}
             >
               <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
@@ -145,10 +148,15 @@ export function ArtistWorkspaceShell({
               <X className="size-5" />
             </Button>
             <Button
-              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={
+                isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              }
               aria-controls="artist-dashboard-sidebar"
               aria-expanded={!isSidebarCollapsed}
-              className={cn("hidden lg:inline-flex", !isSidebarCollapsed && "ml-auto")}
+              className={cn(
+                "hidden lg:inline-flex",
+                !isSidebarCollapsed && "ml-auto"
+              )}
               onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
               size="icon"
               variant="ghost"
@@ -164,7 +172,12 @@ export function ArtistWorkspaceShell({
             <ArtistSidebarNav items={navItems} pathname={pathname} />
           </div>
 
-          <div className={cn("mt-auto border-t border-border p-4", isSidebarCollapsed && "lg:hidden")}>
+          <div
+            className={cn(
+              "mt-auto border-t border-border p-4",
+              isSidebarCollapsed && "lg:hidden"
+            )}
+          >
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">
                 {user?.displayName || user?.email || "Artist account"}
@@ -214,7 +227,7 @@ export function ArtistWorkspaceShell({
                   href="/"
                   className={cn(
                     "shrink-0 items-center gap-3",
-                    isSidebarCollapsed ? "hidden lg:flex" : "hidden",
+                    isSidebarCollapsed ? "hidden lg:flex" : "hidden"
                   )}
                 >
                   <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
@@ -241,7 +254,12 @@ export function ArtistWorkspaceShell({
 
               <div className="flex flex-wrap items-center gap-2">
                 <ThemeToggle />
-                <Button asChild className="relative" size="icon" variant="outline">
+                <Button
+                  asChild
+                  className="relative"
+                  size="icon"
+                  variant="outline"
+                >
                   <Link aria-label="Notifications" href="/notifications">
                     <Bell className="size-4" />
                   </Link>
@@ -289,7 +307,7 @@ export function ArtistWorkspaceShell({
                       "shrink-0 rounded-md px-3 py-2 text-sm transition-colors",
                       active
                         ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
                     {item.label}
@@ -347,7 +365,7 @@ function ArtistSidebarNav({
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
               active
                 ? "bg-muted font-medium text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             <Icon className="size-4" />

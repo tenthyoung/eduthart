@@ -31,7 +31,7 @@ export const useLocomotiveScroll = () => {
   const context = useContext(LocomotiveScrollContext);
   if (!context) {
     throw new Error(
-      "useLocomotiveScroll must be used within LocomotiveScrollProvider",
+      "useLocomotiveScroll must be used within LocomotiveScrollProvider"
     );
   }
   return context.scroll;

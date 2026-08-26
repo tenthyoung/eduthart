@@ -54,7 +54,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
 
     form.setValue(
       "message",
-      `I'm interested in purchasing “${artwork}”${artist ? ` by ${artist}` : ""}.${listing ? `\n\nArtwork: ${window.location.origin}${listing}` : ""}\n\nPlease let me know the next steps.`,
+      `I'm interested in purchasing “${artwork}”${artist ? ` by ${artist}` : ""}.${listing ? `\n\nArtwork: ${window.location.origin}${listing}` : ""}\n\nPlease let me know the next steps.`
     );
   }, [form]);
 
@@ -79,7 +79,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to send message. Please try again.",
+          : "Failed to send message. Please try again."
       );
     }
   };

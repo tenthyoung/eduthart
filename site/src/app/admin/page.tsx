@@ -30,7 +30,9 @@ export default function AdminOverviewPage() {
   const [users, setUsers] = useState<AdminUserSummary[]>([]);
   const [roles, setRoles] = useState<AdminRoleRecord[]>([]);
   const [refunds, setRefunds] = useState<RefundRequestRecord[]>([]);
-  const [moderationQueue, setModerationQueue] = useState<ModerationQueueItem[]>([]);
+  const [moderationQueue, setModerationQueue] = useState<ModerationQueueItem[]>(
+    []
+  );
 
   useEffect(() => {
     void (async () => {
@@ -48,7 +50,9 @@ export default function AdminOverviewPage() {
         setRefunds(nextRefunds);
         setModerationQueue(nextModerationQueue);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Overview failed to load.");
+        toast.error(
+          error instanceof Error ? error.message : "Overview failed to load."
+        );
       } finally {
         setLoading(false);
       }
@@ -56,7 +60,7 @@ export default function AdminOverviewPage() {
   }, []);
 
   const openRefunds = refunds.filter((request) =>
-    ["requested", "under_review"].includes(request.status),
+    ["requested", "under_review"].includes(request.status)
   ).length;
 
   return (
@@ -70,8 +74,15 @@ export default function AdminOverviewPage() {
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminStat label="Open moderation items" value={moderationQueue.length} />
-        <AdminStat label="Refunds awaiting action" value={openRefunds} tone={openRefunds > 0 ? "danger" : "default"} />
+        <AdminStat
+          label="Open moderation items"
+          value={moderationQueue.length}
+        />
+        <AdminStat
+          label="Refunds awaiting action"
+          value={openRefunds}
+          tone={openRefunds > 0 ? "danger" : "default"}
+        />
         <AdminStat label="Active admins" value={roles.length} />
         <AdminStat label="Recent users loaded" value={users.length} />
       </div>
@@ -109,13 +120,19 @@ export default function AdminOverviewPage() {
                   <div>
                     <p className="font-medium">{user.displayName}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[user.email ?? user.uid, user.accountStatus, `${user.tier} plan`]
+                      {[
+                        user.email ?? user.uid,
+                        user.accountStatus,
+                        `${user.tier} plan`,
+                      ]
                         .filter(Boolean)
                         .join(" • ")}
                     </p>
                   </div>
                   <p className="shrink-0 text-sm text-muted-foreground">
-                    {formatCurrencyFromMicros(user.monthlyEstimatedCostMicrosUsd)}
+                    {formatCurrencyFromMicros(
+                      user.monthlyEstimatedCostMicrosUsd
+                    )}
                   </p>
                 </Link>
               ))
@@ -140,7 +157,9 @@ export default function AdminOverviewPage() {
             </div>
             <div className="mt-6 space-y-3">
               {loading ? (
-                <p className="text-sm text-muted-foreground">Loading queue...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading queue...
+                </p>
               ) : moderationQueue.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No reported decks right now.
@@ -178,18 +197,28 @@ export default function AdminOverviewPage() {
             </div>
             <div className="mt-6 space-y-3">
               {loading ? (
-                <p className="text-sm text-muted-foreground">Loading refunds...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading refunds...
+                </p>
               ) : refunds.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No refund requests yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  No refund requests yet.
+                </p>
               ) : (
                 refunds.slice(0, 4).map((request) => (
                   <div
                     key={request.id}
                     className="rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3"
                   >
-                    <p className="font-medium">{request.userEmail ?? request.uid}</p>
+                    <p className="font-medium">
+                      {request.userEmail ?? request.uid}
+                    </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[request.reason, request.status, request.currentPriceDisplay]
+                      {[
+                        request.reason,
+                        request.status,
+                        request.currentPriceDisplay,
+                      ]
                         .filter(Boolean)
                         .join(" • ")}
                     </p>
