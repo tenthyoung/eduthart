@@ -61,7 +61,7 @@ export function HomeHero() {
 
         <form className="mx-auto w-full max-w-5xl rounded-[2rem] border border-border/70 bg-card p-3 shadow-[0_24px_70px_-40px_rgba(56,40,25,0.22)]">
           <div className="grid gap-2 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
-            <label className="rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
+            <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
               <p className="text-sm font-semibold text-foreground">What</p>
               <Input
                 value={query}
@@ -71,10 +71,10 @@ export function HomeHero() {
               />
             </label>
 
-            <label className="rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
+            <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
               <p className="text-sm font-semibold text-foreground">Style</p>
               <Select value={style} onValueChange={setStyle}>
-                <SelectTrigger className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg">
+                <SelectTrigger className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg [&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate">
                   <SelectValue placeholder="Warm minimal, textural, bold statement" />
                 </SelectTrigger>
                 <SelectContent>
@@ -87,10 +87,10 @@ export function HomeHero() {
               </Select>
             </label>
 
-            <label className="rounded-[1.5rem] px-5 py-4 text-left">
+            <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left">
               <p className="text-sm font-semibold text-foreground">Budget</p>
               <Select value={budget} onValueChange={setBudget}>
-                <SelectTrigger className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg">
+                <SelectTrigger className="mt-1 h-auto w-full border-0 px-0 py-0 text-base shadow-none focus-visible:ring-0 sm:text-lg [&>[data-slot=select-value]]:block [&>[data-slot=select-value]]:min-w-0 [&>[data-slot=select-value]]:truncate">
                   <SelectValue placeholder="Under $500, under $1,000, collector pieces" />
                 </SelectTrigger>
                 <SelectContent>
