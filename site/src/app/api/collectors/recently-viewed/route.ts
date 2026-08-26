@@ -10,7 +10,7 @@ import { apiError, withSession } from "@/lib/api/handler";
 
 export function GET(request: Request) {
   return withSession(request, async (session) =>
-    NextResponse.json({ recentlyViewed: await listRecentlyViewed(session.uid) }),
+    NextResponse.json({ recentlyViewed: await listRecentlyViewed(session.uid) })
   );
 }
 

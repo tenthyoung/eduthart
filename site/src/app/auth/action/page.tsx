@@ -2,18 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import {
-  confirmPasswordReset,
-  verifyPasswordResetCode,
-} from "firebase/auth";
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
@@ -22,12 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
-type ResetStatus =
-  | "checking"
-  | "ready"
-  | "submitting"
-  | "success"
-  | "invalid";
+type ResetStatus = "checking" | "ready" | "submitting" | "success" | "invalid";
 
 const LOGIN_ROUTE = "/login";
 const DEFAULT_SUCCESS_ROUTE = "/login?reset=success";
@@ -60,7 +46,10 @@ function formatResetError(error: unknown) {
       ? error.code
       : null;
 
-  if (code === "auth/expired-action-code" || code === "auth/invalid-action-code") {
+  if (
+    code === "auth/expired-action-code" ||
+    code === "auth/invalid-action-code"
+  ) {
     return "This reset link is invalid or has expired. Request a fresh password reset email and try again.";
   }
 
@@ -83,7 +72,7 @@ function AuthActionContent() {
   const continueUrl = searchParams.get("continueUrl");
   const nextHref = useMemo(
     () => normalizeContinueUrl(continueUrl),
-    [continueUrl],
+    [continueUrl]
   );
 
   const [status, setStatus] = useState<ResetStatus>("checking");
@@ -209,7 +198,8 @@ function AuthActionContent() {
           <Alert>
             <AlertTitle>Password updated</AlertTitle>
             <AlertDescription>
-              Your password has been reset successfully. Continue back to EduthArt and sign in with your new password.
+              Your password has been reset successfully. Continue back to
+              EduthArt and sign in with your new password.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -249,7 +239,9 @@ function AuthActionContent() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button className="flex-1" disabled={isBusy} size="lg">
-                {status === "submitting" ? "Updating password..." : "Save new password"}
+                {status === "submitting"
+                  ? "Updating password..."
+                  : "Save new password"}
               </Button>
               <Button
                 className="flex-1"

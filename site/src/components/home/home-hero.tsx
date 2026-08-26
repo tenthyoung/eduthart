@@ -55,7 +55,8 @@ export function HomeHero() {
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
             Make the homepage feel more like a confident search-led marketplace:
-            a clear starting point, curated browse paths, and helpful guidance for collectors.
+            a clear starting point, curated browse paths, and helpful guidance
+            for collectors.
           </p>
         </div>
 
@@ -128,7 +129,12 @@ export function HomeHero() {
             ))}
           </div>
 
-          <Button asChild variant="ghost" size="lg" className="justify-start lg:justify-center">
+          <Button
+            asChild
+            variant="ghost"
+            size="lg"
+            className="justify-start lg:justify-center"
+          >
             <Link href="#collections">
               Explore curated collections
               <ArrowRight className="h-4 w-4" />

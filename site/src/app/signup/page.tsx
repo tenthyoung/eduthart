@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
-import { useAuth, type FederatedProvider } from "@/components/auth/auth-provider";
+import {
+  useAuth,
+  type FederatedProvider,
+} from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

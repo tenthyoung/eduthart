@@ -37,7 +37,9 @@ export async function createAccount(page: Page, options: TestAccountOptions) {
     username: options.username ?? null,
   };
 
-  const response = await page.request.post("/api/test/e2e-auth", { data: profilePayload });
+  const response = await page.request.post("/api/test/e2e-auth", {
+    data: profilePayload,
+  });
   expect(response.ok()).toBeTruthy();
 
   return profilePayload;
@@ -59,15 +61,17 @@ export async function signInAs(page: Page, profile: TestAccount) {
         providerIds: profile.authProviders,
         uid: profile.uid,
       },
-    },
+    }
   );
 
   await page.waitForFunction(
     ({ expectedUid, storageKey }) => {
       const raw = window.localStorage.getItem(storageKey);
-      return raw ? (JSON.parse(raw) as { uid?: string }).uid === expectedUid : false;
+      return raw
+        ? (JSON.parse(raw) as { uid?: string }).uid === expectedUid
+        : false;
     },
-    { expectedUid: profile.uid, storageKey: E2E_STORAGE_KEY },
+    { expectedUid: profile.uid, storageKey: E2E_STORAGE_KEY }
   );
 }
 
@@ -84,15 +88,21 @@ export async function seedAccount(page: Page, options: TestAccountOptions) {
 /** Publish an artwork for an artist account that already has a username. */
 export async function seedPublishedArtwork(
   page: Page,
-  options: { itemId?: string; price?: string; title?: string; uid: string },
+  options: { itemId?: string; price?: string; title?: string; uid: string }
 ) {
-  const response = await page.request.post("/api/test/e2e-listing", { data: options });
+  const response = await page.request.post("/api/test/e2e-listing", {
+    data: options,
+  });
   expect(response.ok()).toBeTruthy();
 
-  return (await response.json()) as { href: string; itemId: string; username: string };
+  return (await response.json()) as {
+    href: string;
+    itemId: string;
+    username: string;
+  };
 }
 
 export const TINY_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==",
-  "base64",
+  "base64"
 );

@@ -26,7 +26,11 @@ export function SiteShell({ children }: SiteShellProps) {
       return <main>{children}</main>;
     }
 
-    return <ArtistWorkspaceShell username={username}>{children}</ArtistWorkspaceShell>;
+    return (
+      <ArtistWorkspaceShell username={username}>
+        {children}
+      </ArtistWorkspaceShell>
+    );
   }
 
   return (

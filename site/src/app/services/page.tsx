@@ -231,7 +231,9 @@ export default function ServicesPage() {
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Clock className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold mb-4">Lasting Relationships</h3>
+                <h3 className="text-xl font-bold mb-4">
+                  Lasting Relationships
+                </h3>
                 <p className="text-muted-foreground">
                   The gallery is built for repeat visits, stronger artist
                   relationships, and long-term trust.

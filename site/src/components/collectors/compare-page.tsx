@@ -18,19 +18,31 @@ import { formatMinorUnits } from "@/lib/commerce/money";
 
 // The table hugs its columns (w-fit) so comparing two pieces does not stretch
 // them across the page, and scrolls once there are four.
-const ROWS: Array<{ label: string; read: (artwork: IndexedArtwork) => string }> = [
+const ROWS: Array<{
+  label: string;
+  read: (artwork: IndexedArtwork) => string;
+}> = [
   { label: "Artist", read: (artwork) => artwork.artistName },
   {
     label: "Price",
     read: (artwork) =>
-      artwork.priceMinor > 0 ? formatMinorUnits(artwork.priceMinor, artwork.currency) : "On request",
+      artwork.priceMinor > 0
+        ? formatMinorUnits(artwork.priceMinor, artwork.currency)
+        : "On request",
   },
-  { label: "Availability", read: (artwork) => artwork.availability.replaceAll("_", " ") },
+  {
+    label: "Availability",
+    read: (artwork) => artwork.availability.replaceAll("_", " "),
+  },
   { label: "Medium", read: (artwork) => artwork.medium || "—" },
   { label: "Style", read: (artwork) => artwork.style || "—" },
   { label: "Category", read: (artwork) => artwork.category || "—" },
   { label: "Subject", read: (artwork) => artwork.subject || "—" },
-  { label: "Tags", read: (artwork) => (artwork.tags.length > 0 ? artwork.tags.join(", ") : "—") },
+  {
+    label: "Tags",
+    read: (artwork) =>
+      artwork.tags.length > 0 ? artwork.tags.join(", ") : "—",
+  },
 ];
 
 /**
@@ -53,14 +65,18 @@ export function ComparePage() {
     }
 
     try {
-      const response = await fetch(`/api/collectors/artworks?keys=${nextKeys.join(",")}`);
-      const payload = (await response.json()) as { artworks?: IndexedArtwork[] };
+      const response = await fetch(
+        `/api/collectors/artworks?keys=${nextKeys.join(",")}`
+      );
+      const payload = (await response.json()) as {
+        artworks?: IndexedArtwork[];
+      };
       const found = payload.artworks ?? [];
       // Preserve the order the collector added them in.
       setArtworks(
         nextKeys
           .map((key) => found.find((artwork) => artwork.key === key))
-          .filter((artwork): artwork is IndexedArtwork => artwork !== undefined),
+          .filter((artwork): artwork is IndexedArtwork => artwork !== undefined)
       );
     } finally {
       setLoading(false);
@@ -87,10 +103,12 @@ export function ComparePage() {
               <Scale className="size-3.5" />
               Compare
             </div>
-            <h1 className="text-4xl text-foreground sm:text-5xl">Side by side</h1>
+            <h1 className="text-4xl text-foreground sm:text-5xl">
+              Side by side
+            </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Up to {MAX_COMPARISON_ITEMS} originals at once. Your selection lasts for this browser
-              session.
+              Up to {MAX_COMPARISON_ITEMS} originals at once. Your selection
+              lasts for this browser session.
             </p>
           </div>
           {keys.length > 0 ? (
@@ -123,10 +141,16 @@ export function ComparePage() {
                     Artwork
                   </th>
                   {artworks.map((artwork) => (
-                    <th key={artwork.key} className="w-64 border-b border-border/70 p-4 align-top">
+                    <th
+                      key={artwork.key}
+                      className="w-64 border-b border-border/70 p-4 align-top"
+                    >
                       <div className="space-y-3 text-left">
                         <div className="flex items-start justify-between gap-2">
-                          <Link className="text-base font-medium hover:underline" href={artwork.href}>
+                          <Link
+                            className="text-base font-medium hover:underline"
+                            href={artwork.href}
+                          >
                             {artwork.title}
                           </Link>
                           <Button
@@ -139,7 +163,10 @@ export function ComparePage() {
                             <X />
                           </Button>
                         </div>
-                        <Link className="block overflow-hidden rounded-xl bg-muted/30" href={artwork.href}>
+                        <Link
+                          className="block overflow-hidden rounded-xl bg-muted/30"
+                          href={artwork.href}
+                        >
                           {artwork.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -163,7 +190,10 @@ export function ComparePage() {
                       {row.label}
                     </th>
                     {artworks.map((artwork) => (
-                      <td key={artwork.key} className="p-4 align-top text-sm text-foreground">
+                      <td
+                        key={artwork.key}
+                        className="p-4 align-top text-sm text-foreground"
+                      >
                         {row.read(artwork)}
                       </td>
                     ))}

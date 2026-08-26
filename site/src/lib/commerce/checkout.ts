@@ -1,13 +1,23 @@
 import type { ListingItemDraft } from "@/lib/artists/listing-flow";
-import { isPubliclyListed, loadListingStudio } from "@/lib/artists/listing-store";
+import {
+  isPubliclyListed,
+  loadListingStudio,
+} from "@/lib/artists/listing-store";
 import { buildArtworkHref } from "@/lib/artists/public-artwork";
-import { buildProfileDisplayName, loadAccountProfile } from "@/lib/auth/profile-store";
+import {
+  buildProfileDisplayName,
+  loadAccountProfile,
+} from "@/lib/auth/profile-store";
 import type { SavedAddress } from "@/lib/collectors/address-format";
 import { getAddress, getDefaultAddress } from "@/lib/collectors/addresses";
 import { buildArtworkKey } from "@/lib/collectors/artwork-reference";
 import { readCart } from "@/lib/commerce/cart";
 import { normalizeCurrency, toMinorUnits } from "@/lib/commerce/money";
-import { createOrder, attachCheckoutSession, type OrderLineItem } from "@/lib/commerce/orders";
+import {
+  createOrder,
+  attachCheckoutSession,
+  type OrderLineItem,
+} from "@/lib/commerce/orders";
 import { reserveArtwork } from "@/lib/commerce/reservations";
 import { resolveShippingAmountMinor } from "@/lib/commerce/shipping";
 import { buildE2ESessionId, isE2ECheckout } from "@/lib/commerce/e2e-payments";
@@ -27,12 +37,15 @@ export type CheckoutRequest = {
 function toLineItem(
   item: ListingItemDraft,
   artist: { artistUid: string; artistUsername: string },
-  currency: string,
+  currency: string
 ): OrderLineItem {
   return {
     artistUid: artist.artistUid,
     artistUsername: artist.artistUsername,
-    artworkKey: buildArtworkKey({ artistUid: artist.artistUid, itemId: item.id }),
+    artworkKey: buildArtworkKey({
+      artistUid: artist.artistUid,
+      itemId: item.id,
+    }),
     href: buildArtworkHref(artist.artistUsername, item.id),
     imageUrl: item.media.mainImageUrl,
     itemId: item.id,
@@ -41,7 +54,11 @@ function toLineItem(
   };
 }
 
-async function resolveAddress(uid: string, id: string | null | undefined, kind: "billing" | "shipping") {
+async function resolveAddress(
+  uid: string,
+  id: string | null | undefined,
+  kind: "billing" | "shipping"
+) {
   if (id) {
     const address = await getAddress(uid, id);
 
@@ -86,22 +103,36 @@ export async function createCheckoutSession(request: CheckoutRequest) {
     throw new Error("This artist is no longer selling on EduthArt.");
   }
 
-  const artist = { artistUid: sellerUid, artistUsername: sellerProfile.username };
+  const artist = {
+    artistUid: sellerUid,
+    artistUsername: sellerProfile.username,
+  };
   const items: ListingItemDraft[] = [];
 
   for (const entry of cart) {
-    const item = studio.items.find((candidate) => candidate.id === entry.itemId);
+    const item = studio.items.find(
+      (candidate) => candidate.id === entry.itemId
+    );
 
     if (!item || !isPubliclyListed(item)) {
       throw new Error(`"${entry.title}" is no longer listed.`);
     }
 
     if (item.pricingInventory.availability !== "original_available") {
-      throw new Error(`"${item.artworkDetails.title || "This artwork"}" is no longer available.`);
+      throw new Error(
+        `"${item.artworkDetails.title || "This artwork"}" is no longer available.`
+      );
     }
 
-    if (toMinorUnits(item.pricingInventory.price, item.pricingInventory.currency) <= 0) {
-      throw new Error(`"${item.artworkDetails.title || "This artwork"}" is not priced for checkout.`);
+    if (
+      toMinorUnits(
+        item.pricingInventory.price,
+        item.pricingInventory.currency
+      ) <= 0
+    ) {
+      throw new Error(
+        `"${item.artworkDetails.title || "This artwork"}" is not priced for checkout.`
+      );
     }
 
     items.push(item);
@@ -109,8 +140,14 @@ export async function createCheckoutSession(request: CheckoutRequest) {
 
   const currency = normalizeCurrency(items[0]!.pricingInventory.currency);
 
-  if (items.some((item) => normalizeCurrency(item.pricingInventory.currency) !== currency)) {
-    throw new Error("Every artwork in one checkout must use the same currency.");
+  if (
+    items.some(
+      (item) => normalizeCurrency(item.pricingInventory.currency) !== currency
+    )
+  ) {
+    throw new Error(
+      "Every artwork in one checkout must use the same currency."
+    );
   }
 
   const [shippingAddress, billingAddress] = await Promise.all([
@@ -124,8 +161,9 @@ export async function createCheckoutSession(request: CheckoutRequest) {
 
   const lineItems = items.map((item) => toLineItem(item, artist, currency));
   const shippingAmountMinor = items.reduce(
-    (total, item) => total + resolveShippingAmountMinor(item, studio.shared, currency),
-    0,
+    (total, item) =>
+      total + resolveShippingAmountMinor(item, studio.shared, currency),
+    0
   );
 
   const order = await createOrder({
@@ -145,14 +183,21 @@ export async function createCheckoutSession(request: CheckoutRequest) {
   // reach the payment page for the same one-of-a-kind piece.
   await Promise.all(
     lineItems.map((item) =>
-      reserveArtwork({ artworkKey: item.artworkKey, buyerUid: request.buyerUid, orderId: order.id }),
-    ),
+      reserveArtwork({
+        artworkKey: item.artworkKey,
+        buyerUid: request.buyerUid,
+        orderId: order.id,
+      })
+    )
   );
 
   if (isE2ECheckout()) {
     const sessionId = buildE2ESessionId(order.id);
     await attachCheckoutSession(order.id, sessionId);
-    return { order, url: `${request.origin}/checkout/success?session_id=${sessionId}` };
+    return {
+      order,
+      url: `${request.origin}/checkout/success?session_id=${sessionId}`,
+    };
   }
 
   const stripe = getStripeClient();
@@ -172,7 +217,9 @@ export async function createCheckoutSession(request: CheckoutRequest) {
           currency: currency.toLowerCase(),
           product_data: {
             description: `Original artwork by ${order.sellerName}`,
-            images: item.media.mainImageUrl ? [item.media.mainImageUrl] : undefined,
+            images: item.media.mainImageUrl
+              ? [item.media.mainImageUrl]
+              : undefined,
             name: item.artworkDetails.title || "Untitled artwork",
           },
           unit_amount: toMinorUnits(item.pricingInventory.price, currency),
@@ -196,7 +243,9 @@ export async function createCheckoutSession(request: CheckoutRequest) {
     mode: "payment",
     // Saving the card for later is the collector's choice, and Stripe holds the
     // card details throughout: they never reach EduthArt.
-    payment_intent_data: request.savePaymentMethod ? { setup_future_usage: "off_session" } : undefined,
+    payment_intent_data: request.savePaymentMethod
+      ? { setup_future_usage: "off_session" }
+      : undefined,
     success_url: `${request.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
   });
 

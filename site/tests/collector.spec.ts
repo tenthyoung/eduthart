@@ -1,9 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-import { createAccount, seedAccount, seedPublishedArtwork } from "./support/accounts";
+import {
+  createAccount,
+  seedAccount,
+  seedPublishedArtwork,
+} from "./support/accounts";
 
 /** An artist with one published original, plus a signed-in collector. */
-async function seedGallery(page: import("@playwright/test").Page, suffix: string) {
+async function seedGallery(
+  page: import("@playwright/test").Page,
+  suffix: string
+) {
   const artist = await createAccount(page, {
     displayName: "Marina Vale",
     uid: `artist-${suffix}`,
@@ -18,7 +25,9 @@ async function seedGallery(page: import("@playwright/test").Page, suffix: string
   return { artist, artwork, collector };
 }
 
-test("saves an artwork, organizes it into a collection, and shares the collection", async ({ page }) => {
+test("saves an artwork, organizes it into a collection, and shares the collection", async ({
+  page,
+}) => {
   const { artwork } = await seedGallery(page, "collect");
 
   await page.goto(artwork.href);
@@ -34,11 +43,15 @@ test("saves an artwork, organizes it into a collection, and shares the collectio
   await expect(page.getByText("Added to your collection.")).toBeVisible();
 
   await page.goto("/account/collections");
-  await expect(page.getByRole("heading", { name: "Coastal light" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Coastal light" })
+  ).toBeVisible();
   await expect(page.getByText("1 artwork")).toBeVisible();
 
   await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText("Anyone with the link can view it.")).toBeVisible();
+  await expect(
+    page.getByText("Anyone with the link can view it.")
+  ).toBeVisible();
 
   const shareHref = await page
     .getByRole("link", { name: /^\/collections\// })
@@ -48,7 +61,9 @@ test("saves an artwork, organizes it into a collection, and shares the collectio
   // A signed-out visitor can open the share link.
   await page.evaluate(() => window.localStorage.clear());
   await page.goto(shareHref!);
-  await expect(page.getByRole("heading", { name: "Coastal light" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Coastal light" })
+  ).toBeVisible();
   await expect(page.getByText("Curated by Robin Buyer")).toBeVisible();
 });
 
@@ -58,12 +73,16 @@ test("renames and deletes a collection", async ({ page }) => {
   await page.goto("/account/collections");
   await page.getByLabel("New collection").fill("First draft");
   await page.getByRole("button", { name: "Create collection" }).click();
-  await expect(page.getByRole("heading", { name: "First draft" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "First draft" })
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Rename" }).click();
   await page.getByLabel("Collection name").fill("Studio wall");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("heading", { name: "Studio wall" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Studio wall" })
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Delete" }).click();
   await expect(page.getByText("No collections yet")).toBeVisible();
@@ -80,20 +99,26 @@ test("follows and unfollows an artist", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Marina Vale" })).toBeVisible();
 
   await page.getByRole("button", { name: "Unfollow" }).click();
-  await expect(page.getByText("You are not following anyone yet")).toBeVisible();
+  await expect(
+    page.getByText("You are not following anyone yet")
+  ).toBeVisible();
 });
 
-test("records recently viewed artwork and can clear the history", async ({ page }) => {
+test("records recently viewed artwork and can clear the history", async ({
+  page,
+}) => {
   const { artwork } = await seedGallery(page, "history");
 
   // The view is recorded from the client, so let it land before navigating.
   const recorded = page.waitForResponse(
     (response) =>
       response.url().includes("/api/collectors/recently-viewed") &&
-      response.request().method() === "POST",
+      response.request().method() === "POST"
   );
   await page.goto(artwork.href);
-  await expect(page.getByRole("heading", { name: "Harbour Light" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Harbour Light" })
+  ).toBeVisible();
   await recorded;
 
   await page.goto("/account/recently-viewed");
@@ -103,7 +128,9 @@ test("records recently viewed artwork and can clear the history", async ({ page 
   await expect(page.getByText("Nothing viewed yet")).toBeVisible();
 });
 
-test("recommends artwork from the same artist once a piece is saved", async ({ page }) => {
+test("recommends artwork from the same artist once a piece is saved", async ({
+  page,
+}) => {
   const artist = await createAccount(page, {
     displayName: "Marina Vale",
     uid: "artist-recommend",
@@ -135,8 +162,15 @@ test("compares two artworks side by side", async ({ page }) => {
     uid: "artist-compare-b",
     username: "tomas-compare-b",
   });
-  const artworkA = await seedPublishedArtwork(page, { title: "Harbour Light", uid: first.uid });
-  const artworkB = await seedPublishedArtwork(page, { price: "980", title: "Quarry Dusk", uid: second.uid });
+  const artworkA = await seedPublishedArtwork(page, {
+    title: "Harbour Light",
+    uid: first.uid,
+  });
+  const artworkB = await seedPublishedArtwork(page, {
+    price: "980",
+    title: "Quarry Dusk",
+    uid: second.uid,
+  });
   await seedAccount(page, { uid: "collector-compare" });
 
   await page.goto(artworkA.href);
@@ -145,8 +179,12 @@ test("compares two artworks side by side", async ({ page }) => {
   await page.getByRole("button", { name: "Compare", exact: true }).click();
 
   await page.goto("/compare");
-  await expect(page.getByRole("columnheader", { name: /Harbour Light/ })).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: /Quarry Dusk/ })).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: /Harbour Light/ })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("columnheader", { name: /Quarry Dusk/ })
+  ).toBeVisible();
   await expect(page.getByText("$2,400.00")).toBeVisible();
   await expect(page.getByText("$980.00")).toBeVisible();
 });

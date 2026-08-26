@@ -37,7 +37,8 @@ function loadImage(src: string) {
     const image = new Image();
 
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to read the selected image."));
+    image.onerror = () =>
+      reject(new Error("Unable to read the selected image."));
     image.src = src;
   });
 }
@@ -65,13 +66,15 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
         reject(new Error("Unable to crop the selected image."));
       },
       IMAGE_OUTPUT_TYPE,
-      IMAGE_OUTPUT_QUALITY,
+      IMAGE_OUTPUT_QUALITY
     );
   });
 }
 
 function buildCroppedFileName(fileName: string, width: number, height: number) {
-  const base = fileName.replace(/\.[^./\\]+$/, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const base = fileName
+    .replace(/\.[^./\\]+$/, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-");
   return `${base || "image"}-${width}x${height}.jpg`;
 }
 
@@ -88,13 +91,23 @@ export type ImageCropDialogProps = {
  * The banner and the profile picture differ only in output size and framing,
  * so the interaction lives here once and each caller supplies its own spec.
  */
-export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDialogProps) {
+export function ImageCropDialog({
+  file,
+  onCancel,
+  onCropped,
+  spec,
+}: ImageCropDialogProps) {
   const outputWidth = spec.outputWidth;
   const outputHeight = spec.outputHeight;
   const aspectRatio = outputWidth / outputHeight;
   const dimensionsLabel = `${outputWidth} × ${outputHeight}`;
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const dragStateRef = useRef<{ offset: Offset; pointerId: number; x: number; y: number } | null>(null);
+  const dragStateRef = useRef<{
+    offset: Offset;
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const hasCenteredRef = useRef(false);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -107,13 +120,17 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
   const frameHeight = frameWidth / aspectRatio;
   const coverScale =
     image && frameWidth > 0
-      ? Math.max(frameWidth / image.naturalWidth, frameHeight / image.naturalHeight)
+      ? Math.max(
+          frameWidth / image.naturalWidth,
+          frameHeight / image.naturalHeight
+        )
       : 0;
   const renderScale = coverScale * zoom;
   const renderedWidth = image ? image.naturalWidth * renderScale : 0;
   const renderedHeight = image ? image.naturalHeight * renderScale : 0;
   const isLowResolution =
-    image !== null && (image.naturalWidth < outputWidth || image.naturalHeight < outputHeight);
+    image !== null &&
+    (image.naturalWidth < outputWidth || image.naturalHeight < outputHeight);
 
   // The dialog body mounts after this component's effects run, so measure the
   // frame from a callback ref instead of a layout effect.
@@ -144,7 +161,7 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
       x: clamp(next.x, Math.min(0, frameWidth - renderedWidth), 0),
       y: clamp(next.y, Math.min(0, frameHeight - renderedHeight), 0),
     }),
-    [frameHeight, frameWidth, renderedHeight, renderedWidth],
+    [frameHeight, frameWidth, renderedHeight, renderedWidth]
   );
 
   useEffect(() => {
@@ -172,7 +189,9 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
       .catch((loadError: unknown) => {
         if (!cancelled) {
           setError(
-            loadError instanceof Error ? loadError.message : "Unable to read the selected image.",
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to read the selected image."
           );
         }
       });
@@ -191,12 +210,22 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
 
     if (!hasCenteredRef.current) {
       hasCenteredRef.current = true;
-      setOffset({ x: (frameWidth - renderedWidth) / 2, y: (frameHeight - renderedHeight) / 2 });
+      setOffset({
+        x: (frameWidth - renderedWidth) / 2,
+        y: (frameHeight - renderedHeight) / 2,
+      });
       return;
     }
 
     setOffset((current) => clampOffset(current));
-  }, [clampOffset, frameHeight, frameWidth, image, renderedHeight, renderedWidth]);
+  }, [
+    clampOffset,
+    frameHeight,
+    frameWidth,
+    image,
+    renderedHeight,
+    renderedWidth,
+  ]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!image) {
@@ -223,7 +252,7 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
       clampOffset({
         x: dragState.offset.x + (event.clientX - dragState.x),
         y: dragState.offset.y + (event.clientY - dragState.y),
-      }),
+      })
     );
   };
 
@@ -263,7 +292,10 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
     const baseHeight = image ? image.naturalHeight * coverScale : 0;
 
     setZoom(MIN_ZOOM);
-    setOffset({ x: (frameWidth - baseWidth) / 2, y: (frameHeight - baseHeight) / 2 });
+    setOffset({
+      x: (frameWidth - baseWidth) / 2,
+      y: (frameHeight - baseHeight) / 2,
+    });
   };
 
   const handleApply = async () => {
@@ -297,18 +329,26 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
         0,
         0,
         outputWidth,
-        outputHeight,
+        outputHeight
       );
 
       const blob = await canvasToBlob(canvas);
 
       await onCropped(
-        new File([blob], buildCroppedFileName(file.name, outputWidth, outputHeight), {
-          type: IMAGE_OUTPUT_TYPE,
-        }),
+        new File(
+          [blob],
+          buildCroppedFileName(file.name, outputWidth, outputHeight),
+          {
+            type: IMAGE_OUTPUT_TYPE,
+          }
+        )
       );
     } catch (cropError: unknown) {
-      setError(cropError instanceof Error ? cropError.message : "Unable to crop the selected image.");
+      setError(
+        cropError instanceof Error
+          ? cropError.message
+          : "Unable to crop the selected image."
+      );
     } finally {
       setApplying(false);
     }
@@ -333,7 +373,7 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
           ref={measureFrame}
           className={cn(
             "relative w-full cursor-grab touch-none overflow-hidden border border-border/80 bg-muted/45 active:cursor-grabbing",
-            spec.circular ? "mx-auto max-w-xs rounded-full" : "rounded-2xl",
+            spec.circular ? "mx-auto max-w-xs rounded-full" : "rounded-2xl"
           )}
           data-testid="image-crop-frame"
           onPointerCancel={handlePointerUp}
@@ -418,18 +458,27 @@ export function ImageCropDialog({ file, onCancel, onCropped, spec }: ImageCropDi
 
         {isLowResolution ? (
           <p className="text-xs text-muted-foreground">
-            This image is smaller than {dimensionsLabel} pixels, so it may look soft once it is
-            scaled up.
+            This image is smaller than {dimensionsLabel} pixels, so it may look
+            soft once it is scaled up.
           </p>
         ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         <DialogFooter>
-          <Button disabled={applying} onClick={onCancel} type="button" variant="ghost">
+          <Button
+            disabled={applying}
+            onClick={onCancel}
+            type="button"
+            variant="ghost"
+          >
             Cancel
           </Button>
-          <Button disabled={!image || applying} onClick={handleApply} type="button">
+          <Button
+            disabled={!image || applying}
+            onClick={handleApply}
+            type="button"
+          >
             {applying ? <Loader2 className="animate-spin" /> : <Check />}
             {applying ? spec.submittingLabel : spec.submitLabel}
           </Button>

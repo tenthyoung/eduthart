@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "Name, email, and message are required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Please provide a valid email address" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
-                    },
+                    }
                   )}
                 </p>
               </div>
@@ -132,7 +132,7 @@ Sent on: ${new Date().toLocaleDateString("en-US", {
         message: "Message sent successfully!",
         messageId: data.data?.id,
       },
-      { status: 200 },
+      { status: 200 }
     );
   } catch (error) {
     console.error("Contact form error:", error);
@@ -142,7 +142,7 @@ Sent on: ${new Date().toLocaleDateString("en-US", {
         error: "Failed to send message. Please try again later.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

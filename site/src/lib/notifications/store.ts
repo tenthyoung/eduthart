@@ -7,25 +7,39 @@ import {
   saveUserDocument,
 } from "@/lib/store/document-store";
 
-import type { NotificationTemplate, UserNotification } from "@/lib/notifications/types";
+import type {
+  NotificationTemplate,
+  UserNotification,
+} from "@/lib/notifications/types";
 
 const NOTIFICATIONS_COLLECTION = "notifications";
 
-function toUserNotification(document: Record<string, unknown> & { id: string }): UserNotification {
+function toUserNotification(
+  document: Record<string, unknown> & { id: string }
+): UserNotification {
   return {
-    actionHref: typeof document.actionHref === "string" ? document.actionHref : null,
-    actionLabel: typeof document.actionLabel === "string" ? document.actionLabel : null,
+    actionHref:
+      typeof document.actionHref === "string" ? document.actionHref : null,
+    actionLabel:
+      typeof document.actionLabel === "string" ? document.actionLabel : null,
     body: typeof document.body === "string" ? document.body : "",
-    createdAt: typeof document.createdAt === "string" ? document.createdAt : new Date(0).toISOString(),
+    createdAt:
+      typeof document.createdAt === "string"
+        ? document.createdAt
+        : new Date(0).toISOString(),
     id: document.id,
     imageUrl: typeof document.imageUrl === "string" ? document.imageUrl : null,
-    kind: (typeof document.kind === "string" ? document.kind : "choose_username") as UserNotification["kind"],
+    kind: (typeof document.kind === "string"
+      ? document.kind
+      : "choose_username") as UserNotification["kind"],
     readAt: typeof document.readAt === "string" ? document.readAt : null,
     title: typeof document.title === "string" ? document.title : "",
   };
 }
 
-export async function listNotifications(uid: string): Promise<UserNotification[]> {
+export async function listNotifications(
+  uid: string
+): Promise<UserNotification[]> {
   const documents = await listUserDocuments(uid, NOTIFICATIONS_COLLECTION);
 
   return documents
@@ -35,13 +49,14 @@ export async function listNotifications(uid: string): Promise<UserNotification[]
 
 export async function countUnreadNotifications(uid: string) {
   const notifications = await listNotifications(uid);
-  return notifications.filter((notification) => notification.readAt === null).length;
+  return notifications.filter((notification) => notification.readAt === null)
+    .length;
 }
 
 export async function createNotification(
   uid: string,
   template: NotificationTemplate,
-  options?: { dedupeKey?: string },
+  options?: { dedupeKey?: string }
 ): Promise<UserNotification | null> {
   const id = options?.dedupeKey ?? createDocumentId("ntf");
 
@@ -69,7 +84,11 @@ export async function createNotification(
   return toUserNotification(saved);
 }
 
-export async function setNotificationRead(uid: string, id: string, read: boolean) {
+export async function setNotificationRead(
+  uid: string,
+  id: string,
+  read: boolean
+) {
   const existing = await getUserDocument(uid, NOTIFICATIONS_COLLECTION, id);
 
   if (!existing) {
@@ -91,8 +110,10 @@ export async function markAllNotificationsRead(uid: string) {
     notifications
       .filter((notification) => notification.readAt === null)
       .map((notification) =>
-        saveUserDocument(uid, NOTIFICATIONS_COLLECTION, notification.id, { readAt }),
-      ),
+        saveUserDocument(uid, NOTIFICATIONS_COLLECTION, notification.id, {
+          readAt,
+        })
+      )
   );
 
   return listNotifications(uid);

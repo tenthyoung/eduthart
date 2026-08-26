@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import { AdminCard, AdminPage } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAdminUserDetails, updateUserModerationState } from "@/lib/admin/api";
+import {
+  getAdminUserDetails,
+  updateUserModerationState,
+} from "@/lib/admin/api";
 import {
   formatCurrency,
   formatCurrencyFromMicros,
@@ -36,7 +39,9 @@ export default function AdminUserDetailPage() {
     try {
       setDetail(await getAdminUserDetails(uid));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "User detail failed to load.");
+      toast.error(
+        error instanceof Error ? error.message : "User detail failed to load."
+      );
     } finally {
       setLoading(false);
     }
@@ -64,7 +69,9 @@ export default function AdminUserDetailPage() {
       setReason("");
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Moderation update failed.");
+      toast.error(
+        error instanceof Error ? error.message : "Moderation update failed."
+      );
     } finally {
       setSubmittingAction(null);
     }
@@ -72,10 +79,18 @@ export default function AdminUserDetailPage() {
 
   return (
     <AdminPage
-      title={detail ? fullName || detail.user.email || detail.user.uid : "User detail"}
+      title={
+        detail
+          ? fullName || detail.user.email || detail.user.uid
+          : "User detail"
+      }
       description="Moderate account state, inspect billing and AI usage, and review any public decks this user owns."
       actions={
-        <Button variant="outline" onClick={() => void load()} disabled={loading}>
+        <Button
+          variant="outline"
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
       }
@@ -121,7 +136,7 @@ export default function AdminUserDetailPage() {
                   <p className="text-sm font-medium">Monthly AI cost</p>
                   <p className="mt-2 text-2xl font-semibold">
                     {formatCurrencyFromMicros(
-                      detail.aiUsage?.monthlyEstimatedCostMicrosUsd ?? 0,
+                      detail.aiUsage?.monthlyEstimatedCostMicrosUsd ?? 0
                     )}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -134,13 +149,14 @@ export default function AdminUserDetailPage() {
                 <p>Created: {formatDateTime(detail.user.createdAt)}</p>
                 <p>Updated: {formatDateTime(detail.user.updatedAt)}</p>
                 <p>
-                  Latest paid: {formatCurrency(detail.billing.latestKnownAmountPaidUsd)}
+                  Latest paid:{" "}
+                  {formatCurrency(detail.billing.latestKnownAmountPaidUsd)}
                 </p>
-                <p>
-                  Renews: {detail.billing.latestKnownRenewsAt ?? "Unknown"}
-                </p>
+                <p>Renews: {detail.billing.latestKnownRenewsAt ?? "Unknown"}</p>
                 {detail.user.moderationReason ? (
-                  <p>Current moderation reason: {detail.user.moderationReason}</p>
+                  <p>
+                    Current moderation reason: {detail.user.moderationReason}
+                  </p>
                 ) : null}
               </div>
             </AdminCard>
@@ -151,7 +167,8 @@ export default function AdminUserDetailPage() {
                   Moderation actions
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Use a reason whenever you change account state. It is stored in the user profile for later review.
+                  Use a reason whenever you change account state. It is stored
+                  in the user profile for later review.
                 </p>
               </div>
               <Input
@@ -179,7 +196,7 @@ export default function AdminUserDetailPage() {
                     void handleAction(
                       detail.user.publishingDisabled
                         ? "enable_publishing"
-                        : "disable_publishing",
+                        : "disable_publishing"
                     )
                   }
                 >
@@ -202,7 +219,8 @@ export default function AdminUserDetailPage() {
               <div className="mt-6 space-y-3">
                 {detail.publicDecks.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    This user has no public decks returned by the admin detail endpoint.
+                    This user has no public decks returned by the admin detail
+                    endpoint.
                   </p>
                 ) : (
                   detail.publicDecks.map((deck) => (
@@ -235,7 +253,9 @@ export default function AdminUserDetailPage() {
               </h3>
               <div className="mt-6 space-y-3 text-sm text-muted-foreground">
                 <p>Monthly tokens: {detail.aiUsage?.monthlyTokens ?? 0}</p>
-                <p>Cumulative tokens: {detail.aiUsage?.cumulativeTokens ?? 0}</p>
+                <p>
+                  Cumulative tokens: {detail.aiUsage?.cumulativeTokens ?? 0}
+                </p>
                 <p>
                   Prompt tokens: {detail.aiUsage?.cumulativePromptTokens ?? 0}
                 </p>
@@ -243,7 +263,9 @@ export default function AdminUserDetailPage() {
                   Output tokens: {detail.aiUsage?.cumulativeOutputTokens ?? 0}
                 </p>
                 <p>Credits tier: {detail.credits?.tier ?? "free"}</p>
-                <p>Credits used this month: {detail.credits?.creditsUsed ?? 0}</p>
+                <p>
+                  Credits used this month: {detail.credits?.creditsUsed ?? 0}
+                </p>
                 <p>
                   Credits used total: {detail.credits?.totalCreditsUsed ?? 0}
                 </p>

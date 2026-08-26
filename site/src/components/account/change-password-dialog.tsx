@@ -25,8 +25,14 @@ type Requirement = {
 };
 
 const REQUIREMENTS: Requirement[] = [
-  { label: `At least ${MIN_PASSWORD_LENGTH} characters`, test: (value) => value.length >= MIN_PASSWORD_LENGTH },
-  { label: "One lowercase and one uppercase letter", test: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value) },
+  {
+    label: `At least ${MIN_PASSWORD_LENGTH} characters`,
+    test: (value) => value.length >= MIN_PASSWORD_LENGTH,
+  },
+  {
+    label: "One lowercase and one uppercase letter",
+    test: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value),
+  },
   { label: "One number or symbol", test: (value) => /[^A-Za-z]/.test(value) },
 ];
 
@@ -43,12 +49,21 @@ export function ChangePasswordDialog({
   const [error, setError] = useState<string | null>(null);
 
   const results = useMemo(
-    () => REQUIREMENTS.map((requirement) => ({ ...requirement, met: requirement.test(nextPassword) })),
-    [nextPassword],
+    () =>
+      REQUIREMENTS.map((requirement) => ({
+        ...requirement,
+        met: requirement.test(nextPassword),
+      })),
+    [nextPassword]
   );
   const meetsRequirements = results.every((result) => result.met);
-  const passwordsMatch = nextPassword.length > 0 && nextPassword === confirmPassword;
-  const canSubmit = currentPassword.length > 0 && meetsRequirements && passwordsMatch && !saving;
+  const passwordsMatch =
+    nextPassword.length > 0 && nextPassword === confirmPassword;
+  const canSubmit =
+    currentPassword.length > 0 &&
+    meetsRequirements &&
+    passwordsMatch &&
+    !saving;
 
   const reset = () => {
     setCurrentPassword("");
@@ -72,7 +87,11 @@ export function ChangePasswordDialog({
       reset();
       setOpen(false);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to change your password.");
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Unable to change your password."
+      );
     } finally {
       setSaving(false);
     }
@@ -101,8 +120,8 @@ export function ChangePasswordDialog({
         <DialogHeader>
           <DialogTitle>Change password</DialogTitle>
           <DialogDescription>
-            Confirm the password you use today, then choose a new one. You stay signed in on this
-            device.
+            Confirm the password you use today, then choose a new one. You stay
+            signed in on this device.
           </DialogDescription>
         </DialogHeader>
 
@@ -136,16 +155,22 @@ export function ChangePasswordDialog({
                 key={result.label}
                 className={cn(
                   "flex items-center gap-2 text-sm",
-                  result.met ? "text-foreground" : "text-muted-foreground",
+                  result.met ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 <span
                   className={cn(
                     "flex size-5 shrink-0 items-center justify-center rounded-full",
-                    result.met ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground",
+                    result.met
+                      ? "bg-green-100 text-green-700"
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
-                  {result.met ? <Check className="size-3.5" /> : <span className="size-1.5 rounded-full bg-current" />}
+                  {result.met ? (
+                    <Check className="size-3.5" />
+                  ) : (
+                    <span className="size-1.5 rounded-full bg-current" />
+                  )}
                 </span>
                 {result.label}
               </li>
@@ -153,7 +178,9 @@ export function ChangePasswordDialog({
           </ul>
 
           <div className="space-y-2">
-            <Label htmlFor="account-confirm-password">Confirm new password</Label>
+            <Label htmlFor="account-confirm-password">
+              Confirm new password
+            </Label>
             <PasswordInput
               id="account-confirm-password"
               autoComplete="new-password"

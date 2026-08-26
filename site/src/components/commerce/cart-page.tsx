@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeft, Loader2, MapPin, ShieldCheck, ShoppingBag, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  MapPin,
+  ShieldCheck,
+  ShoppingBag,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -12,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { collectorRequest } from "@/lib/collectors/client";
-import { formatAddressLines, type SavedAddress } from "@/lib/collectors/address-format";
+import {
+  formatAddressLines,
+  type SavedAddress,
+} from "@/lib/collectors/address-format";
 
 export type CartItem = {
   artistName: string;
@@ -28,7 +38,9 @@ export type CartItem = {
 };
 
 function money(value: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { currency, style: "currency" }).format(value);
+  return new Intl.NumberFormat("en-US", { currency, style: "currency" }).format(
+    value
+  );
 }
 
 export function CartPage({ checkout = false }: { checkout?: boolean }) {
@@ -37,7 +49,9 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<CartItem[]>([]);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
-  const [shippingAddressId, setShippingAddressId] = useState<string | null>(null);
+  const [shippingAddressId, setShippingAddressId] = useState<string | null>(
+    null
+  );
   const [billingAddressId, setBillingAddressId] = useState<string | null>(null);
   const [savePaymentMethod, setSavePaymentMethod] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -50,22 +64,29 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
     }
 
     const token = await user.getIdToken();
-    const cart = await collectorRequest<{ items: CartItem[] }>("/api/cart", token);
+    const cart = await collectorRequest<{ items: CartItem[] }>(
+      "/api/cart",
+      token
+    );
     setItems(cart.items ?? []);
 
     if (checkout) {
       const saved = await collectorRequest<{ addresses: SavedAddress[] }>(
         "/api/collectors/addresses",
-        token,
+        token
       );
       setAddresses(saved.addresses ?? []);
       setShippingAddressId(
-        saved.addresses.find((address) => address.kind === "shipping" && address.isDefault)?.id ??
+        saved.addresses.find(
+          (address) => address.kind === "shipping" && address.isDefault
+        )?.id ??
           saved.addresses.find((address) => address.kind === "shipping")?.id ??
-          null,
+          null
       );
       setBillingAddressId(
-        saved.addresses.find((address) => address.kind === "billing" && address.isDefault)?.id ?? null,
+        saved.addresses.find(
+          (address) => address.kind === "billing" && address.isDefault
+        )?.id ?? null
       );
     }
   }, [checkout, user]);
@@ -82,7 +103,9 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
 
     void load()
       .catch((error: unknown) =>
-        toast.error(error instanceof Error ? error.message : "Unable to load your cart."),
+        toast.error(
+          error instanceof Error ? error.message : "Unable to load your cart."
+        )
       )
       .finally(() => setLoading(false));
   }, [checkout, load, router, status]);
@@ -93,13 +116,21 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
     }
 
     try {
-      const payload = await collectorRequest<{ items: CartItem[] }>("/api/cart", await user.getIdToken(), {
-        body: { itemId },
-        method: "DELETE",
-      });
+      const payload = await collectorRequest<{ items: CartItem[] }>(
+        "/api/cart",
+        await user.getIdToken(),
+        {
+          body: { itemId },
+          method: "DELETE",
+        }
+      );
       setItems(payload.items ?? []);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to remove that artwork.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to remove that artwork."
+      );
     }
   };
 
@@ -115,11 +146,15 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
       const payload = await collectorRequest<{ url: string }>(
         "/api/commerce/checkout",
         await user.getIdToken(),
-        { body: { billingAddressId, savePaymentMethod, shippingAddressId }, method: "POST" },
+        {
+          body: { billingAddressId, savePaymentMethod, shippingAddressId },
+          method: "POST",
+        }
       );
       window.location.href = payload.url;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to start checkout.";
+      const message =
+        error instanceof Error ? error.message : "Unable to start checkout.";
       setPayError(message);
       toast.error(message);
       setRedirecting(false);
@@ -128,22 +163,33 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
 
   const currency = items[0]?.currency || "USD";
   const total = items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-  const shippingAddresses = addresses.filter((address) => address.kind === "shipping");
-  const billingAddresses = addresses.filter((address) => address.kind === "billing");
-  const shippingAddress = shippingAddresses.find((address) => address.id === shippingAddressId) ?? null;
+  const shippingAddresses = addresses.filter(
+    (address) => address.kind === "shipping"
+  );
+  const billingAddresses = addresses.filter(
+    (address) => address.kind === "billing"
+  );
+  const shippingAddress =
+    shippingAddresses.find((address) => address.id === shippingAddressId) ??
+    null;
 
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         {checkout ? (
-          <Link className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" href="/cart">
+          <Link
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            href="/cart"
+          >
             <ArrowLeft className="size-4" />
             Back to cart
           </Link>
         ) : (
           <button
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
+            onClick={() =>
+              window.history.length > 1 ? router.back() : router.push("/")
+            }
             type="button"
           >
             <ArrowLeft className="size-4" />
@@ -155,8 +201,8 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
           <Alert className="mt-6">
             <AlertTitle>Checkout cancelled</AlertTitle>
             <AlertDescription>
-              Nothing was charged and your cart is untouched. The artwork stays held for you for a
-              short while.
+              Nothing was charged and your cart is untouched. The artwork stays
+              held for you for a short while.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -175,7 +221,9 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
             ) : items.length === 0 ? (
               <div className="mt-8 rounded-[2rem] border border-dashed border-border p-10 text-center">
                 <ShoppingBag className="mx-auto size-8 text-primary" />
-                <p className="mt-4 text-muted-foreground">Your cart is empty.</p>
+                <p className="mt-4 text-muted-foreground">
+                  Your cart is empty.
+                </p>
                 <Button asChild className="mt-6">
                   <Link href="/">Browse artwork</Link>
                 </Button>
@@ -183,16 +231,28 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
             ) : (
               <div className="mt-8 space-y-4">
                 {items.map((item) => (
-                  <article key={item.itemId} className="flex gap-4 rounded-[1.5rem] border border-border/70 p-4">
+                  <article
+                    key={item.itemId}
+                    className="flex gap-4 rounded-[1.5rem] border border-border/70 p-4"
+                  >
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img alt="" className="size-28 rounded-xl object-cover" src={item.imageUrl} />
+                      <img
+                        alt=""
+                        className="size-28 rounded-xl object-cover"
+                        src={item.imageUrl}
+                      />
                     ) : null}
                     <div className="min-w-0 flex-1">
-                      <Link className="text-xl font-medium hover:underline" href={item.href}>
+                      <Link
+                        className="text-xl font-medium hover:underline"
+                        href={item.href}
+                      >
                         {item.title}
                       </Link>
-                      <p className="mt-1 text-sm text-muted-foreground">by {item.artistName}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        by {item.artistName}
+                      </p>
                       <p className="mt-4 font-semibold">
                         {money(Number(item.price), item.currency)}
                       </p>
@@ -224,7 +284,10 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                     <AlertTitle>Add a shipping address</AlertTitle>
                     <AlertDescription>
                       We need somewhere to send the artwork.{" "}
-                      <Link className="underline underline-offset-4" href="/account/addresses">
+                      <Link
+                        className="underline underline-offset-4"
+                        href="/account/addresses"
+                      >
                         Add an address
                       </Link>{" "}
                       and come back to finish checking out.
@@ -236,12 +299,18 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                     <select
                       className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                       id="checkout-shipping-address"
-                      onChange={(event) => setShippingAddressId(event.target.value)}
+                      onChange={(event) =>
+                        setShippingAddressId(event.target.value)
+                      }
                       value={shippingAddressId ?? ""}
                     >
                       {shippingAddresses.map((address) => (
                         <option key={address.id} value={address.id}>
-                          {[address.label || address.name, address.line1, address.city]
+                          {[
+                            address.label || address.name,
+                            address.line1,
+                            address.city,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </option>
@@ -265,13 +334,19 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                     <select
                       className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                       id="checkout-billing-address"
-                      onChange={(event) => setBillingAddressId(event.target.value || null)}
+                      onChange={(event) =>
+                        setBillingAddressId(event.target.value || null)
+                      }
                       value={billingAddressId ?? ""}
                     >
                       <option value="">Same as shipping address</option>
                       {billingAddresses.map((address) => (
                         <option key={address.id} value={address.id}>
-                          {[address.label || address.name, address.line1, address.city]
+                          {[
+                            address.label || address.name,
+                            address.line1,
+                            address.city,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </option>
@@ -284,11 +359,16 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                   <Checkbox
                     checked={savePaymentMethod}
                     id="save-payment-method"
-                    onCheckedChange={(checked) => setSavePaymentMethod(checked === true)}
+                    onCheckedChange={(checked) =>
+                      setSavePaymentMethod(checked === true)
+                    }
                   />
-                  <Label className="font-normal leading-6" htmlFor="save-payment-method">
-                    Save this card for faster checkout next time. Stripe stores the card; EduthArt
-                    never sees the number.
+                  <Label
+                    className="font-normal leading-6"
+                    htmlFor="save-payment-method"
+                  >
+                    Save this card for faster checkout next time. Stripe stores
+                    the card; EduthArt never sees the number.
                   </Label>
                 </div>
               </section>
@@ -303,8 +383,8 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                 <strong>{money(total, currency)}</strong>
               </div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Shipping is calculated from the artist&apos;s stated rate and shown on the Stripe
-                payment page before you pay.
+                Shipping is calculated from the artist&apos;s stated rate and
+                shown on the Stripe payment page before you pay.
               </p>
 
               {payError ? (
@@ -317,7 +397,9 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
               {checkout ? (
                 <Button
                   className="mt-6 w-full"
-                  disabled={items.length === 0 || redirecting || !shippingAddressId}
+                  disabled={
+                    items.length === 0 || redirecting || !shippingAddressId
+                  }
                   onClick={() => void pay()}
                   size="lg"
                 >
@@ -331,15 +413,20 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                   )}
                 </Button>
               ) : (
-                <Button asChild className="mt-6 w-full" disabled={items.length === 0} size="lg">
+                <Button
+                  asChild
+                  className="mt-6 w-full"
+                  disabled={items.length === 0}
+                  size="lg"
+                >
                   <Link href="/checkout">Continue to checkout</Link>
                 </Button>
               )}
 
               <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                Payment is completed on Stripe&apos;s hosted checkout. Your card details never reach
-                EduthArt.
+                Payment is completed on Stripe&apos;s hosted checkout. Your card
+                details never reach EduthArt.
               </p>
             </div>
           </aside>

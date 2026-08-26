@@ -24,12 +24,19 @@ export type DocumentFilter = {
 
 const E2E_STORE_DIR = join(tmpdir(), "eduthart-e2e-document-store");
 
-function toStoredDocument(id: string, data: Record<string, unknown> | undefined): StoredDocument {
+function toStoredDocument(
+  id: string,
+  data: Record<string, unknown> | undefined
+): StoredDocument {
   return { ...(data ?? {}), id };
 }
 
 function getE2EPath(scope: string, collection: string) {
-  return join(E2E_STORE_DIR, encodeURIComponent(scope), `${encodeURIComponent(collection)}.json`);
+  return join(
+    E2E_STORE_DIR,
+    encodeURIComponent(scope),
+    `${encodeURIComponent(collection)}.json`
+  );
 }
 
 async function readE2ECollection(scope: string, collection: string) {
@@ -44,7 +51,7 @@ async function readE2ECollection(scope: string, collection: string) {
 async function writeE2ECollection(
   scope: string,
   collection: string,
-  documents: Record<string, Record<string, unknown>>,
+  documents: Record<string, Record<string, unknown>>
 ) {
   const path = getE2EPath(scope, collection);
   await fs.mkdir(dirname(path), { recursive: true });
@@ -65,7 +72,7 @@ const e2eWriteQueues = new Map<string, Promise<unknown>>();
 async function mutateE2ECollection<T>(
   scope: string,
   collection: string,
-  mutator: (documents: Record<string, Record<string, unknown>>) => T,
+  mutator: (documents: Record<string, Record<string, unknown>>) => T
 ): Promise<T> {
   const key = `${scope}/${collection}`;
   const run = (e2eWriteQueues.get(key) ?? Promise.resolve()).then(async () => {
@@ -79,24 +86,30 @@ async function mutateE2ECollection<T>(
   // file would inherit the rejection.
   e2eWriteQueues.set(
     key,
-    run.catch(() => undefined),
+    run.catch(() => undefined)
   );
 
   return run;
 }
 
-function matchesFilters(data: Record<string, unknown>, filters: DocumentFilter[]) {
+function matchesFilters(
+  data: Record<string, unknown>,
+  filters: DocumentFilter[]
+) {
   return filters.every((filter) => data[filter.field] === filter.value);
 }
 
 function userCollectionRef(uid: string, collection: string) {
-  return getFirebaseAdminDb().collection("users").doc(uid).collection(collection);
+  return getFirebaseAdminDb()
+    .collection("users")
+    .doc(uid)
+    .collection(collection);
 }
 
 export async function listUserDocuments(
   uid: string,
   collection: string,
-  filters: DocumentFilter[] = [],
+  filters: DocumentFilter[] = []
 ): Promise<StoredDocument[]> {
   if (isE2EAuthEnabled()) {
     const documents = await readE2ECollection(uid, collection);
@@ -112,13 +125,15 @@ export async function listUserDocuments(
   }
 
   const snapshot = await query.get();
-  return snapshot.docs.map((document) => toStoredDocument(document.id, document.data()));
+  return snapshot.docs.map((document) =>
+    toStoredDocument(document.id, document.data())
+  );
 }
 
 export async function getUserDocument(
   uid: string,
   collection: string,
-  id: string,
+  id: string
 ): Promise<StoredDocument | null> {
   if (isE2EAuthEnabled()) {
     const documents = await readE2ECollection(uid, collection);
@@ -127,14 +142,16 @@ export async function getUserDocument(
   }
 
   const snapshot = await userCollectionRef(uid, collection).doc(id).get();
-  return snapshot.exists ? toStoredDocument(snapshot.id, snapshot.data()) : null;
+  return snapshot.exists
+    ? toStoredDocument(snapshot.id, snapshot.data())
+    : null;
 }
 
 export async function saveUserDocument(
   uid: string,
   collection: string,
   id: string,
-  data: Record<string, unknown>,
+  data: Record<string, unknown>
 ): Promise<StoredDocument> {
   if (isE2EAuthEnabled()) {
     return mutateE2ECollection(uid, collection, (documents) => {
@@ -148,7 +165,11 @@ export async function saveUserDocument(
   return toStoredDocument(snapshot.id, snapshot.data());
 }
 
-export async function deleteUserDocument(uid: string, collection: string, id: string) {
+export async function deleteUserDocument(
+  uid: string,
+  collection: string,
+  id: string
+) {
   if (isE2EAuthEnabled()) {
     await mutateE2ECollection(uid, collection, (documents) => {
       delete documents[id];
@@ -173,7 +194,7 @@ const ROOT_SCOPE = "__root__";
 
 export async function listRootDocuments(
   collection: string,
-  filters: DocumentFilter[] = [],
+  filters: DocumentFilter[] = []
 ): Promise<StoredDocument[]> {
   if (isE2EAuthEnabled()) {
     const documents = await readE2ECollection(ROOT_SCOPE, collection);
@@ -182,31 +203,42 @@ export async function listRootDocuments(
       .map(([id, data]) => toStoredDocument(id, data));
   }
 
-  let query: FirebaseFirestore.Query = getFirebaseAdminDb().collection(collection);
+  let query: FirebaseFirestore.Query =
+    getFirebaseAdminDb().collection(collection);
 
   for (const filter of filters) {
     query = query.where(filter.field, "==", filter.value);
   }
 
   const snapshot = await query.get();
-  return snapshot.docs.map((document) => toStoredDocument(document.id, document.data()));
+  return snapshot.docs.map((document) =>
+    toStoredDocument(document.id, document.data())
+  );
 }
 
-export async function getRootDocument(collection: string, id: string): Promise<StoredDocument | null> {
+export async function getRootDocument(
+  collection: string,
+  id: string
+): Promise<StoredDocument | null> {
   if (isE2EAuthEnabled()) {
     const documents = await readE2ECollection(ROOT_SCOPE, collection);
     const data = documents[id];
     return data ? toStoredDocument(id, data) : null;
   }
 
-  const snapshot = await getFirebaseAdminDb().collection(collection).doc(id).get();
-  return snapshot.exists ? toStoredDocument(snapshot.id, snapshot.data()) : null;
+  const snapshot = await getFirebaseAdminDb()
+    .collection(collection)
+    .doc(id)
+    .get();
+  return snapshot.exists
+    ? toStoredDocument(snapshot.id, snapshot.data())
+    : null;
 }
 
 export async function saveRootDocument(
   collection: string,
   id: string,
-  data: Record<string, unknown>,
+  data: Record<string, unknown>
 ): Promise<StoredDocument> {
   if (isE2EAuthEnabled()) {
     return mutateE2ECollection(ROOT_SCOPE, collection, (documents) => {
@@ -215,8 +247,14 @@ export async function saveRootDocument(
     });
   }
 
-  await getFirebaseAdminDb().collection(collection).doc(id).set(data, { merge: true });
-  const snapshot = await getFirebaseAdminDb().collection(collection).doc(id).get();
+  await getFirebaseAdminDb()
+    .collection(collection)
+    .doc(id)
+    .set(data, { merge: true });
+  const snapshot = await getFirebaseAdminDb()
+    .collection(collection)
+    .doc(id)
+    .get();
   return toStoredDocument(snapshot.id, snapshot.data());
 }
 
@@ -237,10 +275,15 @@ export async function clearDocumentStore() {
 
 /** Drop every collection belonging to one user. Used to reset a test account. */
 export async function clearUserDocuments(uid: string) {
-  await fs.rm(join(E2E_STORE_DIR, encodeURIComponent(uid)), { force: true, recursive: true });
+  await fs.rm(join(E2E_STORE_DIR, encodeURIComponent(uid)), {
+    force: true,
+    recursive: true,
+  });
 }
 
 export function createDocumentId(prefix: string) {
-  const random = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12);
+  const random =
+    globalThis.crypto?.randomUUID?.() ??
+    Math.random().toString(36).slice(2, 12);
   return `${prefix}_${random.replaceAll("-", "").slice(0, 20)}`;
 }

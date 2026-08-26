@@ -24,7 +24,7 @@ type CollectionBody = {
 
 export function GET(request: Request) {
   return withSession(request, async (session) =>
-    NextResponse.json({ collections: await listCollections(session.uid) }),
+    NextResponse.json({ collections: await listCollections(session.uid) })
   );
 }
 
@@ -51,11 +51,15 @@ export function POST(request: Request) {
         itemId: artwork.item.id,
       });
 
-      return NextResponse.json({ collections: await listCollections(session.uid) });
+      return NextResponse.json({
+        collections: await listCollections(session.uid),
+      });
     }
 
     await createCollection(session.uid, body.name ?? "", body.description);
-    return NextResponse.json({ collections: await listCollections(session.uid) });
+    return NextResponse.json({
+      collections: await listCollections(session.uid),
+    });
   });
 }
 
@@ -68,14 +72,20 @@ export function PATCH(request: Request) {
     }
 
     if (typeof body.isPublic === "boolean") {
-      await setCollectionVisibility(session.uid, body.collectionId, body.isPublic);
+      await setCollectionVisibility(
+        session.uid,
+        body.collectionId,
+        body.isPublic
+      );
     }
 
     if (typeof body.name === "string") {
       await renameCollection(session.uid, body.collectionId, body.name);
     }
 
-    return NextResponse.json({ collections: await listCollections(session.uid) });
+    return NextResponse.json({
+      collections: await listCollections(session.uid),
+    });
   });
 }
 
@@ -88,11 +98,17 @@ export function DELETE(request: Request) {
     }
 
     if (body.artworkKey) {
-      await removeArtworkFromCollection(session.uid, body.collectionId, body.artworkKey);
+      await removeArtworkFromCollection(
+        session.uid,
+        body.collectionId,
+        body.artworkKey
+      );
     } else {
       await deleteCollection(session.uid, body.collectionId);
     }
 
-    return NextResponse.json({ collections: await listCollections(session.uid) });
+    return NextResponse.json({
+      collections: await listCollections(session.uid),
+    });
   });
 }

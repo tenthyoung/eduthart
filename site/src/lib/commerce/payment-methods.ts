@@ -1,4 +1,7 @@
-import { loadAccountProfile, saveAccountProfile } from "@/lib/auth/profile-store";
+import {
+  loadAccountProfile,
+  saveAccountProfile,
+} from "@/lib/auth/profile-store";
 import { getStripeClient } from "@/lib/commerce/stripe";
 import { getRootDocument, saveRootDocument } from "@/lib/store/document-store";
 
@@ -30,7 +33,11 @@ export async function ensureStripeCustomer({
 }) {
   const existing = await getRootDocument(STRIPE_CUSTOMERS_COLLECTION, uid);
 
-  if (existing && typeof existing.customerId === "string" && existing.customerId) {
+  if (
+    existing &&
+    typeof existing.customerId === "string" &&
+    existing.customerId
+  ) {
     return existing.customerId;
   }
 
@@ -41,16 +48,22 @@ export async function ensureStripeCustomer({
     name: name ?? undefined,
   });
 
-  await saveRootDocument(STRIPE_CUSTOMERS_COLLECTION, uid, { customerId: customer.id });
+  await saveRootDocument(STRIPE_CUSTOMERS_COLLECTION, uid, {
+    customerId: customer.id,
+  });
   return customer.id;
 }
 
 export async function findStripeCustomerId(uid: string) {
   const existing = await getRootDocument(STRIPE_CUSTOMERS_COLLECTION, uid);
-  return existing && typeof existing.customerId === "string" ? existing.customerId : null;
+  return existing && typeof existing.customerId === "string"
+    ? existing.customerId
+    : null;
 }
 
-export async function listPaymentMethods(uid: string): Promise<SavedPaymentMethod[]> {
+export async function listPaymentMethods(
+  uid: string
+): Promise<SavedPaymentMethod[]> {
   const customerId = await findStripeCustomerId(uid);
 
   if (!customerId) {
@@ -64,7 +77,8 @@ export async function listPaymentMethods(uid: string): Promise<SavedPaymentMetho
   ]);
 
   const defaultMethodId =
-    !customer.deleted && typeof customer.invoice_settings?.default_payment_method === "string"
+    !customer.deleted &&
+    typeof customer.invoice_settings?.default_payment_method === "string"
       ? customer.invoice_settings.default_payment_method
       : null;
 
@@ -80,7 +94,10 @@ export async function listPaymentMethods(uid: string): Promise<SavedPaymentMetho
     }));
 }
 
-export async function setDefaultPaymentMethod(uid: string, paymentMethodId: string) {
+export async function setDefaultPaymentMethod(
+  uid: string,
+  paymentMethodId: string
+) {
   const customerId = await findStripeCustomerId(uid);
 
   if (!customerId) {
@@ -94,7 +111,10 @@ export async function setDefaultPaymentMethod(uid: string, paymentMethodId: stri
   return listPaymentMethods(uid);
 }
 
-export async function removePaymentMethod(uid: string, paymentMethodId: string) {
+export async function removePaymentMethod(
+  uid: string,
+  paymentMethodId: string
+) {
   const customerId = await findStripeCustomerId(uid);
   const stripe = getStripeClient();
   const method = await stripe.paymentMethods.retrieve(paymentMethodId);
@@ -143,7 +163,9 @@ export async function forgetStripeCustomer(uid: string) {
     return;
   }
 
-  await getStripeClient().customers.del(customerId).catch(() => undefined);
+  await getStripeClient()
+    .customers.del(customerId)
+    .catch(() => undefined);
   await saveRootDocument(STRIPE_CUSTOMERS_COLLECTION, uid, { customerId: "" });
   await saveAccountProfile(uid, { updatedAt: new Date().toISOString() });
 }

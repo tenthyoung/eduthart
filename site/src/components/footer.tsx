@@ -62,7 +62,7 @@ export function Footer() {
     if (!data.subscribe) {
       setAlertType("error");
       setAlertMessage(
-        "Please confirm that you would like to join our mailing list.",
+        "Please confirm that you would like to join our mailing list."
       );
       return;
     }
@@ -90,7 +90,9 @@ export function Footer() {
         reset();
       } else {
         setAlertType("error");
-        setAlertMessage("We could not save your subscription. Please try again.");
+        setAlertMessage(
+          "We could not save your subscription. Please try again."
+        );
         toast.error("We could not save your subscription. Please try again.");
         console.error("Subscription error:", responseData);
       }
@@ -106,12 +108,12 @@ export function Footer() {
     if (!subscribe) {
       setAlertType("error");
       setAlertMessage(
-        "Please confirm that you would like to join our mailing list.",
+        "Please confirm that you would like to join our mailing list."
       );
     } else if (errors.email) {
       setAlertType("error");
       setAlertMessage(
-        errors.email.message || "Please fill in all required fields.",
+        errors.email.message || "Please fill in all required fields."
       );
     }
   };
@@ -205,7 +207,8 @@ export function Footer() {
                     EDUTHART
                   </p>
                   <p className="mb-2">
-                    For collecting inquiries, artist questions, and brand partnerships.
+                    For collecting inquiries, artist questions, and brand
+                    partnerships.
                   </p>
                   <Link
                     href="mailto:support@eduthart.com"
@@ -215,9 +218,16 @@ export function Footer() {
                   </Link>
                 </div>
                 <div className="text-muted-foreground">
-                  <p className="mb-2">Follow new collections, fresh arrivals, and advisory updates</p>
-                  <p className="mb-3">Online-first art marketplace with a curated point of view</p>
-                  <p>Designed for collectors, first-time buyers, and interior-led sourcing</p>
+                  <p className="mb-2">
+                    Follow new collections, fresh arrivals, and advisory updates
+                  </p>
+                  <p className="mb-3">
+                    Online-first art marketplace with a curated point of view
+                  </p>
+                  <p>
+                    Designed for collectors, first-time buyers, and interior-led
+                    sourcing
+                  </p>
                 </div>
               </div>
             </div>
@@ -227,7 +237,8 @@ export function Footer() {
                 Join the Collector List
               </h3>
               <p className="text-muted-foreground">
-                Receive new collection drops, artist highlights, and practical collecting guidance.
+                Receive new collection drops, artist highlights, and practical
+                collecting guidance.
               </p>
 
               {isSubscribed ? (

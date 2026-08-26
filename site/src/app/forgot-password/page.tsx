@@ -50,7 +50,10 @@ export default function ForgotPasswordPage() {
           <h2 className="text-2xl text-foreground">Forgot your password?</h2>
           <p className="text-sm text-muted-foreground">
             Remembered it after all?{" "}
-            <Link className="font-medium text-primary hover:underline" href="/login">
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/login"
+            >
               Go back to login
             </Link>
             .
@@ -61,7 +64,8 @@ export default function ForgotPasswordPage() {
           <Alert>
             <AlertTitle>Check your inbox</AlertTitle>
             <AlertDescription>
-              If an account exists for {email}, a password reset link is on the way.
+              If an account exists for {email}, a password reset link is on the
+              way.
             </AlertDescription>
           </Alert>
         ) : null}

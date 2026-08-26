@@ -19,7 +19,9 @@ function read(): string[] {
   try {
     const raw = window.sessionStorage.getItem(COMPARISON_STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-    return Array.isArray(parsed) ? parsed.filter((key): key is string => typeof key === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((key): key is string => typeof key === "string")
+      : [];
   } catch {
     return [];
   }
@@ -60,7 +62,9 @@ export function removeFromComparison(artworkKey: string) {
 }
 
 export function toggleComparison(artworkKey: string) {
-  return isInComparison(artworkKey) ? removeFromComparison(artworkKey) : addToComparison(artworkKey);
+  return isInComparison(artworkKey)
+    ? removeFromComparison(artworkKey)
+    : addToComparison(artworkKey);
 }
 
 export function clearComparison() {

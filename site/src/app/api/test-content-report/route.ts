@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (urls.length === 0) {
       return NextResponse.json(
         { error: "At least one direct public deck URL is required." },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (parsePublicDeckIds(urls).length === 0) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
           error:
             "Please include at least one valid direct EduthArt public deck URL.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -103,14 +103,14 @@ ${body.description}
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues[0]?.message ?? "Invalid request." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     console.error("Test content report error:", error);
     return NextResponse.json(
       { error: "Failed to submit report. Please try again later." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

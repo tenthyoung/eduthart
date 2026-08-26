@@ -76,11 +76,11 @@ fb --project PROJECT_ID apps:list
 Projects set up this way: `eduthart-5dd68`, `memdojo-d62de`,
 `stepslayer-32677`. What each repo actually deploys:
 
-| Repo         | Config in           | Deploys                             |
-| ------------ | ------------------- | ----------------------------------- |
-| `eduthart`   | `site/`             | storage rules only — the site is on Vercel |
-| `memdojo`    | repo root           | functions, firestore rules/indexes, storage |
-| `stepslayer` | `firebase/`         | firestore rules and indexes         |
+| Repo         | Config in   | Deploys                                     |
+| ------------ | ----------- | ------------------------------------------- |
+| `eduthart`   | `site/`     | storage rules only — the site is on Vercel  |
+| `memdojo`    | repo root   | functions, firestore rules/indexes, storage |
+| `stepslayer` | `firebase/` | firestore rules and indexes                 |
 
 ## App Store
 

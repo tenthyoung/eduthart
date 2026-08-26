@@ -19,7 +19,8 @@ function readFileAsDataUrl(file: File) {
       reject(new Error("Unable to read the selected image."));
     };
 
-    reader.onerror = () => reject(new Error("Unable to read the selected image."));
+    reader.onerror = () =>
+      reject(new Error("Unable to read the selected image."));
     reader.readAsDataURL(file);
   });
 }

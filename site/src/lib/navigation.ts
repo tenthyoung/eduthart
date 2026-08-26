@@ -15,7 +15,7 @@ export function isArtistCapableUsername(username?: string | null) {
 }
 
 export function isArtistCapableProfile(
-  profile?: Pick<AccountProfile, "username"> | null,
+  profile?: Pick<AccountProfile, "username"> | null
 ) {
   return isArtistCapableUsername(profile?.username);
 }

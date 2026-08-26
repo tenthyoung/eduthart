@@ -13,7 +13,7 @@ type AddressBody = AddressInput & { id?: string; makeDefault?: boolean };
 
 export function GET(request: Request) {
   return withSession(request, async (session) =>
-    NextResponse.json({ addresses: await listAddresses(session.uid) }),
+    NextResponse.json({ addresses: await listAddresses(session.uid) })
   );
 }
 

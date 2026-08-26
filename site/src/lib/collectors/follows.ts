@@ -28,15 +28,22 @@ function buildFollowerKey(artistUid: string, followerUid: string) {
   return `${artistUid}__${followerUid}`;
 }
 
-export async function listFollowedArtists(uid: string): Promise<FollowedArtist[]> {
+export async function listFollowedArtists(
+  uid: string
+): Promise<FollowedArtist[]> {
   const documents = await listUserDocuments(uid, FOLLOWING_COLLECTION);
 
   return documents
     .map((document) => ({
-      artistName: typeof document.artistName === "string" ? document.artistName : "",
+      artistName:
+        typeof document.artistName === "string" ? document.artistName : "",
       artistUid: document.id,
-      artistUsername: typeof document.artistUsername === "string" ? document.artistUsername : "",
-      followedAt: typeof document.followedAt === "string" ? document.followedAt : "",
+      artistUsername:
+        typeof document.artistUsername === "string"
+          ? document.artistUsername
+          : "",
+      followedAt:
+        typeof document.followedAt === "string" ? document.followedAt : "",
     }))
     .sort((first, second) => second.followedAt.localeCompare(first.followedAt));
 }
@@ -65,16 +72,23 @@ export async function followArtist(uid: string, artistUid: string) {
     followedAt,
   });
 
-  await saveRootDocument(FOLLOWERS_COLLECTION, buildFollowerKey(artistUid, uid), {
-    artistUid,
-    followedAt,
-    followerUid: uid,
-  });
+  await saveRootDocument(
+    FOLLOWERS_COLLECTION,
+    buildFollowerKey(artistUid, uid),
+    {
+      artistUid,
+      followedAt,
+      followerUid: uid,
+    }
+  );
 }
 
 export async function unfollowArtist(uid: string, artistUid: string) {
   await deleteUserDocument(uid, FOLLOWING_COLLECTION, artistUid);
-  await deleteRootDocument(FOLLOWERS_COLLECTION, buildFollowerKey(artistUid, uid));
+  await deleteRootDocument(
+    FOLLOWERS_COLLECTION,
+    buildFollowerKey(artistUid, uid)
+  );
 }
 
 export async function listArtistFollowerUids(artistUid: string) {
@@ -83,7 +97,9 @@ export async function listArtistFollowerUids(artistUid: string) {
   ]);
 
   return documents
-    .map((document) => (typeof document.followerUid === "string" ? document.followerUid : null))
+    .map((document) =>
+      typeof document.followerUid === "string" ? document.followerUid : null
+    )
     .filter((followerUid): followerUid is string => followerUid !== null);
 }
 
@@ -93,5 +109,7 @@ export async function countArtistFollowers(artistUid: string) {
 
 export async function removeAllFollowsForUser(uid: string) {
   const following = await listFollowedArtists(uid);
-  await Promise.all(following.map((artist) => unfollowArtist(uid, artist.artistUid)));
+  await Promise.all(
+    following.map((artist) => unfollowArtist(uid, artist.artistUid))
+  );
 }

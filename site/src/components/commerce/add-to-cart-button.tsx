@@ -9,36 +9,57 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { CART_OPEN_EVENT } from "@/components/commerce/cart-drawer";
 
-export function AddToCartButton({ itemId, username }: { itemId: string; username: string }) {
+export function AddToCartButton({
+  itemId,
+  username,
+}: {
+  itemId: string;
+  username: string;
+}) {
   const { status, user } = useAuth();
   const router = useRouter();
   const [adding, setAdding] = useState(false);
 
   const add = async () => {
     if (!user || status !== "authenticated") {
-      router.push(`/login?next=${encodeURIComponent(`/artists/${username}/art/${itemId}`)}`);
+      router.push(
+        `/login?next=${encodeURIComponent(`/artists/${username}/art/${itemId}`)}`
+      );
       return;
     }
     setAdding(true);
     try {
       const response = await fetch("/api/cart", {
         method: "POST",
-        headers: { authorization: `Bearer ${await user.getIdToken()}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${await user.getIdToken()}`,
+          "content-type": "application/json",
+        },
         body: JSON.stringify({ itemId, username }),
       });
       const payload = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "Unable to add artwork to cart.");
+      if (!response.ok)
+        throw new Error(payload.error || "Unable to add artwork to cart.");
       toast.success("Artwork added to your cart.");
       window.dispatchEvent(new Event(CART_OPEN_EVENT));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to add artwork to cart.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to add artwork to cart."
+      );
     } finally {
       setAdding(false);
     }
   };
 
   return (
-    <Button className="mt-6 w-full" disabled={adding} onClick={() => void add()} size="lg">
+    <Button
+      className="mt-6 w-full"
+      disabled={adding}
+      onClick={() => void add()}
+      size="lg"
+    >
       <ShoppingCart />
       {adding ? "Adding..." : "Add to cart"}
     </Button>

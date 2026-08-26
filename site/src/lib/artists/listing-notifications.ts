@@ -17,10 +17,10 @@ import {
 export async function notifyFollowersOfListingChanges(
   artistUid: string,
   artistName: string,
-  changes: ArtworkIndexChange[],
+  changes: ArtworkIndexChange[]
 ) {
   const announceable = changes.filter(
-    (change) => change.type === "listed" || change.type === "price_drop",
+    (change) => change.type === "listed" || change.type === "price_drop"
   );
 
   if (announceable.length === 0) {
@@ -34,7 +34,10 @@ export async function notifyFollowersOfListingChanges(
   }
 
   const followers = await Promise.all(
-    followerUids.map(async (uid) => ({ email: (await loadAccountProfile(uid))?.email ?? null, uid })),
+    followerUids.map(async (uid) => ({
+      email: (await loadAccountProfile(uid))?.email ?? null,
+      uid,
+    }))
   );
 
   for (const change of announceable) {
@@ -64,7 +67,9 @@ export async function notifyFollowersOfListingChanges(
         : `ntf_drop_${entry.key}_${entry.priceMinor}`;
 
     await Promise.all(
-      followers.map((follower) => dispatchNotification(follower, template, { dedupeKey })),
+      followers.map((follower) =>
+        dispatchNotification(follower, template, { dedupeKey })
+      )
     );
   }
 }

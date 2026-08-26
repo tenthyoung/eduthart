@@ -1,10 +1,19 @@
-import { getApp, getApps, initializeApp, cert, applicationDefault } from "firebase-admin/app";
+import {
+  getApp,
+  getApps,
+  initializeApp,
+  cert,
+  applicationDefault,
+} from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 const adminProjectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
 const adminClientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-const adminPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
+const adminPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
+  /\\n/g,
+  "\n"
+);
 
 function getFirebaseAdminApp() {
   if (getApps().length > 0) {

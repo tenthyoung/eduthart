@@ -5,7 +5,10 @@ import { notFound } from "next/navigation";
 import { type ListingItemDraft } from "@/lib/artists/listing-flow";
 import { listPublishedArtworks } from "@/lib/artists/listing-store";
 import { buildArtistPageHref } from "@/lib/auth/account-profile";
-import { buildProfileDisplayName, findAccountProfileByUsername } from "@/lib/auth/profile-store";
+import {
+  buildProfileDisplayName,
+  findAccountProfileByUsername,
+} from "@/lib/auth/profile-store";
 import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
 import { countArtistFollowers } from "@/lib/collectors/follows";
 import { cn } from "@/lib/utils";
@@ -59,18 +62,33 @@ export default async function ArtistPage({
 
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8">
             <div className="flex items-center gap-4">
-              <div className={cn("flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg", profile.bannerURL && "-mt-16")}>
+              <div
+                className={cn(
+                  "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg",
+                  profile.bannerURL && "-mt-16"
+                )}
+              >
                 {profile.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img alt={displayName} className="h-full w-full object-cover" src={profile.photoURL} />
+                  <img
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                    src={profile.photoURL}
+                  />
                 ) : (
                   (displayName.trim()[0] ?? "@").toUpperCase()
                 )}
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">Artist Page</p>
-                <h1 className="text-4xl text-foreground sm:text-5xl">{displayName}</h1>
-                <p className="text-base text-muted-foreground">@{profile.username}</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+                  Artist Page
+                </p>
+                <h1 className="text-4xl text-foreground sm:text-5xl">
+                  {displayName}
+                </h1>
+                <p className="text-base text-muted-foreground">
+                  @{profile.username}
+                </p>
                 {profile.location ? (
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="size-4" />
@@ -78,7 +96,8 @@ export default async function ArtistPage({
                   </p>
                 ) : null}
                 <p className="text-sm text-muted-foreground">
-                  {followerCount} {followerCount === 1 ? "follower" : "followers"}
+                  {followerCount}{" "}
+                  {followerCount === 1 ? "follower" : "followers"}
                 </p>
               </div>
             </div>
@@ -90,9 +109,11 @@ export default async function ArtistPage({
                 username={profile.username}
               />
               <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
-                Personal art page URL:
-                {" "}
-                <Link className="font-medium text-foreground underline decoration-primary/30 underline-offset-4" href={buildArtistPageHref(profile.username)}>
+                Personal art page URL:{" "}
+                <Link
+                  className="font-medium text-foreground underline decoration-primary/30 underline-offset-4"
+                  href={buildArtistPageHref(profile.username)}
+                >
                   {buildArtistPageHref(profile.username)}
                 </Link>
               </div>
@@ -102,7 +123,9 @@ export default async function ArtistPage({
 
         {profile.bio ? (
           <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">About</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+              About
+            </p>
             <p className="mt-3 max-w-3xl whitespace-pre-line text-base leading-8 text-muted-foreground">
               {profile.bio}
             </p>
@@ -111,7 +134,9 @@ export default async function ArtistPage({
 
         <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
           <div className="max-w-3xl space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">Gallery</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+              Gallery
+            </p>
             <h2 className="text-3xl text-foreground">Available artwork</h2>
             <p className="text-base leading-7 text-muted-foreground">
               Explore the work {displayName} has published for collectors.
@@ -143,20 +168,37 @@ export default async function ArtistPage({
                     <div className="space-y-3 p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="text-xl text-foreground">{item.artworkDetails.title || "Untitled artwork"}</h3>
+                          <h3 className="text-xl text-foreground">
+                            {item.artworkDetails.title || "Untitled artwork"}
+                          </h3>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {[item.artworkDetails.medium, item.artworkDetails.yearCreated].filter(Boolean).join(" · ")}
+                            {[
+                              item.artworkDetails.medium,
+                              item.artworkDetails.yearCreated,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </p>
                         </div>
-                        {price ? <p className="shrink-0 text-base font-semibold text-foreground">{price}</p> : null}
+                        {price ? (
+                          <p className="shrink-0 text-base font-semibold text-foreground">
+                            {price}
+                          </p>
+                        ) : null}
                       </div>
                       {item.artworkDetails.description ? (
-                        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">{item.artworkDetails.description}</p>
+                        <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                          {item.artworkDetails.description}
+                        </p>
                       ) : null}
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                        {item.pricingInventory.availability === "original_available"
+                        {item.pricingInventory.availability ===
+                        "original_available"
                           ? "Original available"
-                          : item.pricingInventory.availability.replaceAll("_", " ")}
+                          : item.pricingInventory.availability.replaceAll(
+                              "_",
+                              " "
+                            )}
                       </p>
                     </div>
                   </Link>

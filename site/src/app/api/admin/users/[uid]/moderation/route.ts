@@ -5,7 +5,7 @@ import { requireAdmin, updateUserModerationState } from "@/lib/admin/server";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ uid: string }> },
+  { params }: { params: Promise<{ uid: string }> }
 ) {
   try {
     const decodedToken = await requireAdminSession();
@@ -16,7 +16,7 @@ export async function POST(
       access.uid,
       uid,
       body?.action?.toString() ?? "",
-      body?.reason?.toString().trim() ?? "",
+      body?.reason?.toString().trim() ?? ""
     );
     return NextResponse.json(result);
   } catch (error) {

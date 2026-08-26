@@ -7,14 +7,29 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
-import { Bell, ChevronRight, CircleUserRound, LayoutDashboard, Linkedin, Loader2, LogOut, Menu, Settings, X, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  CircleUserRound,
+  LayoutDashboard,
+  Linkedin,
+  Loader2,
+  LogOut,
+  Menu,
+  Settings,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
 import { getNavContext, isArtistCapableUsername } from "@/lib/navigation";
-import { fetchNotifications, NOTIFICATIONS_CHANGED_EVENT } from "@/lib/notifications/client";
+import {
+  fetchNotifications,
+  NOTIFICATIONS_CHANGED_EVENT,
+} from "@/lib/notifications/client";
 import { cn } from "@/lib/utils";
 import { CartDrawer } from "@/components/commerce/cart-drawer";
 
@@ -59,14 +74,8 @@ export function Navbar() {
       : [];
   const navItems: NavItem[] =
     status === "authenticated"
-      ? [
-          ...(isHomepage ? homepageNavItems : []),
-          ...authenticatedNavItems,
-        ]
-      : [
-          ...(isHomepage ? homepageNavItems : []),
-          ...guestNavItems,
-        ];
+      ? [...(isHomepage ? homepageNavItems : []), ...authenticatedNavItems]
+      : [...(isHomepage ? homepageNavItems : []), ...guestNavItems];
   const desktopNavItems = navItems;
 
   const socialIcons = [
@@ -231,13 +240,13 @@ export function Navbar() {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
           ? "border-b border-border/50 bg-background/90 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl"
-          : "bg-transparent",
+          : "bg-transparent"
       )}
     >
       <div
         className={cn(
           "px-4 sm:px-6 lg:px-16",
-          isScrolled ? "pt-4 pb-3" : "pt-8 pb-4",
+          isScrolled ? "pt-4 pb-3" : "pt-8 pb-4"
         )}
       >
         <div className="flex items-center justify-between h-20 gap-6">
@@ -281,7 +290,12 @@ export function Navbar() {
             <ThemeToggle />
             {status === "authenticated" ? (
               <div className="hidden items-center gap-2 lg:flex">
-                <Button asChild className="relative" size="icon" variant="outline">
+                <Button
+                  asChild
+                  className="relative"
+                  size="icon"
+                  variant="outline"
+                >
                   <Link
                     aria-label={
                       unreadNotifications > 0
@@ -334,7 +348,12 @@ export function Navbar() {
               </div>
             )}
             {isHomepage ? (
-              <Button asChild variant="gradient" size="lg" className="hidden xl:inline-flex">
+              <Button
+                asChild
+                variant="gradient"
+                size="lg"
+                className="hidden xl:inline-flex"
+              >
                 <Link href="/#collections">Shop</Link>
               </Button>
             ) : null}
@@ -401,10 +420,14 @@ export function Navbar() {
                 {status === "authenticated" ? (
                   <>
                     <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm text-foreground">
-                      Signed in as {user?.displayName || user?.email || "collector"}
+                      Signed in as{" "}
+                      {user?.displayName || user?.email || "collector"}
                     </div>
                     <Button asChild className="w-full" variant="outline">
-                      <Link href="/notifications" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         <Bell />
                         Notifications
                         {unreadNotifications > 0 ? (
@@ -415,7 +438,10 @@ export function Navbar() {
                       </Link>
                     </Button>
                     <Button asChild className="w-full" variant="outline">
-                      <Link href="/account" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/account"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         <Settings />
                         Account settings
                         <ChevronRight />
@@ -423,7 +449,10 @@ export function Navbar() {
                     </Button>
                     {username ? (
                       <Button asChild className="w-full" variant="gradient">
-                        <Link href={`/artists/${username}/listings/new`} onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link
+                          href={`/artists/${username}/listings/new`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
                           <LayoutDashboard />
                           Artist Dashboard
                         </Link>
@@ -446,12 +475,18 @@ export function Navbar() {
                 ) : (
                   <>
                     <Button asChild className="w-full" variant="outline">
-                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         Log in
                       </Link>
                     </Button>
                     <Button asChild className="w-full" variant="gradient">
-                      <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/signup"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         Sign up
                       </Link>
                     </Button>
@@ -459,7 +494,10 @@ export function Navbar() {
                 )}
                 {isHomepage ? (
                   <Button asChild className="w-full" variant="gradient">
-                    <Link href="/#collections" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link
+                      href="/#collections"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       Shop
                     </Link>
                   </Button>

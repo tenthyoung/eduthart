@@ -27,7 +27,11 @@ const SECTIONS = [
   { href: "/account/recently-viewed", icon: History, label: "Recently viewed" },
   { href: "/account/orders", icon: Receipt, label: "Purchases" },
   { href: "/account/addresses", icon: MapPin, label: "Addresses" },
-  { href: "/account/payment-methods", icon: CreditCard, label: "Payment methods" },
+  {
+    href: "/account/payment-methods",
+    icon: CreditCard,
+    label: "Payment methods",
+  },
   { href: "/notifications", icon: Bell, label: "Notifications" },
 ];
 
@@ -47,7 +51,9 @@ export function AccountSectionNav() {
         {SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive =
-            section.href === "/account" ? pathname === "/account" : pathname.startsWith(section.href);
+            section.href === "/account"
+              ? pathname === "/account"
+              : pathname.startsWith(section.href);
 
           return (
             <li key={section.href}>
@@ -57,7 +63,7 @@ export function AccountSectionNav() {
                   "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border/70 bg-white text-muted-foreground hover:text-foreground",
+                    : "border-border/70 bg-white text-muted-foreground hover:text-foreground"
                 )}
                 href={section.href}
               >
@@ -97,7 +103,9 @@ export function AccountShell({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
             <h1 className="text-4xl text-foreground sm:text-5xl">{title}</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              {description}
+            </p>
           </div>
           {action}
         </div>

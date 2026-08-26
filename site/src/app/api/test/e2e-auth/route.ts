@@ -1,8 +1,15 @@
 import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
 import { NextResponse } from "next/server";
 
-import { clearE2EAccountProfiles, isE2EAuthEnabled, seedE2EAccountProfile } from "@/lib/auth/e2e-store";
-import { clearDocumentStore, clearUserDocuments } from "@/lib/store/document-store";
+import {
+  clearE2EAccountProfiles,
+  isE2EAuthEnabled,
+  seedE2EAccountProfile,
+} from "@/lib/auth/e2e-store";
+import {
+  clearDocumentStore,
+  clearUserDocuments,
+} from "@/lib/store/document-store";
 
 type SeedBody = {
   authProviders?: string[];
@@ -28,7 +35,7 @@ function ensureE2EEnabled() {
           message: "Not found.",
         },
       },
-      { status: 404 },
+      { status: 404 }
     );
   }
 
@@ -52,7 +59,7 @@ export async function POST(request: Request) {
           message: "A uid is required.",
         },
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 

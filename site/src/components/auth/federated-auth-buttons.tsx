@@ -5,7 +5,11 @@ import { GoogleIcon } from "@/components/auth/google-icon";
 import { Button } from "@/components/ui/button";
 import type { FederatedProvider } from "@/components/auth/auth-provider";
 
-const PROVIDERS: Array<{ Icon: () => React.JSX.Element; id: FederatedProvider; name: string }> = [
+const PROVIDERS: Array<{
+  Icon: () => React.JSX.Element;
+  id: FederatedProvider;
+  name: string;
+}> = [
   { Icon: GoogleIcon, id: "google.com", name: "Google" },
   { Icon: AppleIcon, id: "apple.com", name: "Apple" },
 ];

@@ -31,7 +31,9 @@ import type { FavoriteRecord } from "@/lib/collectors/favorites";
 import { addToComparison } from "@/lib/collectors/comparison";
 
 export function FavoritesPage() {
-  const { data, error, loading, mutate, user } = useCollectorResource<FavoriteRecord[]>({
+  const { data, error, loading, mutate, user } = useCollectorResource<
+    FavoriteRecord[]
+  >({
     initialData: [],
     path: "/api/collectors/favorites",
     select: (payload) => (payload.favorites as FavoriteRecord[]) ?? [],
@@ -50,10 +52,9 @@ export function FavoritesPage() {
     }
 
     try {
-      const payload = await collectorRequest<{ collections: ArtworkCollection[] }>(
-        "/api/collectors/collections",
-        await user.getIdToken(),
-      );
+      const payload = await collectorRequest<{
+        collections: ArtworkCollection[];
+      }>("/api/collectors/collections", await user.getIdToken());
       setCollections(payload.collections);
     } catch {
       setCollections([]);
@@ -68,23 +69,25 @@ export function FavoritesPage() {
     setBusy(true);
 
     try {
-      const payload = await collectorRequest<{ collections: ArtworkCollection[] }>(
-        "/api/collectors/collections",
-        await user.getIdToken(),
-        {
-          body: {
-            collectionId,
-            itemId: organizing.itemId,
-            username: organizing.artistUsername,
-          },
-          method: "POST",
+      const payload = await collectorRequest<{
+        collections: ArtworkCollection[];
+      }>("/api/collectors/collections", await user.getIdToken(), {
+        body: {
+          collectionId,
+          itemId: organizing.itemId,
+          username: organizing.artistUsername,
         },
-      );
+        method: "POST",
+      });
       setCollections(payload.collections);
       setOrganizing(null);
       toast.success("Added to your collection.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to add that to a collection.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to add that to a collection."
+      );
     } finally {
       setBusy(false);
     }
@@ -100,14 +103,17 @@ export function FavoritesPage() {
     setBusy(true);
 
     try {
-      const created = await collectorRequest<{ collections: ArtworkCollection[] }>(
-        "/api/collectors/collections",
-        await user.getIdToken(),
-        { body: { name }, method: "POST" },
-      );
+      const created = await collectorRequest<{
+        collections: ArtworkCollection[];
+      }>("/api/collectors/collections", await user.getIdToken(), {
+        body: { name },
+        method: "POST",
+      });
       setCollections(created.collections);
 
-      const newest = created.collections.find((collection) => collection.name === name);
+      const newest = created.collections.find(
+        (collection) => collection.name === name
+      );
 
       if (!newest) {
         throw new Error("The collection was created but could not be opened.");
@@ -116,7 +122,11 @@ export function FavoritesPage() {
       setNewCollectionName("");
       await addToCollection(newest.id);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to create that collection.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to create that collection."
+      );
     } finally {
       setBusy(false);
     }
@@ -124,7 +134,10 @@ export function FavoritesPage() {
 
   if (loading) {
     return (
-      <AccountShell description="Artwork you saved for later." title="Favorites">
+      <AccountShell
+        description="Artwork you saved for later."
+        title="Favorites"
+      >
         <CollectorLoadingPanel label="Loading your favorites..." />
       </AccountShell>
     );
@@ -169,7 +182,11 @@ export function FavoritesPage() {
                 key={favorite.key}
                 actions={
                   <>
-                    <Button onClick={() => void openOrganizer(favorite)} size="sm" variant="outline">
+                    <Button
+                      onClick={() => void openOrganizer(favorite)}
+                      size="sm"
+                      variant="outline"
+                    >
                       <FolderPlus />
                       Add to collection
                     </Button>
@@ -192,7 +209,7 @@ export function FavoritesPage() {
                             },
                             method: "DELETE",
                           },
-                          "Removed from your favorites.",
+                          "Removed from your favorites."
                         )
                       }
                       size="sm"
@@ -205,18 +222,21 @@ export function FavoritesPage() {
                 }
                 artwork={favorite.artwork}
               />
-            ) : null,
+            ) : null
           )}
         </ArtworkCardGrid>
       )}
 
-      <Dialog open={organizing !== null} onOpenChange={(open) => (open ? null : setOrganizing(null))}>
+      <Dialog
+        open={organizing !== null}
+        onOpenChange={(open) => (open ? null : setOrganizing(null))}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add to a collection</DialogTitle>
             <DialogDescription>
-              Group “{organizing?.artwork?.title ?? "this artwork"}” with the rest of a theme you are
-              building.
+              Group “{organizing?.artwork?.title ?? "this artwork"}” with the
+              rest of a theme you are building.
             </DialogDescription>
           </DialogHeader>
 
@@ -255,7 +275,10 @@ export function FavoritesPage() {
           </div>
 
           <DialogFooter>
-            <Button disabled={busy || !newCollectionName.trim()} onClick={() => void createAndAdd()}>
+            <Button
+              disabled={busy || !newCollectionName.trim()}
+              onClick={() => void createAndAdd()}
+            >
               Create and add
             </Button>
           </DialogFooter>

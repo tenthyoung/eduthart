@@ -10,7 +10,8 @@ import {
 
 const ORDERS_COLLECTION = "orders";
 
-export type OrderStatus = "awaiting_payment" | "cancelled" | "paid" | "refunded";
+export type OrderStatus =
+  "awaiting_payment" | "cancelled" | "paid" | "refunded";
 
 export type OrderLineItem = {
   artistUid: string;
@@ -79,7 +80,9 @@ function toOrder(document: StoredDocument): Order {
     createdAt: readString("createdAt") ?? "",
     currency: normalizeCurrency(readString("currency")),
     id: document.id,
-    items: Array.isArray(document.items) ? (document.items as OrderLineItem[]) : [],
+    items: Array.isArray(document.items)
+      ? (document.items as OrderLineItem[])
+      : [],
     number: readString("number") ?? document.id,
     paidAt: readString("paidAt"),
     sellerName: readString("sellerName") ?? "",
@@ -111,7 +114,10 @@ export type CreateOrderInput = {
 export async function createOrder(input: CreateOrderInput) {
   const now = new Date().toISOString();
   const id = createDocumentId("ord");
-  const subtotalMinor = input.items.reduce((total, item) => total + item.unitAmountMinor, 0);
+  const subtotalMinor = input.items.reduce(
+    (total, item) => total + item.unitAmountMinor,
+    0
+  );
 
   const saved = await saveRootDocument(ORDERS_COLLECTION, id, {
     ...input,
@@ -145,7 +151,9 @@ export async function findOrderByCheckoutSession(sessionId: string) {
 }
 
 async function listOrdersBy(field: "buyerUid" | "sellerUid", uid: string) {
-  const documents = await listRootDocuments(ORDERS_COLLECTION, [{ field, value: uid }]);
+  const documents = await listRootDocuments(ORDERS_COLLECTION, [
+    { field, value: uid },
+  ]);
 
   return documents
     .map(toOrder)
@@ -160,7 +168,10 @@ export function listSales(uid: string) {
   return listOrdersBy("sellerUid", uid);
 }
 
-export async function attachCheckoutSession(orderId: string, sessionId: string) {
+export async function attachCheckoutSession(
+  orderId: string,
+  sessionId: string
+) {
   await saveRootDocument(ORDERS_COLLECTION, orderId, {
     stripeCheckoutSessionId: sessionId,
     updatedAt: new Date().toISOString(),
@@ -169,7 +180,7 @@ export async function attachCheckoutSession(orderId: string, sessionId: string) 
 
 export async function markOrderPaid(
   orderId: string,
-  details: { paymentIntentId: string | null },
+  details: { paymentIntentId: string | null }
 ) {
   const now = new Date().toISOString();
 

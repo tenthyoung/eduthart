@@ -17,16 +17,22 @@ import { addToComparison } from "@/lib/collectors/comparison";
 import type { ArtworkRecommendation } from "@/lib/collectors/recommendations";
 
 export function RecommendationsPage() {
-  const { data, error, loading } = useCollectorResource<ArtworkRecommendation[]>({
+  const { data, error, loading } = useCollectorResource<
+    ArtworkRecommendation[]
+  >({
     initialData: [],
     path: "/api/collectors/recommendations",
-    select: (payload) => (payload.recommendations as ArtworkRecommendation[]) ?? [],
+    select: (payload) =>
+      (payload.recommendations as ArtworkRecommendation[]) ?? [],
     signInPath: "/account/recommendations",
   });
 
   if (loading) {
     return (
-      <AccountShell description="Artwork picked from what you save." title="For you">
+      <AccountShell
+        description="Artwork picked from what you save."
+        title="For you"
+      >
         <CollectorLoadingPanel label="Looking through the gallery for you..." />
       </AccountShell>
     );

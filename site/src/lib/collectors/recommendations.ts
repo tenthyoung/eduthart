@@ -1,4 +1,7 @@
-import { listIndexedArtworks, type IndexedArtwork } from "@/lib/artists/artwork-index";
+import {
+  listIndexedArtworks,
+  type IndexedArtwork,
+} from "@/lib/artists/artwork-index";
 import { listFavorites } from "@/lib/collectors/favorites";
 import { listFollowedArtists } from "@/lib/collectors/follows";
 
@@ -51,7 +54,9 @@ function collectAttributes(artworks: IndexedArtwork[]) {
  * Everything is derived from the favorites and follows the collector created
  * themselves; nothing is inferred from other people's behaviour.
  */
-export async function buildRecommendations(uid: string): Promise<ArtworkRecommendation[]> {
+export async function buildRecommendations(
+  uid: string
+): Promise<ArtworkRecommendation[]> {
   const [favorites, followed, index] = await Promise.all([
     listFavorites(uid),
     listFollowedArtists(uid),
@@ -67,8 +72,12 @@ export async function buildRecommendations(uid: string): Promise<ArtworkRecommen
   }
 
   const savedKeys = new Set(favorites.map((favorite) => favorite.key));
-  const savedArtistUids = new Set(savedArtworks.map((artwork) => artwork.artistUid));
-  const followedArtistUids = new Set(followed.map((artist) => artist.artistUid));
+  const savedArtistUids = new Set(
+    savedArtworks.map((artwork) => artwork.artistUid)
+  );
+  const followedArtistUids = new Set(
+    followed.map((artist) => artist.artistUid)
+  );
   const { categories, media, styles, tags } = collectAttributes(savedArtworks);
 
   const recommendations = index
@@ -76,7 +85,7 @@ export async function buildRecommendations(uid: string): Promise<ArtworkRecommen
       (artwork) =>
         artwork.availability === "original_available" &&
         !savedKeys.has(artwork.key) &&
-        artwork.artistUid !== uid,
+        artwork.artistUid !== uid
     )
     .map((artwork) => {
       const reasons: string[] = [];
@@ -122,7 +131,7 @@ export async function buildRecommendations(uid: string): Promise<ArtworkRecommen
     .sort((first, second) =>
       second.score === first.score
         ? second.artwork.updatedAt.localeCompare(first.artwork.updatedAt)
-        : second.score - first.score,
+        : second.score - first.score
     )
     .slice(0, MAX_RECOMMENDATIONS);
 }

@@ -2,8 +2,15 @@ import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { createEmptyListingStudio, type ListingStudioDraft, type ShippingOriginAddress } from "@/lib/artists/listing-flow";
-import { buildDisplayName, type AccountProfile } from "@/lib/auth/account-profile";
+import {
+  createEmptyListingStudio,
+  type ListingStudioDraft,
+  type ShippingOriginAddress,
+} from "@/lib/artists/listing-flow";
+import {
+  buildDisplayName,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
 
 type SeedProfileArgs = {
   authProviders?: string[];
@@ -28,7 +35,9 @@ const E2E_STORE_DIR = join(tmpdir(), "eduthart-e2e-account-store");
 const E2E_LISTING_FLOW_DIR = join(tmpdir(), "eduthart-e2e-listing-flow-store");
 
 export function isE2EAuthEnabled() {
-  return process.env.E2E_AUTH === "1" || process.env.NEXT_PUBLIC_E2E_AUTH === "1";
+  return (
+    process.env.E2E_AUTH === "1" || process.env.NEXT_PUBLIC_E2E_AUTH === "1"
+  );
 }
 
 function getProfilePath(uid: string) {
@@ -80,7 +89,9 @@ export async function seedE2EAccountProfile({
       ({
         acceptedAt: now,
         acceptedVersion: "e2e",
-        acceptedVia: authProviders?.includes("google") ? "google" : "email_password",
+        acceptedVia: authProviders?.includes("google")
+          ? "google"
+          : "email_password",
         privacyPolicyAcceptedAt: now,
         privacyPolicyPath: "/legal/privacy-policy",
         termsOfServiceAcceptedAt: now,
@@ -111,7 +122,7 @@ export async function getE2EAccountProfile(uid: string) {
 
 export async function updateE2EAccountProfile(
   uid: string,
-  updates: Partial<AccountProfile>,
+  updates: Partial<AccountProfile>
 ) {
   const current = await getE2EAccountProfile(uid);
 
@@ -147,14 +158,20 @@ export async function getE2EListingFlow(uid: string) {
   }
 }
 
-export async function seedE2EListingFlow(uid: string, address?: ShippingOriginAddress | null) {
+export async function seedE2EListingFlow(
+  uid: string,
+  address?: ShippingOriginAddress | null
+) {
   const flow = createEmptyListingStudio({ existingAddress: address ?? null });
   await ensureListingFlowDir();
   await fs.writeFile(getListingFlowPath(uid), JSON.stringify(flow), "utf8");
   return flow;
 }
 
-export async function updateE2EListingFlow(uid: string, flow: ListingStudioDraft) {
+export async function updateE2EListingFlow(
+  uid: string,
+  flow: ListingStudioDraft
+) {
   await ensureListingFlowDir();
   await fs.writeFile(getListingFlowPath(uid), JSON.stringify(flow), "utf8");
   return flow;

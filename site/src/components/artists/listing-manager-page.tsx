@@ -34,7 +34,11 @@ import {
   normalizeListingStudio,
   type ListingStudioDraft,
 } from "@/lib/artists/listing-flow";
-import { buildArtistPageHref, buildFallbackAccountProfile, type AccountProfile } from "@/lib/auth/account-profile";
+import {
+  buildArtistPageHref,
+  buildFallbackAccountProfile,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
 
 type ListingStudioPayload = {
   profile: AccountProfile;
@@ -42,16 +46,12 @@ type ListingStudioPayload = {
 };
 
 type SortValue =
-  | "newest"
-  | "oldest"
-  | "progress_desc"
-  | "price_desc"
-  | "title_asc";
+  "newest" | "oldest" | "progress_desc" | "price_desc" | "title_asc";
 
 async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: string };
+  } | null;
 
   return payload?.error?.message ?? fallbackMessage;
 }
@@ -65,7 +65,9 @@ export function ListingManagerPage({ username }: { username: string }) {
   const router = useRouter();
   const { status, user } = useAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
-  const [studio, setStudio] = useState<ListingStudioDraft>(() => createEmptyListingStudio());
+  const [studio, setStudio] = useState<ListingStudioDraft>(() =>
+    createEmptyListingStudio()
+  );
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,12 +98,15 @@ export function ListingManagerPage({ username }: { username: string }) {
         const token = await user.getIdToken();
         const controller = new AbortController();
         timeoutId = window.setTimeout(() => controller.abort(), 12000);
-        const response = await fetch(`/api/artists/listing-flow?username=${encodeURIComponent(username)}`, {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/artists/listing-flow?username=${encodeURIComponent(username)}`,
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
 
         if (timeoutId !== null) {
           window.clearTimeout(timeoutId);
@@ -109,7 +114,9 @@ export function ListingManagerPage({ username }: { username: string }) {
         }
 
         if (!response.ok) {
-          throw new Error(await parseApiError(response, "Unable to load your listings."));
+          throw new Error(
+            await parseApiError(response, "Unable to load your listings.")
+          );
         }
 
         const payload = (await response.json()) as ListingStudioPayload;
@@ -118,9 +125,11 @@ export function ListingManagerPage({ username }: { username: string }) {
         }
 
         setProfile(payload.profile);
-        setStudio(normalizeListingStudio(payload.studio, {
-          existingAddress: payload.profile.shippingOriginAddress,
-        }));
+        setStudio(
+          normalizeListingStudio(payload.studio, {
+            existingAddress: payload.profile.shippingOriginAddress,
+          })
+        );
         setSelectedItemIds([]);
       } catch (loadError) {
         if (!cancelled) {
@@ -152,7 +161,10 @@ export function ListingManagerPage({ username }: { username: string }) {
     };
   }, [router, status, user, username]);
 
-  const persistStudio = async (nextStudio: ListingStudioDraft, successMessage?: string) => {
+  const persistStudio = async (
+    nextStudio: ListingStudioDraft,
+    successMessage?: string
+  ) => {
     if (!user) {
       return null;
     }
@@ -162,22 +174,27 @@ export function ListingManagerPage({ username }: { username: string }) {
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`/api/artists/listing-flow?username=${encodeURIComponent(username)}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          studio: {
-            ...nextStudio,
-            updatedAt: new Date().toISOString(),
+      const response = await fetch(
+        `/api/artists/listing-flow?username=${encodeURIComponent(username)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${token}`,
           },
-        }),
-      });
+          body: JSON.stringify({
+            studio: {
+              ...nextStudio,
+              updatedAt: new Date().toISOString(),
+            },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to update your listings."));
+        throw new Error(
+          await parseApiError(response, "Unable to update your listings.")
+        );
       }
 
       const payload = (await response.json()) as ListingStudioPayload;
@@ -187,7 +204,9 @@ export function ListingManagerPage({ username }: { username: string }) {
       setProfile(payload.profile);
       setStudio(normalizedStudio);
       setSelectedItemIds((current) =>
-        current.filter((id) => normalizedStudio.items.some((item) => item.id === id)),
+        current.filter((id) =>
+          normalizedStudio.items.some((item) => item.id === id)
+        )
       );
 
       if (successMessage) {
@@ -196,7 +215,10 @@ export function ListingManagerPage({ username }: { username: string }) {
 
       return normalizedStudio;
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : "Unable to update your listings.";
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to update your listings.";
       setError(message);
       toast.error(message);
       return null;
@@ -218,16 +240,16 @@ export function ListingManagerPage({ username }: { username: string }) {
         item.artworkDetails.subject.toLowerCase().includes(loweredSearch);
 
       const matchesAvailability =
-        availabilityFilter === "all" || item.pricingInventory.availability === availabilityFilter;
+        availabilityFilter === "all" ||
+        item.pricingInventory.availability === availabilityFilter;
 
-      const visibility =
-        item.salesVisibility.public
-          ? "public"
-          : item.salesVisibility.unlisted
-            ? "unlisted"
-            : item.salesVisibility.private
-              ? "private"
-              : "draft";
+      const visibility = item.salesVisibility.public
+        ? "public"
+        : item.salesVisibility.unlisted
+          ? "unlisted"
+          : item.salesVisibility.private
+            ? "private"
+            : "draft";
 
       const matchesVisibility =
         visibilityFilter === "all" || visibility === visibilityFilter;
@@ -238,21 +260,42 @@ export function ListingManagerPage({ username }: { username: string }) {
     next.sort((a, b) => {
       switch (sortBy) {
         case "title_asc":
-          return getItemDisplayTitle(a, 0).localeCompare(getItemDisplayTitle(b, 0));
+          return getItemDisplayTitle(a, 0).localeCompare(
+            getItemDisplayTitle(b, 0)
+          );
         case "oldest":
-          return new Date(a.updatedAt ?? 0).getTime() - new Date(b.updatedAt ?? 0).getTime();
+          return (
+            new Date(a.updatedAt ?? 0).getTime() -
+            new Date(b.updatedAt ?? 0).getTime()
+          );
         case "progress_desc":
-          return getItemProgressPercent(b, studio.shared) - getItemProgressPercent(a, studio.shared);
+          return (
+            getItemProgressPercent(b, studio.shared) -
+            getItemProgressPercent(a, studio.shared)
+          );
         case "price_desc":
-          return parsePrice(b.pricingInventory.price) - parsePrice(a.pricingInventory.price);
+          return (
+            parsePrice(b.pricingInventory.price) -
+            parsePrice(a.pricingInventory.price)
+          );
         case "newest":
         default:
-          return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime();
+          return (
+            new Date(b.updatedAt ?? 0).getTime() -
+            new Date(a.updatedAt ?? 0).getTime()
+          );
       }
     });
 
     return next;
-  }, [availabilityFilter, search, sortBy, studio.items, studio.shared, visibilityFilter]);
+  }, [
+    availabilityFilter,
+    search,
+    sortBy,
+    studio.items,
+    studio.shared,
+    visibilityFilter,
+  ]);
 
   const handleCreateItem = async () => {
     const nextItem = createEmptyListingItem();
@@ -269,7 +312,9 @@ export function ListingManagerPage({ username }: { username: string }) {
   };
 
   const handleDuplicateSelected = async () => {
-    const sourceItems = studio.items.filter((item) => selectedItemIds.includes(item.id));
+    const sourceItems = studio.items.filter((item) =>
+      selectedItemIds.includes(item.id)
+    );
     if (sourceItems.length === 0) {
       toast.error("Select at least one listing to duplicate.");
       return;
@@ -281,9 +326,11 @@ export function ListingManagerPage({ username }: { username: string }) {
         id: undefined,
         artworkDetails: {
           ...item.artworkDetails,
-          title: item.artworkDetails.title ? `${item.artworkDetails.title} Copy` : "",
+          title: item.artworkDetails.title
+            ? `${item.artworkDetails.title} Copy`
+            : "",
         },
-      }),
+      })
     );
 
     const persisted = await persistStudio(
@@ -292,7 +339,7 @@ export function ListingManagerPage({ username }: { username: string }) {
         items: [...studio.items, ...duplicates],
         updatedAt: new Date().toISOString(),
       },
-      "Selected listings duplicated.",
+      "Selected listings duplicated."
     );
 
     if (persisted) {
@@ -306,14 +353,20 @@ export function ListingManagerPage({ username }: { username: string }) {
       return;
     }
 
-    const remainingItems = studio.items.filter((item) => !selectedItemIds.includes(item.id));
+    const remainingItems = studio.items.filter(
+      (item) => !selectedItemIds.includes(item.id)
+    );
     const nextStudio: ListingStudioDraft = {
       ...studio,
-      items: remainingItems.length > 0 ? remainingItems : [createEmptyListingItem()],
+      items:
+        remainingItems.length > 0 ? remainingItems : [createEmptyListingItem()],
       updatedAt: new Date().toISOString(),
     };
 
-    const persisted = await persistStudio(nextStudio, "Selected listings removed.");
+    const persisted = await persistStudio(
+      nextStudio,
+      "Selected listings removed."
+    );
     if (persisted) {
       setSelectedItemIds([]);
     }
@@ -342,10 +395,15 @@ export function ListingManagerPage({ username }: { username: string }) {
         <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Listings Manager</p>
-              <h1 className="text-4xl text-foreground sm:text-5xl">Manage your artwork inventory</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+                Listings Manager
+              </p>
+              <h1 className="text-4xl text-foreground sm:text-5xl">
+                Manage your artwork inventory
+              </h1>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
-                Browse all listing drafts and published works in one place, then open any card to edit on its own page.
+                Browse all listing drafts and published works in one place, then
+                open any card to edit on its own page.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -354,7 +412,11 @@ export function ListingManagerPage({ username }: { username: string }) {
                   Preview gallery
                 </Link>
               </Button>
-              <Button disabled={saving} onClick={() => void handleCreateItem()} size="lg">
+              <Button
+                disabled={saving}
+                onClick={() => void handleCreateItem()}
+                size="lg"
+              >
                 <Plus />
                 New listing
               </Button>
@@ -373,7 +435,10 @@ export function ListingManagerPage({ username }: { username: string }) {
             </div>
             <div className="space-y-2">
               <Label>Sort</Label>
-              <Select onValueChange={(value: SortValue) => setSortBy(value)} value={sortBy}>
+              <Select
+                onValueChange={(value: SortValue) => setSortBy(value)}
+                value={sortBy}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -381,21 +446,28 @@ export function ListingManagerPage({ username }: { username: string }) {
                   <SelectItem value="newest">Recently updated</SelectItem>
                   <SelectItem value="oldest">Oldest updated</SelectItem>
                   <SelectItem value="title_asc">Title A-Z</SelectItem>
-                  <SelectItem value="progress_desc">Highest completion</SelectItem>
+                  <SelectItem value="progress_desc">
+                    Highest completion
+                  </SelectItem>
                   <SelectItem value="price_desc">Highest price</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Availability</Label>
-              <Select onValueChange={setAvailabilityFilter} value={availabilityFilter}>
+              <Select
+                onValueChange={setAvailabilityFilter}
+                value={availabilityFilter}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="original_available">Original available</SelectItem>
+                  <SelectItem value="original_available">
+                    Original available
+                  </SelectItem>
                   <SelectItem value="reserved">Reserved</SelectItem>
                   <SelectItem value="sold">Sold</SelectItem>
                 </SelectContent>
@@ -403,7 +475,10 @@ export function ListingManagerPage({ username }: { username: string }) {
             </div>
             <div className="space-y-2">
               <Label>Visibility</Label>
-              <Select onValueChange={setVisibilityFilter} value={visibilityFilter}>
+              <Select
+                onValueChange={setVisibilityFilter}
+                value={visibilityFilter}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -419,17 +494,28 @@ export function ListingManagerPage({ username }: { username: string }) {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            <Button disabled={selectedItemIds.length === 0 || saving} onClick={() => void handleDuplicateSelected()} size="sm" variant="outline">
+            <Button
+              disabled={selectedItemIds.length === 0 || saving}
+              onClick={() => void handleDuplicateSelected()}
+              size="sm"
+              variant="outline"
+            >
               <CopyPlus />
               Duplicate selected
             </Button>
-            <Button disabled={selectedItemIds.length === 0 || saving} onClick={() => void handleDeleteSelected()} size="sm" variant="outline">
+            <Button
+              disabled={selectedItemIds.length === 0 || saving}
+              onClick={() => void handleDeleteSelected()}
+              size="sm"
+              variant="outline"
+            >
               <Trash2 />
               Remove selected
             </Button>
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/35 px-4 py-2 text-sm text-muted-foreground">
               <SlidersHorizontal className="size-4" />
-              {filteredItems.length} result{filteredItems.length === 1 ? "" : "s"}
+              {filteredItems.length} result
+              {filteredItems.length === 1 ? "" : "s"}
             </div>
           </div>
         </div>
@@ -453,7 +539,11 @@ export function ListingManagerPage({ username }: { username: string }) {
                 : item.salesVisibility.private
                   ? "Private"
                   : "Draft";
-            const mediumLine = [item.artworkDetails.category, item.artworkDetails.medium, item.artworkDetails.subject]
+            const mediumLine = [
+              item.artworkDetails.category,
+              item.artworkDetails.medium,
+              item.artworkDetails.subject,
+            ]
               .filter(Boolean)
               .join(" • ");
 
@@ -461,7 +551,9 @@ export function ListingManagerPage({ username }: { username: string }) {
               <button
                 key={item.id}
                 className="group rounded-[2rem] border border-white/70 bg-white/92 p-5 text-left shadow-[0_30px_80px_-50px_rgba(47,36,28,0.35)] transition-transform hover:-translate-y-0.5 hover:border-primary/20"
-                onClick={() => router.push(`/artists/${username}/listings/${item.id}`)}
+                onClick={() =>
+                  router.push(`/artists/${username}/listings/${item.id}`)
+                }
                 type="button"
               >
                 <div className="flex items-start gap-3">
@@ -471,7 +563,7 @@ export function ListingManagerPage({ username }: { username: string }) {
                       setSelectedItemIds((current) =>
                         checked === true
                           ? Array.from(new Set([...current, item.id]))
-                          : current.filter((id) => id !== item.id),
+                          : current.filter((id) => id !== item.id)
                       )
                     }
                     onClick={(event) => event.stopPropagation()}
@@ -479,38 +571,58 @@ export function ListingManagerPage({ username }: { username: string }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="truncate text-lg font-semibold text-foreground">{title}</p>
+                        <p className="truncate text-lg font-semibold text-foreground">
+                          {title}
+                        </p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           {mediumLine || "Add category, medium, and subject"}
                         </p>
                       </div>
-                      <span className={[
-                        "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                        visibility === "Public"
-                          ? "bg-green-100 text-green-800"
-                          : visibility === "Draft"
-                            ? "bg-amber-100 text-amber-900"
-                            : "bg-muted text-muted-foreground",
-                      ].join(" ")}>
+                      <span
+                        className={[
+                          "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                          visibility === "Public"
+                            ? "bg-green-100 text-green-800"
+                            : visibility === "Draft"
+                              ? "bg-amber-100 text-amber-900"
+                              : "bg-muted text-muted-foreground",
+                        ].join(" ")}
+                      >
                         {visibility}
                       </span>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Availability</p>
-                        <p className="mt-1 text-sm text-foreground">{item.pricingInventory.availability.replaceAll("_", " ")}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Availability
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">
+                          {item.pricingInventory.availability.replaceAll(
+                            "_",
+                            " "
+                          )}
+                        </p>
                       </div>
                       <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Price</p>
-                        <p className="mt-1 text-sm text-foreground">{item.pricingInventory.price || "Not set"} {item.pricingInventory.currency}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Price
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">
+                          {item.pricingInventory.price || "Not set"}{" "}
+                          {item.pricingInventory.currency}
+                        </p>
                       </div>
                     </div>
 
                     <div className="mt-4">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Completion</span>
-                        <span className="font-medium text-foreground">{progress}%</span>
+                        <span className="text-muted-foreground">
+                          Completion
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {progress}%
+                        </span>
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted/60">
                         <div

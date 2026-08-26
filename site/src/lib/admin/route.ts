@@ -14,7 +14,7 @@ export async function requireAdminSession() {
     throw new AdminRouteError(
       "auth/session-missing",
       "Please sign in to the admin console again.",
-      401,
+      401
     );
   }
 
@@ -31,7 +31,7 @@ export function handleAdminRouteError(error: unknown) {
           details: error.details ?? null,
         },
       },
-      { status: error.status },
+      { status: error.status }
     );
   }
 
@@ -43,6 +43,6 @@ export function handleAdminRouteError(error: unknown) {
         message: "Unexpected admin server error.",
       },
     },
-    { status: 500 },
+    { status: 500 }
   );
 }

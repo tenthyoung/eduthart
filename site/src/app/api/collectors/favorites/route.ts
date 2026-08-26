@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { getPublicArtwork } from "@/lib/artists/public-artwork";
-import { addFavorite, listFavorites, removeFavorite } from "@/lib/collectors/favorites";
+import {
+  addFavorite,
+  listFavorites,
+  removeFavorite,
+} from "@/lib/collectors/favorites";
 import { apiError, withSession } from "@/lib/api/handler";
 
 type FavoriteBody = { itemId?: string; username?: string };
@@ -26,13 +30,15 @@ async function resolveReference(body: FavoriteBody) {
 
 export function GET(request: Request) {
   return withSession(request, async (session) =>
-    NextResponse.json({ favorites: await listFavorites(session.uid) }),
+    NextResponse.json({ favorites: await listFavorites(session.uid) })
   );
 }
 
 export function POST(request: Request) {
   return withSession(request, async (session) => {
-    const reference = await resolveReference((await request.json()) as FavoriteBody);
+    const reference = await resolveReference(
+      (await request.json()) as FavoriteBody
+    );
 
     if (!reference) {
       return apiError("That artwork could not be found.", 404, "not-found");
@@ -45,7 +51,9 @@ export function POST(request: Request) {
 
 export function DELETE(request: Request) {
   return withSession(request, async (session) => {
-    const reference = await resolveReference((await request.json()) as FavoriteBody);
+    const reference = await resolveReference(
+      (await request.json()) as FavoriteBody
+    );
 
     if (!reference) {
       return apiError("That artwork could not be found.", 404, "not-found");

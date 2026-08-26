@@ -16,8 +16,10 @@ export async function POST(request: Request) {
     const idToken = body?.idToken?.toString();
     if (!idToken) {
       return NextResponse.json(
-        { error: { code: "invalid-argument", message: "idToken is required." } },
-        { status: 400 },
+        {
+          error: { code: "invalid-argument", message: "idToken is required." },
+        },
+        { status: 400 }
       );
     }
 

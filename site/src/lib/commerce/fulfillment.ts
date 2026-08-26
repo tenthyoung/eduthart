@@ -46,7 +46,7 @@ async function notifyEveryone(order: Order) {
       orderNumber: order.number,
       totalMinor: order.totalMinor,
     }),
-    { dedupeKey: `ntf_order_${order.id}` },
+    { dedupeKey: `ntf_order_${order.id}` }
   );
 
   for (const item of order.items) {
@@ -60,14 +60,14 @@ async function notifyEveryone(order: Order) {
         orderNumber: order.number,
         totalMinor: item.unitAmountMinor,
       }),
-      { dedupeKey: `ntf_sale_${order.id}_${item.itemId}` },
+      { dedupeKey: `ntf_sale_${order.id}_${item.itemId}` }
     );
 
     // Everyone who had saved this piece finds out it is gone, except the
     // collector who just bought it.
-    const collectorUids = (await listCollectorsWhoSaved(item.artworkKey)).filter(
-      (collectorUid) => collectorUid !== order.buyerUid,
-    );
+    const collectorUids = (
+      await listCollectorsWhoSaved(item.artworkKey)
+    ).filter((collectorUid) => collectorUid !== order.buyerUid);
 
     await Promise.all(
       collectorUids.map(async (collectorUid) => {
@@ -81,9 +81,9 @@ async function notifyEveryone(order: Order) {
             artworkTitle: item.title,
             imageUrl: item.imageUrl,
           }),
-          { dedupeKey: `ntf_saved_sold_${order.id}_${item.itemId}` },
+          { dedupeKey: `ntf_saved_sold_${order.id}_${item.itemId}` }
         );
-      }),
+      })
     );
   }
 }
@@ -98,7 +98,9 @@ async function notifyEveryone(order: Order) {
 export async function fulfillCheckoutSession(session: FulfillableSession) {
   const orderId =
     session.metadata?.orderId ?? session.client_reference_id ?? null;
-  const order = orderId ? await getOrder(orderId) : await findOrderByCheckoutSession(session.id);
+  const order = orderId
+    ? await getOrder(orderId)
+    : await findOrderByCheckoutSession(session.id);
 
   if (!order) {
     console.error(`No EduthArt order matches Stripe session ${session.id}`);
@@ -117,7 +119,7 @@ export async function fulfillCheckoutSession(session: FulfillableSession) {
     paymentIntentId:
       typeof session.payment_intent === "string"
         ? session.payment_intent
-        : session.payment_intent?.id ?? null,
+        : (session.payment_intent?.id ?? null),
   });
 
   await Promise.all(
@@ -125,7 +127,7 @@ export async function fulfillCheckoutSession(session: FulfillableSession) {
       await setListingAvailability(item.artistUid, item.itemId, "sold");
       await setIndexedArtworkAvailability(item.artworkKey, "sold");
       await releaseReservation(item.artworkKey);
-    }),
+    })
   );
 
   await clearCart(order.buyerUid);
@@ -136,13 +138,18 @@ export async function fulfillCheckoutSession(session: FulfillableSession) {
 
 /** Release the held originals when a checkout is abandoned or expires. */
 export async function releaseCheckoutSession(session: FulfillableSession) {
-  const orderId = session.metadata?.orderId ?? session.client_reference_id ?? null;
-  const order = orderId ? await getOrder(orderId) : await findOrderByCheckoutSession(session.id);
+  const orderId =
+    session.metadata?.orderId ?? session.client_reference_id ?? null;
+  const order = orderId
+    ? await getOrder(orderId)
+    : await findOrderByCheckoutSession(session.id);
 
   if (!order || order.status === "paid") {
     return order;
   }
 
-  await Promise.all(order.items.map((item) => releaseReservation(item.artworkKey)));
+  await Promise.all(
+    order.items.map((item) => releaseReservation(item.artworkKey))
+  );
   return markOrderCancelled(order.id);
 }

@@ -1,7 +1,11 @@
 import { formatMinorUnits } from "@/lib/commerce/money";
 import type { NotificationTemplate } from "@/lib/notifications/types";
 
-export function passwordChangedNotification({ changedAt }: { changedAt: Date }): NotificationTemplate {
+export function passwordChangedNotification({
+  changedAt,
+}: {
+  changedAt: Date;
+}): NotificationTemplate {
   const when = new Intl.DateTimeFormat("en-US", {
     dateStyle: "long",
     timeStyle: "short",
@@ -19,7 +23,11 @@ export function passwordChangedNotification({ changedAt }: { changedAt: Date }):
   };
 }
 
-export function emailChangedNotification({ nextEmail }: { nextEmail: string }): NotificationTemplate {
+export function emailChangedNotification({
+  nextEmail,
+}: {
+  nextEmail: string;
+}): NotificationTemplate {
   return {
     actionHref: "/account",
     actionLabel: "Review your account",

@@ -41,7 +41,9 @@ export default function AdminRolesPage() {
     try {
       setItems(await listAdminRoles());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Admin roles failed to load.");
+      toast.error(
+        error instanceof Error ? error.message : "Admin roles failed to load."
+      );
     } finally {
       setLoading(false);
     }
@@ -91,7 +93,8 @@ export default function AdminRolesPage() {
               Grant access
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              This updates both the `admin_roles` record and Firebase custom claims.
+              This updates both the `admin_roles` record and Firebase custom
+              claims.
             </p>
           </div>
           <div className="grid gap-4 xl:grid-cols-[1fr_220px_auto]">
@@ -113,7 +116,10 @@ export default function AdminRolesPage() {
                 <SelectItem value="super_admin">Super admin</SelectItem>
               </SelectContent>
             </Select>
-            <Button disabled={saving || email.trim().length === 0} onClick={() => void handleGrant()}>
+            <Button
+              disabled={saving || email.trim().length === 0}
+              onClick={() => void handleGrant()}
+            >
               {saving ? "Granting..." : "Grant access"}
             </Button>
           </div>
@@ -121,7 +127,8 @@ export default function AdminRolesPage() {
       ) : (
         <AdminCard>
           <p className="text-sm text-muted-foreground">
-            Only a super admin can grant or revoke roles. You are signed in as {user?.email ?? "an admin account"}.
+            Only a super admin can grant or revoke roles. You are signed in as{" "}
+            {user?.email ?? "an admin account"}.
           </p>
         </AdminCard>
       )}
@@ -149,7 +156,9 @@ export default function AdminRolesPage() {
                   <div>
                     <p className="font-medium">{item.displayName}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {[item.email ?? item.uid, item.role].filter(Boolean).join(" • ")}
+                      {[item.email ?? item.uid, item.role]
+                        .filter(Boolean)
+                        .join(" • ")}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Updated {formatDateTime(item.updatedAt)}

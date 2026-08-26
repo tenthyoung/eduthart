@@ -1,4 +1,7 @@
-import { Timestamp, type QueryDocumentSnapshot } from "firebase-admin/firestore";
+import {
+  Timestamp,
+  type QueryDocumentSnapshot,
+} from "firebase-admin/firestore";
 import type { DecodedIdToken } from "firebase-admin/auth";
 
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
@@ -15,12 +18,15 @@ const SESSION_COOKIE_NAME = "memdojo_admin_session";
 const SESSION_COOKIE_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 type AdminRole = "admin" | "super_admin";
-const PLAN_PRICE_BY_TIER: Record<string, {
-  monthlyDisplay: string;
-  yearlyDisplay: string;
-  monthlyCents: number | null;
-  yearlyCents: number | null;
-}> = {
+const PLAN_PRICE_BY_TIER: Record<
+  string,
+  {
+    monthlyDisplay: string;
+    yearlyDisplay: string;
+    monthlyCents: number | null;
+    yearlyCents: number | null;
+  }
+> = {
   free: {
     monthlyDisplay: "Free",
     yearlyDisplay: "Free",
@@ -46,12 +52,7 @@ export class AdminRouteError extends Error {
   readonly status: number;
   readonly details?: unknown;
 
-  constructor(
-    code: string,
-    message: string,
-    status = 500,
-    details?: unknown,
-  ) {
+  constructor(code: string, message: string, status = 500, details?: unknown) {
     super(message);
     this.name = "AdminRouteError";
     this.code = code;
@@ -82,7 +83,7 @@ export async function verifyAdminIdToken(idToken: string) {
       "auth/invalid-token",
       "Your sign-in session is invalid. Please sign in again.",
       401,
-      error,
+      error
     );
   }
 }
@@ -95,7 +96,7 @@ export async function verifyAdminSessionCookie(sessionCookie: string) {
       "auth/session-expired",
       "Your admin session expired. Please sign in again.",
       401,
-      error,
+      error
     );
   }
 }
@@ -148,7 +149,10 @@ function timestampToIsoString(value: unknown): string | null {
   return parsed ? parsed.toDate().toISOString() : null;
 }
 
-async function setAdminClaims(uid: string, role: AdminRole | null): Promise<void> {
+async function setAdminClaims(
+  uid: string,
+  role: AdminRole | null
+): Promise<void> {
   const user = await auth.getUser(uid);
   const existingClaims = user.customClaims ?? {};
   const nextClaims = {
@@ -180,12 +184,15 @@ async function upsertAdminRole({
       updatedAt: Timestamp.now(),
       createdAt: Timestamp.now(),
     },
-    { merge: true },
+    { merge: true }
   );
   await setAdminClaims(uid, role);
 }
 
-async function ensureBootstrapSuperAdmin(uid: string, email: string | null): Promise<void> {
+async function ensureBootstrapSuperAdmin(
+  uid: string,
+  email: string | null
+): Promise<void> {
   if (email == null || !BOOTSTRAP_SUPER_ADMIN_EMAILS.has(email)) {
     return;
   }
@@ -194,9 +201,7 @@ async function ensureBootstrapSuperAdmin(uid: string, email: string | null): Pro
   const roleSnap = await roleRef.get();
   const data = roleSnap.data();
   const isAlreadyActive =
-    roleSnap.exists &&
-    data?.active === true &&
-    data.role === "super_admin";
+    roleSnap.exists && data?.active === true && data.role === "super_admin";
 
   if (!isAlreadyActive) {
     await roleRef.set(
@@ -209,7 +214,7 @@ async function ensureBootstrapSuperAdmin(uid: string, email: string | null): Pro
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       },
-      { merge: true },
+      { merge: true }
     );
   }
 
@@ -253,11 +258,7 @@ async function getEffectiveAdminAccess(decodedToken: DecodedIdToken): Promise<{
     return { uid, role: "admin", isSuperAdmin: false };
   }
 
-  throw new AdminRouteError(
-    "permission-denied",
-    "Admin access required.",
-    403,
-  );
+  throw new AdminRouteError("permission-denied", "Admin access required.", 403);
 }
 
 export async function requireAdmin(decodedToken: DecodedIdToken) {
@@ -270,7 +271,7 @@ export async function requireSuperAdmin(decodedToken: DecodedIdToken) {
     throw new AdminRouteError(
       "permission-denied",
       "Super admin access required.",
-      403,
+      403
     );
   }
   return access;
@@ -301,17 +302,34 @@ function priceSummaryForTier(tier: string) {
   };
 }
 
-async function buildBillingSummary(uid: string): Promise<Record<string, unknown>> {
-  const billingSnap = await db.collection("users").doc(uid).collection("settings").doc("billing").get();
-  const creditsSnap = await db.collection("users").doc(uid).collection("settings").doc("credits").get();
-  const billingData = (billingSnap.data() as Record<string, unknown> | undefined) ?? {};
-  const creditsData = (creditsSnap.data() as Record<string, unknown> | undefined) ?? {};
-  const tier = billingData.currentTier?.toString() ??
+async function buildBillingSummary(
+  uid: string
+): Promise<Record<string, unknown>> {
+  const billingSnap = await db
+    .collection("users")
+    .doc(uid)
+    .collection("settings")
+    .doc("billing")
+    .get();
+  const creditsSnap = await db
+    .collection("users")
+    .doc(uid)
+    .collection("settings")
+    .doc("credits")
+    .get();
+  const billingData =
+    (billingSnap.data() as Record<string, unknown> | undefined) ?? {};
+  const creditsData =
+    (creditsSnap.data() as Record<string, unknown> | undefined) ?? {};
+  const tier =
+    billingData.currentTier?.toString() ??
     billingData.tier?.toString() ??
     creditsData.tier?.toString() ??
     "free";
   const planSummary = priceSummaryForTier(tier);
-  const receipts = Array.isArray(billingData.receipts) ? billingData.receipts : [];
+  const receipts = Array.isArray(billingData.receipts)
+    ? billingData.receipts
+    : [];
 
   return {
     ...planSummary,
@@ -333,9 +351,10 @@ async function buildBillingSummary(uid: string): Promise<Record<string, unknown>
 
 function serializePublicDeckSummary(
   docId: string,
-  data: Record<string, unknown>,
+  data: Record<string, unknown>
 ): Record<string, unknown> {
-  const deckSnapshot = (data.deckSnapshot as Record<string, unknown> | undefined) ?? {};
+  const deckSnapshot =
+    (data.deckSnapshot as Record<string, unknown> | undefined) ?? {};
   return {
     id: docId,
     ownerUid: data.ownerUid ?? null,
@@ -357,7 +376,10 @@ export async function searchUsersForAdmin(query: string) {
   const docsById = new Map<string, QueryDocumentSnapshot>();
 
   if (!normalizedQuery) {
-    const recentUsers = await usersCollection.orderBy("updatedAt", "desc").limit(20).get();
+    const recentUsers = await usersCollection
+      .orderBy("updatedAt", "desc")
+      .limit(20)
+      .get();
     recentUsers.docs.forEach((doc) => docsById.set(doc.id, doc));
   } else {
     const usernameMatches = await usersCollection
@@ -377,35 +399,52 @@ export async function searchUsersForAdmin(query: string) {
   }
 
   const results = await Promise.all(
-    Array.from(docsById.values()).slice(0, 20).map(async (doc) => {
-      const userData = doc.data() as Record<string, unknown>;
-      const aiUsageSnap = await usersCollection.doc(doc.id).collection("settings").doc("ai_usage").get();
-      const creditsSnap = await usersCollection.doc(doc.id).collection("settings").doc("credits").get();
-      const aiUsage = (aiUsageSnap.data() as Record<string, unknown> | undefined) ?? {};
-      const credits = (creditsSnap.data() as Record<string, unknown> | undefined) ?? {};
-      return {
-        uid: doc.id,
-        email: userData.email ?? null,
-        username: userData.username ?? null,
-        displayName:
-          [userData.firstName, userData.lastName]
-            .filter((value) => typeof value === "string" && value.toString().trim().length > 0)
-            .join(" ") ||
-          userData.username ||
-          userData.email ||
-          doc.id,
-        accountStatus: userData.accountStatus ?? "active",
-        publishingDisabled: userData.publishingDisabled === true,
-        tier: credits.tier ?? "free",
-        monthlyTokens: aiUsage.monthlyTokens ?? 0,
-        monthlyEstimatedCostMicrosUsd: aiUsage.monthlyEstimatedCostMicrosUsd ?? 0,
-        updatedAt: timestampToIsoString(userData.updatedAt),
-      };
-    }),
+    Array.from(docsById.values())
+      .slice(0, 20)
+      .map(async (doc) => {
+        const userData = doc.data() as Record<string, unknown>;
+        const aiUsageSnap = await usersCollection
+          .doc(doc.id)
+          .collection("settings")
+          .doc("ai_usage")
+          .get();
+        const creditsSnap = await usersCollection
+          .doc(doc.id)
+          .collection("settings")
+          .doc("credits")
+          .get();
+        const aiUsage =
+          (aiUsageSnap.data() as Record<string, unknown> | undefined) ?? {};
+        const credits =
+          (creditsSnap.data() as Record<string, unknown> | undefined) ?? {};
+        return {
+          uid: doc.id,
+          email: userData.email ?? null,
+          username: userData.username ?? null,
+          displayName:
+            [userData.firstName, userData.lastName]
+              .filter(
+                (value) =>
+                  typeof value === "string" &&
+                  value.toString().trim().length > 0
+              )
+              .join(" ") ||
+            userData.username ||
+            userData.email ||
+            doc.id,
+          accountStatus: userData.accountStatus ?? "active",
+          publishingDisabled: userData.publishingDisabled === true,
+          tier: credits.tier ?? "free",
+          monthlyTokens: aiUsage.monthlyTokens ?? 0,
+          monthlyEstimatedCostMicrosUsd:
+            aiUsage.monthlyEstimatedCostMicrosUsd ?? 0,
+          updatedAt: timestampToIsoString(userData.updatedAt),
+        };
+      })
   );
 
   results.sort((left, right) =>
-    `${right.updatedAt ?? ""}`.localeCompare(`${left.updatedAt ?? ""}`),
+    `${right.updatedAt ?? ""}`.localeCompare(`${left.updatedAt ?? ""}`)
   );
   return results;
 }
@@ -417,15 +456,28 @@ export async function getAdminUserDetails(targetUid: string) {
   }
 
   const userData = userSnap.data() as Record<string, unknown>;
-  const aiUsageSnap = await db.collection("users").doc(targetUid).collection("settings").doc("ai_usage").get();
-  const creditsSnap = await db.collection("users").doc(targetUid).collection("settings").doc("credits").get();
+  const aiUsageSnap = await db
+    .collection("users")
+    .doc(targetUid)
+    .collection("settings")
+    .doc("ai_usage")
+    .get();
+  const creditsSnap = await db
+    .collection("users")
+    .doc(targetUid)
+    .collection("settings")
+    .doc("credits")
+    .get();
   const publicDecksSnap = await db
     .collection("public_decks")
     .where("ownerUid", "==", targetUid)
     .orderBy("updatedAt", "desc")
     .limit(25)
     .get();
-  const roleSnap = await db.collection(ADMIN_ROLE_COLLECTION).doc(targetUid).get();
+  const roleSnap = await db
+    .collection(ADMIN_ROLE_COLLECTION)
+    .doc(targetUid)
+    .get();
 
   return {
     user: {
@@ -447,9 +499,9 @@ export async function getAdminUserDetails(targetUid: string) {
     aiUsage: aiUsageSnap.data() ?? null,
     credits: creditsSnap.data() ?? null,
     billing: await buildBillingSummary(targetUid),
-    adminRole: roleSnap.exists ? roleSnap.data() ?? null : null,
+    adminRole: roleSnap.exists ? (roleSnap.data() ?? null) : null,
     publicDecks: publicDecksSnap.docs.map((doc) =>
-      serializePublicDeckSummary(doc.id, doc.data() as Record<string, unknown>),
+      serializePublicDeckSummary(doc.id, doc.data() as Record<string, unknown>)
     ),
   };
 }
@@ -474,20 +526,23 @@ export async function listAdminRoles() {
         updatedAt: timestampToIsoString(roleData.updatedAt),
         displayName:
           [userData.firstName, userData.lastName]
-            .filter((value) => typeof value === "string" && value.toString().trim().length > 0)
+            .filter(
+              (value) =>
+                typeof value === "string" && value.toString().trim().length > 0
+            )
             .join(" ") ||
           userData.username ||
           userData.email ||
           doc.id,
       };
-    }),
+    })
   );
 }
 
 export async function grantAdminRole(
   actorUid: string,
   email: string,
-  role: AdminRole,
+  role: AdminRole
 ) {
   const normalized = normalizedEmail(email);
   if (!normalized) {
@@ -513,7 +568,7 @@ export async function revokeAdminRole(actorUid: string, targetUid: string) {
     throw new AdminRouteError(
       "failed-precondition",
       "You cannot revoke your own super admin access.",
-      400,
+      400
     );
   }
 
@@ -524,7 +579,7 @@ export async function revokeAdminRole(actorUid: string, targetUid: string) {
       revokedAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     },
-    { merge: true },
+    { merge: true }
   );
   await setAdminClaims(targetUid, null);
   return { success: true };
@@ -534,20 +589,20 @@ export async function updateUserModerationState(
   moderatorUid: string,
   targetUid: string,
   action: string,
-  reason: string,
+  reason: string
 ) {
   if (!targetUid || !action) {
     throw new AdminRouteError(
       "invalid-argument",
       "uid and action are required.",
-      400,
+      400
     );
   }
   if (targetUid === moderatorUid && action !== "enable_publishing") {
     throw new AdminRouteError(
       "failed-precondition",
       "You cannot moderate your own account.",
-      400,
+      400
     );
   }
 
@@ -586,7 +641,7 @@ export async function updateUserModerationState(
       throw new AdminRouteError(
         "invalid-argument",
         "Unsupported moderation action.",
-        400,
+        400
       );
   }
 
@@ -602,12 +657,15 @@ export async function listModerationQueue() {
     .limit(100)
     .get();
 
-  const grouped = new Map<string, {
-    publicDeckId: string;
-    openReportCount: number;
-    latestReason: string;
-    latestReportType: string;
-  }>();
+  const grouped = new Map<
+    string,
+    {
+      publicDeckId: string;
+      openReportCount: number;
+      latestReason: string;
+      latestReportType: string;
+    }
+  >();
 
   for (const doc of reportsSnapshot.docs) {
     const data = doc.data();
@@ -627,13 +685,17 @@ export async function listModerationQueue() {
 
   return Promise.all(
     Array.from(grouped.values()).map(async (group) => {
-      const publicDeckSnap = await db.collection("public_decks").doc(group.publicDeckId).get();
-      const publicDeck = publicDeckSnap.data() as Record<string, unknown> | undefined;
+      const publicDeckSnap = await db
+        .collection("public_decks")
+        .doc(group.publicDeckId)
+        .get();
+      const publicDeck = publicDeckSnap.data() as
+        Record<string, unknown> | undefined;
       return {
         publicDeckId: group.publicDeckId,
         deckName:
-          ((publicDeck?.deckSnapshot as Record<string, unknown> | undefined)?.name as string | undefined) ??
-          "Untitled Deck",
+          ((publicDeck?.deckSnapshot as Record<string, unknown> | undefined)
+            ?.name as string | undefined) ?? "Untitled Deck",
         ownerUid: publicDeck?.ownerUid ?? null,
         openReportCount: group.openReportCount,
         latestReason: group.latestReason,
@@ -641,7 +703,7 @@ export async function listModerationQueue() {
         visibility: publicDeck?.visibility ?? null,
         publicationStatus: publicDeck?.publicationStatus ?? null,
       };
-    }),
+    })
   );
 }
 
@@ -675,7 +737,7 @@ export async function getPublicDeckDetails(publicDeckId: string) {
         createdAt:
           data.createdAt instanceof Timestamp
             ? data.createdAt.toDate().toISOString()
-            : data.createdAt ?? null,
+            : (data.createdAt ?? null),
       };
     }),
   };
@@ -739,20 +801,20 @@ export async function moderateDeck(
   moderatorUid: string,
   publicDeckId: string,
   action: "warn" | "hide" | "remove",
-  reason: string,
+  reason: string
 ) {
   if (!publicDeckId || !action || !reason) {
     throw new AdminRouteError(
       "invalid-argument",
       "publicDeckId, action, and reason are required.",
-      400,
+      400
     );
   }
   if (!["warn", "hide", "remove"].includes(action)) {
     throw new AdminRouteError(
       "invalid-argument",
       "Unsupported moderation action.",
-      400,
+      400
     );
   }
 
@@ -768,7 +830,7 @@ export async function moderateDeck(
     throw new AdminRouteError(
       "failed-precondition",
       "Deck ownership metadata is missing.",
-      400,
+      400
     );
   }
 
@@ -804,7 +866,12 @@ export async function moderateDeck(
   }
 
   await publicDeckRef.set(publicUpdate, { merge: true });
-  await db.collection("users").doc(ownerUid).collection("decks").doc(sourceDeckId).set(privateUpdate, { merge: true });
+  await db
+    .collection("users")
+    .doc(ownerUid)
+    .collection("decks")
+    .doc(sourceDeckId)
+    .set(privateUpdate, { merge: true });
 
   const openReports = await db
     .collection("deck_reports")
@@ -820,9 +887,9 @@ export async function moderateDeck(
           resolvedBy: moderatorUid,
           resolutionAction: action,
         },
-        { merge: true },
-      ),
-    ),
+        { merge: true }
+      )
+    )
   );
 
   await db.collection("deck_moderation_events").add({
@@ -836,8 +903,8 @@ export async function moderateDeck(
   });
 
   const deckName =
-    ((publicDeck.deckSnapshot as Record<string, unknown> | undefined)?.name as string | undefined) ??
-    "Untitled Deck";
+    ((publicDeck.deckSnapshot as Record<string, unknown> | undefined)?.name as
+      string | undefined) ?? "Untitled Deck";
 
   await createUserNotification({
     userUid: ownerUid,
@@ -885,26 +952,29 @@ export async function updateRefundRequestStatus(
   moderatorUid: string,
   refundRequestId: string,
   status: string,
-  adminNotes: string,
+  adminNotes: string
 ) {
   if (!refundRequestId || !status) {
     throw new AdminRouteError(
       "invalid-argument",
       "refundRequestId and status are required.",
-      400,
+      400
     );
   }
 
-  await db.collection("refund_requests").doc(refundRequestId).set(
-    {
-      status,
-      adminNotes: adminNotes || null,
-      resolvedBy: moderatorUid,
-      resolvedAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    },
-    { merge: true },
-  );
+  await db
+    .collection("refund_requests")
+    .doc(refundRequestId)
+    .set(
+      {
+        status,
+        adminNotes: adminNotes || null,
+        resolvedBy: moderatorUid,
+        resolvedAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
 
   return { success: true };
 }

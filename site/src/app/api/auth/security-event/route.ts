@@ -34,7 +34,10 @@ function readRecentPasswordChange(tokensValidAfterTime: string | undefined) {
   const changedAt = new Date(tokensValidAfterTime);
   const elapsed = Date.now() - changedAt.getTime();
 
-  if (Number.isNaN(changedAt.getTime()) || elapsed > RECENT_PASSWORD_CHANGE_MS) {
+  if (
+    Number.isNaN(changedAt.getTime()) ||
+    elapsed > RECENT_PASSWORD_CHANGE_MS
+  ) {
     return null;
   }
 
@@ -57,8 +60,10 @@ export async function POST(request: Request) {
       await dispatchNotification(
         recipient,
         type === "email_changed"
-          ? emailChangedNotification({ nextEmail: body.nextEmail?.trim() ?? "a new address" })
-          : passwordChangedNotification({ changedAt: new Date() }),
+          ? emailChangedNotification({
+              nextEmail: body.nextEmail?.trim() ?? "a new address",
+            })
+          : passwordChangedNotification({ changedAt: new Date() })
       );
 
       return notified;
@@ -73,7 +78,9 @@ export async function POST(request: Request) {
     const user = await getFirebaseAdminAuth()
       .getUserByEmail(email)
       .catch(() => null);
-    const changedAt = user ? readRecentPasswordChange(user.tokensValidAfterTime) : null;
+    const changedAt = user
+      ? readRecentPasswordChange(user.tokensValidAfterTime)
+      : null;
 
     if (!user || !changedAt) {
       return quiet();
@@ -81,7 +88,7 @@ export async function POST(request: Request) {
 
     await dispatchNotification(
       { email: user.email ?? email, uid: user.uid },
-      passwordChangedNotification({ changedAt }),
+      passwordChangedNotification({ changedAt })
     );
 
     return notified;

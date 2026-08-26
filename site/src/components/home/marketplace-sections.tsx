@@ -1,5 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Frame, LayoutGrid, Ruler, ShieldCheck, Star } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Frame,
+  LayoutGrid,
+  Ruler,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
 import Link from "next/link";
 
 const collections = [
@@ -54,7 +62,10 @@ const assurancePoints = [
 export function MarketplaceSections() {
   return (
     <div className="bg-background">
-      <section id="collections" className="border-y border-border/40 bg-background py-18 lg:py-24">
+      <section
+        id="collections"
+        className="border-y border-border/40 bg-background py-18 lg:py-24"
+      >
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-primary/70">
@@ -64,8 +75,9 @@ export function MarketplaceSections() {
               The homepage should guide people into buying paths.
             </h2>
             <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              Saatchi Art and UGallery both make the first click easy: category discovery,
-              collection-led browsing, and language that answers “what should I look at first?”
+              Saatchi Art and UGallery both make the first click easy: category
+              discovery, collection-led browsing, and language that answers
+              “what should I look at first?”
             </p>
           </div>
 
@@ -121,27 +133,36 @@ export function MarketplaceSections() {
                 <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   01
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold">Land on a clear value proposition</h3>
+                <h3 className="mt-2 text-2xl font-semibold">
+                  Land on a clear value proposition
+                </h3>
                 <p className="mt-2 text-muted-foreground">
-                  Original art, curated inventory, and support for new collectors.
+                  Original art, curated inventory, and support for new
+                  collectors.
                 </p>
               </div>
               <div className="rounded-2xl border border-border/80 bg-card p-5">
                 <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   02
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold">Choose a browse path</h3>
+                <h3 className="mt-2 text-2xl font-semibold">
+                  Choose a browse path
+                </h3>
                 <p className="mt-2 text-muted-foreground">
-                  Medium, room, style, or budget should all feel like valid starting points.
+                  Medium, room, style, or budget should all feel like valid
+                  starting points.
                 </p>
               </div>
               <div className="rounded-2xl border border-border/80 bg-card p-5">
                 <p className="text-sm uppercase tracking-[0.16em] text-primary/70">
                   03
                 </p>
-                <h3 className="mt-2 text-2xl font-semibold">Get reassurance before purchase</h3>
+                <h3 className="mt-2 text-2xl font-semibold">
+                  Get reassurance before purchase
+                </h3>
                 <p className="mt-2 text-muted-foreground">
-                  Shipping, returns, authenticity, and human help need visible placement.
+                  Shipping, returns, authenticity, and human help need visible
+                  placement.
                 </p>
               </div>
             </div>
@@ -149,7 +170,10 @@ export function MarketplaceSections() {
         </div>
       </section>
 
-      <section id="advisory" className="border-y border-border/40 bg-background py-18 lg:py-24">
+      <section
+        id="advisory"
+        className="border-y border-border/40 bg-background py-18 lg:py-24"
+      >
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-primary/70">
@@ -159,8 +183,9 @@ export function MarketplaceSections() {
               Keep it ecommerce-friendly, but never generic.
             </h2>
             <p className="mt-5 text-lg text-muted-foreground">
-              This is where EduthArt can feel more elevated than a normal decor site:
-              thoughtful curation, warmer editorial copy, and a visible “we can help you choose” path.
+              This is where EduthArt can feel more elevated than a normal decor
+              site: thoughtful curation, warmer editorial copy, and a visible
+              “we can help you choose” path.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Button asChild variant="gradient" size="lg">

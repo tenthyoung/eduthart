@@ -5,7 +5,10 @@ import Link from "next/link";
 
 import { AccountShell } from "@/components/account/account-shell";
 import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
-import { DownloadInvoiceButton, OrderStatusBadge } from "@/components/collectors/order-summary";
+import {
+  DownloadInvoiceButton,
+  OrderStatusBadge,
+} from "@/components/collectors/order-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
 import { formatAddressLines } from "@/lib/collectors/address-format";
@@ -20,7 +23,10 @@ function formatOrderDate(value: string | null) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? "—"
-    : new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeStyle: "short" }).format(date);
+    : new Intl.DateTimeFormat("en-US", {
+        dateStyle: "long",
+        timeStyle: "short",
+      }).format(date);
 }
 
 type OrderView = { order: Order | null; role: "buyer" | "seller" };
@@ -52,7 +58,10 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
           <AlertTitle>We could not find that order</AlertTitle>
           <AlertDescription>
             {error ?? "It may belong to another account."}{" "}
-            <Link className="underline underline-offset-4" href="/account/orders">
+            <Link
+              className="underline underline-offset-4"
+              href="/account/orders"
+            >
               Back to your purchases
             </Link>
             .
@@ -64,7 +73,11 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
 
   return (
     <AccountShell
-      action={order.status === "paid" ? <DownloadInvoiceButton order={order} /> : undefined}
+      action={
+        order.status === "paid" ? (
+          <DownloadInvoiceButton order={order} />
+        ) : undefined
+      }
       description={
         role === "seller"
           ? `Placed ${formatOrderDate(order.createdAt)} · bought by ${order.buyerName ?? "a collector"}`
@@ -84,7 +97,8 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
         <Alert className="mt-6">
           <AlertTitle>You are the seller on this order</AlertTitle>
           <AlertDescription>
-            Ship the artwork to the address below and keep the invoice for your records.
+            Ship the artwork to the address below and keep the invoice for your
+            records.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -99,18 +113,30 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
 
           <ul className="space-y-4">
             {order.items.map((item) => (
-              <li key={item.artworkKey} className="flex gap-4 rounded-2xl border border-border/70 p-4">
+              <li
+                key={item.artworkKey}
+                className="flex gap-4 rounded-2xl border border-border/70 p-4"
+              >
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="" className="size-24 rounded-xl object-cover" src={item.imageUrl} />
+                  <img
+                    alt=""
+                    className="size-24 rounded-xl object-cover"
+                    src={item.imageUrl}
+                  />
                 ) : (
                   <div className="size-24 rounded-xl bg-muted" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <Link className="text-lg font-medium hover:underline" href={item.href}>
+                  <Link
+                    className="text-lg font-medium hover:underline"
+                    href={item.href}
+                  >
                     {item.title}
                   </Link>
-                  <p className="mt-1 text-sm text-muted-foreground">by {order.sellerName}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    by {order.sellerName}
+                  </p>
                 </div>
                 <p className="shrink-0 font-semibold">
                   {formatMinorUnits(item.unitAmountMinor, order.currency)}
@@ -126,7 +152,9 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Shipping</dt>
-              <dd>{formatMinorUnits(order.shippingAmountMinor, order.currency)}</dd>
+              <dd>
+                {formatMinorUnits(order.shippingAmountMinor, order.currency)}
+              </dd>
             </div>
             <div className="flex justify-between border-t border-border pt-3 text-lg font-semibold">
               <dt>Total</dt>
@@ -140,8 +168,8 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
             <div className="flex items-center gap-3">
               <MapPin className="size-5 text-primary" />
               <h2 className="text-xl text-foreground">
-              {role === "seller" ? "Ship to" : "Delivery"}
-            </h2>
+                {role === "seller" ? "Ship to" : "Delivery"}
+              </h2>
             </div>
             <address className="mt-4 text-sm not-italic leading-6 text-muted-foreground">
               {order.shippingAddress ? (
@@ -167,11 +195,15 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
               </div>
               <div>
                 <dt className="text-muted-foreground">Paid</dt>
-                <dd className="mt-1 text-foreground">{formatOrderDate(order.paidAt)}</dd>
+                <dd className="mt-1 text-foreground">
+                  {formatOrderDate(order.paidAt)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Billed to</dt>
-                <dd className="mt-1 text-foreground">{order.buyerEmail ?? "—"}</dd>
+                <dd className="mt-1 text-foreground">
+                  {order.buyerEmail ?? "—"}
+                </dd>
               </div>
             </dl>
           </section>

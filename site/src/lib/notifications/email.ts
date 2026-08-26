@@ -4,11 +4,16 @@ import { SUPPORT_EMAIL } from "@/constants/contact.constants";
 import type { NotificationTemplate } from "@/lib/notifications/types";
 
 export function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://eduthart.com").replace(/\/+$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://eduthart.com").replace(
+    /\/+$/,
+    ""
+  );
 }
 
 function toAbsoluteUrl(href: string) {
-  return href.startsWith("http") ? href : `${getSiteUrl()}${href.startsWith("/") ? "" : "/"}${href}`;
+  return href.startsWith("http")
+    ? href
+    : `${getSiteUrl()}${href.startsWith("/") ? "" : "/"}${href}`;
 }
 
 function escapeHtml(value: string) {
@@ -57,7 +62,10 @@ export function isNotificationEmailEnabled() {
  * truth, so a missing API key or a Resend outage is logged and swallowed
  * rather than failing the action that triggered the notification.
  */
-export async function sendNotificationEmail(to: string, template: NotificationTemplate) {
+export async function sendNotificationEmail(
+  to: string,
+  template: NotificationTemplate
+) {
   if (!template.emailSubject || !to.trim() || !isNotificationEmailEnabled()) {
     return false;
   }

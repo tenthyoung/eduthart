@@ -5,6 +5,8 @@ import { withSession } from "@/lib/api/handler";
 
 export function GET(request: Request) {
   return withSession(request, async (session) =>
-    NextResponse.json({ recommendations: await buildRecommendations(session.uid) }),
+    NextResponse.json({
+      recommendations: await buildRecommendations(session.uid),
+    })
   );
 }

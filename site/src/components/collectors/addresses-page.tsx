@@ -19,7 +19,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
-import { formatAddressLines, type AddressKind, type SavedAddress } from "@/lib/collectors/address-format";
+import {
+  formatAddressLines,
+  type AddressKind,
+  type SavedAddress,
+} from "@/lib/collectors/address-format";
 
 type AddressDraft = {
   city: string;
@@ -48,29 +52,64 @@ const EMPTY_DRAFT: AddressDraft = {
   region: "",
 };
 
-const FIELDS: Array<{ autoComplete: string; key: keyof AddressDraft; label: string; required?: boolean }> = [
+const FIELDS: Array<{
+  autoComplete: string;
+  key: keyof AddressDraft;
+  label: string;
+  required?: boolean;
+}> = [
   { autoComplete: "name", key: "name", label: "Full name", required: true },
-  { autoComplete: "address-line1", key: "line1", label: "Street address", required: true },
-  { autoComplete: "address-line2", key: "line2", label: "Apartment, suite (optional)" },
-  { autoComplete: "address-level2", key: "city", label: "City", required: true },
+  {
+    autoComplete: "address-line1",
+    key: "line1",
+    label: "Street address",
+    required: true,
+  },
+  {
+    autoComplete: "address-line2",
+    key: "line2",
+    label: "Apartment, suite (optional)",
+  },
+  {
+    autoComplete: "address-level2",
+    key: "city",
+    label: "City",
+    required: true,
+  },
   { autoComplete: "address-level1", key: "region", label: "State or region" },
-  { autoComplete: "postal-code", key: "postalCode", label: "Postal code", required: true },
+  {
+    autoComplete: "postal-code",
+    key: "postalCode",
+    label: "Postal code",
+    required: true,
+  },
   { autoComplete: "country", key: "country", label: "Country", required: true },
   { autoComplete: "tel", key: "phone", label: "Phone (optional)" },
 ];
 
-const KINDS: Array<{ description: string; kind: AddressKind; title: string }> = [
-  { description: "Where your artwork is delivered.", kind: "shipping", title: "Shipping addresses" },
-  { description: "Where your card statement is registered.", kind: "billing", title: "Billing addresses" },
-];
+const KINDS: Array<{ description: string; kind: AddressKind; title: string }> =
+  [
+    {
+      description: "Where your artwork is delivered.",
+      kind: "shipping",
+      title: "Shipping addresses",
+    },
+    {
+      description: "Where your card statement is registered.",
+      kind: "billing",
+      title: "Billing addresses",
+    },
+  ];
 
 export function AddressesPage() {
-  const { data, error, loading, mutate } = useCollectorResource<SavedAddress[]>({
-    initialData: [],
-    path: "/api/collectors/addresses",
-    select: (payload) => (payload.addresses as SavedAddress[]) ?? [],
-    signInPath: "/account/addresses",
-  });
+  const { data, error, loading, mutate } = useCollectorResource<SavedAddress[]>(
+    {
+      initialData: [],
+      path: "/api/collectors/addresses",
+      select: (payload) => (payload.addresses as SavedAddress[]) ?? [],
+      signInPath: "/account/addresses",
+    }
+  );
   const [draft, setDraft] = useState<AddressDraft | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -85,7 +124,7 @@ export function AddressesPage() {
 
     const saved = await mutate(
       { body: draft, method: "POST" },
-      draft.id ? "Address updated." : "Address saved.",
+      draft.id ? "Address updated." : "Address saved."
     );
 
     setSaving(false);
@@ -202,7 +241,10 @@ export function AddressesPage() {
                         {!address.isDefault ? (
                           <Button
                             onClick={() =>
-                              void mutate({ body: { id: address.id }, method: "PATCH" }, "Default address updated.")
+                              void mutate(
+                                { body: { id: address.id }, method: "PATCH" },
+                                "Default address updated."
+                              )
                             }
                             size="sm"
                             variant="outline"
@@ -213,7 +255,10 @@ export function AddressesPage() {
                         ) : null}
                         <Button
                           onClick={() =>
-                            void mutate({ body: { id: address.id }, method: "DELETE" }, "Address removed.")
+                            void mutate(
+                              { body: { id: address.id }, method: "DELETE" },
+                              "Address removed."
+                            )
                           }
                           size="sm"
                           variant="ghost"
@@ -231,10 +276,15 @@ export function AddressesPage() {
         })}
       </div>
 
-      <Dialog open={draft !== null} onOpenChange={(open) => (open ? null : setDraft(null))}>
+      <Dialog
+        open={draft !== null}
+        onOpenChange={(open) => (open ? null : setDraft(null))}
+      >
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{draft?.id ? "Edit address" : "Add an address"}</DialogTitle>
+            <DialogTitle>
+              {draft?.id ? "Edit address" : "Add an address"}
+            </DialogTitle>
             <DialogDescription>
               Used at checkout for delivery and for your invoice.
             </DialogDescription>
@@ -248,7 +298,10 @@ export function AddressesPage() {
                   className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
                   id="address-kind"
                   onChange={(event) =>
-                    setDraft({ ...draft, kind: event.target.value as AddressKind })
+                    setDraft({
+                      ...draft,
+                      kind: event.target.value as AddressKind,
+                    })
                   }
                   value={draft.kind}
                 >
@@ -261,7 +314,9 @@ export function AddressesPage() {
                 <Label htmlFor="address-label">Label (optional)</Label>
                 <Input
                   id="address-label"
-                  onChange={(event) => setDraft({ ...draft, label: event.target.value })}
+                  onChange={(event) =>
+                    setDraft({ ...draft, label: event.target.value })
+                  }
                   placeholder="Home studio"
                   value={draft.label}
                 />
@@ -273,7 +328,9 @@ export function AddressesPage() {
                   <Input
                     autoComplete={field.autoComplete}
                     id={`address-${field.key}`}
-                    onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })}
+                    onChange={(event) =>
+                      setDraft({ ...draft, [field.key]: event.target.value })
+                    }
                     required={field.required}
                     value={String(draft[field.key] ?? "")}
                   />

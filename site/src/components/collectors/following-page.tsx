@@ -12,7 +12,9 @@ import { useCollectorResource } from "@/hooks/useCollectorResource";
 import type { FollowedArtist } from "@/lib/collectors/follows";
 
 export function FollowingPage() {
-  const { data, error, loading, mutate } = useCollectorResource<FollowedArtist[]>({
+  const { data, error, loading, mutate } = useCollectorResource<
+    FollowedArtist[]
+  >({
     initialData: [],
     path: "/api/collectors/follows",
     select: (payload) => (payload.following as FollowedArtist[]) ?? [],
@@ -64,13 +66,15 @@ export function FollowingPage() {
                 >
                   {artist.artistName || `@${artist.artistUsername}`}
                 </Link>
-                <p className="truncate text-sm text-muted-foreground">@{artist.artistUsername}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  @{artist.artistUsername}
+                </p>
               </div>
               <Button
                 onClick={() =>
                   void mutate(
                     { body: { artistUid: artist.artistUid }, method: "DELETE" },
-                    `You no longer follow ${artist.artistName || `@${artist.artistUsername}`}.`,
+                    `You no longer follow ${artist.artistName || `@${artist.artistUsername}`}.`
                   )
                 }
                 size="sm"

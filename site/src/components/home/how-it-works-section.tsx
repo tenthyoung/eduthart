@@ -59,8 +59,8 @@ export const HowItWorksSection = () => {
               <span className="text-primary">Exhibitions</span>
             </Heading>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A gallery program shaped around strong curation, calm viewing,
-              and meaningful conversations around the work.
+              A gallery program shaped around strong curation, calm viewing, and
+              meaningful conversations around the work.
             </p>
           </div>
 
@@ -98,8 +98,8 @@ export const HowItWorksSection = () => {
           {/* Bottom CTA or additional info */}
           <div className="text-center mt-16">
             <p className="text-lg text-muted-foreground">
-              Discover why collectors, designers, and first-time visitors
-              return to <span className="text-primary font-semibold">EduthArt</span>
+              Discover why collectors, designers, and first-time visitors return
+              to <span className="text-primary font-semibold">EduthArt</span>
             </p>
           </div>
         </MotionStaggerFade>

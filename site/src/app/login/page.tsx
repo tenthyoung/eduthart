@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
-import { useAuth, type FederatedProvider } from "@/components/auth/auth-provider";
+import {
+  useAuth,
+  type FederatedProvider,
+} from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +63,9 @@ function LoginContent() {
       router.replace("/");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : `Unable to sign in with ${providerName}.`;
+        error instanceof Error
+          ? error.message
+          : `Unable to sign in with ${providerName}.`;
       setError(message);
       toast.error(message);
     } finally {
@@ -79,7 +84,10 @@ function LoginContent() {
           <h2 className="text-2xl text-foreground">Welcome back</h2>
           <p className="text-sm text-muted-foreground">
             New here?{" "}
-            <Link className="font-medium text-primary hover:underline" href="/signup">
+            <Link
+              className="font-medium text-primary hover:underline"
+              href="/signup"
+            >
               Create an account
             </Link>
             .
@@ -91,7 +99,8 @@ function LoginContent() {
             <Alert>
               <AlertTitle>Password updated</AlertTitle>
               <AlertDescription>
-                Your password has been reset. Sign in with your new password below.
+                Your password has been reset. Sign in with your new password
+                below.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -156,7 +165,10 @@ function LoginContent() {
 
         <p className="text-sm text-muted-foreground">
           First-time Google and Apple registration lives on the{" "}
-          <Link className="font-medium text-primary hover:underline" href="/signup">
+          <Link
+            className="font-medium text-primary hover:underline"
+            href="/signup"
+          >
             sign up page
           </Link>{" "}
           so we can capture your Terms of Service and Privacy Policy consent.

@@ -7,20 +7,28 @@ import type { IndexedArtwork } from "@/lib/artists/artwork-index";
 import { formatMinorUnits } from "@/lib/commerce/money";
 import { cn } from "@/lib/utils";
 
-export function formatArtworkPrice(artwork: Pick<IndexedArtwork, "currency" | "priceMinor">) {
+export function formatArtworkPrice(
+  artwork: Pick<IndexedArtwork, "currency" | "priceMinor">
+) {
   return artwork.priceMinor > 0
     ? formatMinorUnits(artwork.priceMinor, artwork.currency)
     : "Price on request";
 }
 
-export function ArtworkAvailability({ availability }: { availability: string }) {
+export function ArtworkAvailability({
+  availability,
+}: {
+  availability: string;
+}) {
   const isAvailable = availability === "original_available";
 
   return (
     <span
       className={cn(
         "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
-        isAvailable ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground",
+        isAvailable
+          ? "bg-green-100 text-green-800"
+          : "bg-muted text-muted-foreground"
       )}
     >
       {isAvailable ? "Available" : availability.replaceAll("_", " ")}
@@ -59,23 +67,34 @@ export function ArtworkCard({
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link className="text-lg font-medium text-foreground hover:underline" href={artwork.href}>
+            <Link
+              className="text-lg font-medium text-foreground hover:underline"
+              href={artwork.href}
+            >
               {artwork.title}
             </Link>
-            <p className="mt-1 truncate text-sm text-muted-foreground">by {artwork.artistName}</p>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              by {artwork.artistName}
+            </p>
           </div>
-          <p className="shrink-0 font-semibold text-foreground">{formatArtworkPrice(artwork)}</p>
+          <p className="shrink-0 font-semibold text-foreground">
+            {formatArtworkPrice(artwork)}
+          </p>
         </div>
         <ArtworkAvailability availability={artwork.availability} />
         {footnote}
-        {actions ? <div className="mt-auto flex flex-wrap gap-2 pt-2">{actions}</div> : null}
+        {actions ? (
+          <div className="mt-auto flex flex-wrap gap-2 pt-2">{actions}</div>
+        ) : null}
       </div>
     </article>
   );
 }
 
 export function ArtworkCardGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+  );
 }
 
 export function CollectorEmptyState({
@@ -95,7 +114,9 @@ export function CollectorEmptyState({
         {icon}
       </div>
       <p className="mt-4 text-lg text-foreground">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+        {description}
+      </p>
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );

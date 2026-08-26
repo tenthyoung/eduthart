@@ -12,7 +12,11 @@ import { apiError, getRequestOrigin, withSession } from "@/lib/api/handler";
 function requireStripe() {
   return isStripeConfigured()
     ? null
-    : apiError("Saved payment methods need Stripe to be configured.", 503, "unavailable");
+    : apiError(
+        "Saved payment methods need Stripe to be configured.",
+        503,
+        "unavailable"
+      );
 }
 
 export function GET(request: Request) {
@@ -66,7 +70,10 @@ export function PATCH(request: Request) {
 
     return NextResponse.json({
       configured: true,
-      paymentMethods: await setDefaultPaymentMethod(session.uid, body.paymentMethodId),
+      paymentMethods: await setDefaultPaymentMethod(
+        session.uid,
+        body.paymentMethodId
+      ),
     });
   });
 }
@@ -87,7 +94,10 @@ export function DELETE(request: Request) {
 
     return NextResponse.json({
       configured: true,
-      paymentMethods: await removePaymentMethod(session.uid, body.paymentMethodId),
+      paymentMethods: await removePaymentMethod(
+        session.uid,
+        body.paymentMethodId
+      ),
     });
   });
 }

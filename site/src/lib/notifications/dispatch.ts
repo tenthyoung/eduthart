@@ -18,10 +18,14 @@ export type NotificationRecipient = {
 export async function dispatchNotification(
   recipient: NotificationRecipient,
   template: NotificationTemplate,
-  options?: { dedupeKey?: string },
+  options?: { dedupeKey?: string }
 ) {
   try {
-    const notification = await createNotification(recipient.uid, template, options);
+    const notification = await createNotification(
+      recipient.uid,
+      template,
+      options
+    );
 
     // A deduped repeat returns null, which also means the email already went out.
     if (!notification) {
@@ -42,11 +46,11 @@ export async function dispatchNotification(
 export async function dispatchNotificationToMany(
   recipients: NotificationRecipient[],
   buildTemplate: (recipient: NotificationRecipient) => NotificationTemplate,
-  options?: { dedupeKey?: string },
+  options?: { dedupeKey?: string }
 ) {
   await Promise.all(
     recipients.map((recipient) =>
-      dispatchNotification(recipient, buildTemplate(recipient), options),
-    ),
+      dispatchNotification(recipient, buildTemplate(recipient), options)
+    )
   );
 }

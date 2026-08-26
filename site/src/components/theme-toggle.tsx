@@ -26,7 +26,9 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className="text-foreground hover:bg-accent"
       title={
-        resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+        resolvedTheme === "dark"
+          ? "Switch to light mode"
+          : "Switch to dark mode"
       }
     >
       {resolvedTheme === "dark" ? (
@@ -35,7 +37,9 @@ export function ThemeToggle() {
         <Moon className="size-5" />
       )}
       <span className="sr-only">
-        {resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        {resolvedTheme === "dark"
+          ? "Switch to light mode"
+          : "Switch to dark mode"}
       </span>
     </Button>
   );

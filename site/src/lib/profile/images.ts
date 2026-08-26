@@ -10,7 +10,11 @@ export const IMAGE_OUTPUT_TYPE = "image/jpeg";
 export const IMAGE_OUTPUT_QUALITY = 0.92;
 
 export const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
-export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
 export const ACCEPTED_IMAGE_TYPES_ATTRIBUTE = ACCEPTED_IMAGE_TYPES.join(",");
 
 export function isAcceptedImageType(type: string) {

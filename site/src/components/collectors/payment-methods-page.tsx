@@ -25,15 +25,16 @@ function formatExpiry(method: SavedPaymentMethod) {
 
 export function PaymentMethodsPage() {
   const searchParams = useSearchParams();
-  const { data, error, loading, mutate, user } = useCollectorResource<PaymentMethodsState>({
-    initialData: { configured: true, paymentMethods: [] },
-    path: "/api/commerce/payment-methods",
-    select: (payload) => ({
-      configured: payload.configured !== false,
-      paymentMethods: (payload.paymentMethods as SavedPaymentMethod[]) ?? [],
-    }),
-    signInPath: "/account/payment-methods",
-  });
+  const { data, error, loading, mutate, user } =
+    useCollectorResource<PaymentMethodsState>({
+      initialData: { configured: true, paymentMethods: [] },
+      path: "/api/commerce/payment-methods",
+      select: (payload) => ({
+        configured: payload.configured !== false,
+        paymentMethods: (payload.paymentMethods as SavedPaymentMethod[]) ?? [],
+      }),
+      signInPath: "/account/payment-methods",
+    });
   const [redirecting, setRedirecting] = useState(false);
 
   const startSetup = async () => {
@@ -47,18 +48,25 @@ export function PaymentMethodsPage() {
       const payload = await collectorRequest<{ url: string }>(
         "/api/commerce/payment-methods",
         await user.getIdToken(),
-        { method: "POST" },
+        { method: "POST" }
       );
       window.location.href = payload.url;
     } catch (setupError) {
-      toast.error(setupError instanceof Error ? setupError.message : "Unable to start card setup.");
+      toast.error(
+        setupError instanceof Error
+          ? setupError.message
+          : "Unable to start card setup."
+      );
       setRedirecting(false);
     }
   };
 
   if (loading) {
     return (
-      <AccountShell description="Cards saved for faster checkout." title="Payment methods">
+      <AccountShell
+        description="Cards saved for faster checkout."
+        title="Payment methods"
+      >
         <CollectorLoadingPanel label="Loading your payment methods..." />
       </AccountShell>
     );
@@ -80,7 +88,9 @@ export function PaymentMethodsPage() {
       {searchParams.get("saved") === "1" ? (
         <Alert className="mb-6">
           <AlertTitle>Card saved</AlertTitle>
-          <AlertDescription>Your card is ready to use at checkout.</AlertDescription>
+          <AlertDescription>
+            Your card is ready to use at checkout.
+          </AlertDescription>
         </Alert>
       ) : null}
 
@@ -95,7 +105,8 @@ export function PaymentMethodsPage() {
         <Alert>
           <AlertTitle>Payments are not switched on here</AlertTitle>
           <AlertDescription>
-            This environment has no Stripe keys configured, so there is nothing to save yet.
+            This environment has no Stripe keys configured, so there is nothing
+            to save yet.
           </AlertDescription>
         </Alert>
       ) : data.paymentMethods.length === 0 ? (
@@ -125,7 +136,9 @@ export function PaymentMethodsPage() {
                   <p className="font-medium capitalize text-foreground">
                     {method.brand} ···· {method.last4}
                   </p>
-                  <p className="text-sm text-muted-foreground">Expires {formatExpiry(method)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Expires {formatExpiry(method)}
+                  </p>
                   {method.isDefault ? (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                       <Star className="size-3" />
@@ -140,8 +153,11 @@ export function PaymentMethodsPage() {
                   <Button
                     onClick={() =>
                       void mutate(
-                        { body: { paymentMethodId: method.id }, method: "PATCH" },
-                        "Default card updated.",
+                        {
+                          body: { paymentMethodId: method.id },
+                          method: "PATCH",
+                        },
+                        "Default card updated."
                       )
                     }
                     size="sm"
@@ -155,8 +171,11 @@ export function PaymentMethodsPage() {
                   aria-label={`Remove card ending ${method.last4}`}
                   onClick={() =>
                     void mutate(
-                      { body: { paymentMethodId: method.id }, method: "DELETE" },
-                      "Card removed.",
+                      {
+                        body: { paymentMethodId: method.id },
+                        method: "DELETE",
+                      },
+                      "Card removed."
                     )
                   }
                   size="sm"
@@ -173,7 +192,8 @@ export function PaymentMethodsPage() {
 
       <p className="mt-8 flex items-start gap-2 text-sm text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-        Card details are entered on Stripe&apos;s own hosted page and never pass through EduthArt.
+        Card details are entered on Stripe&apos;s own hosted page and never pass
+        through EduthArt.
       </p>
     </AccountShell>
   );

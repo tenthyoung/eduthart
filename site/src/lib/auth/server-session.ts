@@ -34,7 +34,7 @@ function getAuthorizationToken(request: Request) {
 
 export async function getAuthenticatedSession(
   request: Request,
-  bodyIdToken?: string | null,
+  bodyIdToken?: string | null
 ): Promise<AuthenticatedSession> {
   const token = getAuthorizationToken(request) ?? bodyIdToken?.trim() ?? null;
 
@@ -58,7 +58,9 @@ export async function getAuthenticatedSession(
         displayName: profile.displayName,
         email: profile.email,
         photoURL: profile.photoURL,
-        providerData: profile.authProviders.map((providerId) => ({ providerId })),
+        providerData: profile.authProviders.map((providerId) => ({
+          providerId,
+        })),
         uid,
       },
     };

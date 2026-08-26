@@ -84,17 +84,21 @@ export function ProfileImageField({
       <div
         className={cn(
           "overflow-hidden border border-dashed border-primary/20 bg-white/70",
-          circular ? "mx-auto w-40 rounded-full" : "rounded-2xl",
+          circular ? "mx-auto w-40 rounded-full" : "rounded-2xl"
         )}
       >
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt={`${title} preview`} className={cn("w-full object-cover", aspectClassName)} src={imageUrl} />
+          <img
+            alt={`${title} preview`}
+            className={cn("w-full object-cover", aspectClassName)}
+            src={imageUrl}
+          />
         ) : (
           <div
             className={cn(
               "bg-profile-banner flex flex-col items-center justify-center gap-3 px-6 text-center",
-              aspectClassName,
+              aspectClassName
             )}
           >
             <ImagePlus className="size-6 text-primary" />
@@ -116,12 +120,22 @@ export function ProfileImageField({
       />
 
       <div className="flex flex-wrap gap-3">
-        <Button disabled={busy} onClick={() => inputRef.current?.click()} type="button" variant="outline">
+        <Button
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+          type="button"
+          variant="outline"
+        >
           {busy ? <Loader2 className="animate-spin" /> : <ImagePlus />}
           {busy ? "Uploading..." : uploadLabel}
         </Button>
         {imageUrl ? (
-          <Button disabled={busy} onClick={onRemove} type="button" variant="ghost">
+          <Button
+            disabled={busy}
+            onClick={onRemove}
+            type="button"
+            variant="ghost"
+          >
             <Trash2 />
             {removeLabel}
           </Button>

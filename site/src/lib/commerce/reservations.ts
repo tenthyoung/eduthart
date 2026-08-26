@@ -1,4 +1,8 @@
-import { deleteRootDocument, getRootDocument, saveRootDocument } from "@/lib/store/document-store";
+import {
+  deleteRootDocument,
+  getRootDocument,
+  saveRootDocument,
+} from "@/lib/store/document-store";
 
 const RESERVATIONS_COLLECTION = "artwork_reservations";
 
@@ -20,7 +24,7 @@ export type Reservation = {
 };
 
 function toReservation(
-  document: (Record<string, unknown> & { id: string }) | null,
+  document: (Record<string, unknown> & { id: string }) | null
 ): Reservation | null {
   if (!document) {
     return null;
@@ -41,7 +45,9 @@ function isLive(reservation: Reservation) {
 
 /** An expired reservation is treated as absent rather than being swept eagerly. */
 export async function getActiveReservation(artworkKey: string) {
-  const reservation = toReservation(await getRootDocument(RESERVATIONS_COLLECTION, artworkKey));
+  const reservation = toReservation(
+    await getRootDocument(RESERVATIONS_COLLECTION, artworkKey)
+  );
   return reservation && isLive(reservation) ? reservation : null;
 }
 
@@ -57,7 +63,9 @@ export async function reserveArtwork({
   const existing = await getActiveReservation(artworkKey);
 
   if (existing && existing.buyerUid !== buyerUid) {
-    throw new Error("Another collector is checking out with this artwork. Try again in a few minutes.");
+    throw new Error(
+      "Another collector is checking out with this artwork. Try again in a few minutes."
+    );
   }
 
   const reservation: Omit<Reservation, "artworkKey"> = {

@@ -27,11 +27,7 @@ import type { AdminAccess } from "@/lib/admin/types";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type AdminSessionStatus =
-  | "loading"
-  | "signed_out"
-  | "unauthorized"
-  | "ready"
-  | "error";
+  "loading" | "signed_out" | "unauthorized" | "ready" | "error";
 
 type AdminAuthContextValue = {
   access: AdminAccess | null;
@@ -87,7 +83,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         normalized.code === "functions/permission-denied" ||
           normalized.code === "permission-denied"
           ? "unauthorized"
-          : "error",
+          : "error"
       );
     }
   }, []);
@@ -119,38 +115,35 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     };
   }, [refreshAccess]);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const auth = await getFirebaseAuth();
-      setStatus("loading");
-      setError(null);
-      try {
-        const credential = await signInWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password,
-        );
-        const idToken = await credential.user.getIdToken(true);
-        const nextAccess = await createAdminSession(idToken);
-        setUser(credential.user);
-        setAccess(nextAccess);
-        setStatus("ready");
-      } catch (error) {
-        await firebaseSignOut(auth).catch(() => undefined);
-        const normalized =
-          error instanceof AdminApiError
-            ? error
-            : new AdminApiError(
-                "auth/failed",
-                error instanceof Error ? error.message : "Sign in failed.",
-              );
-        setError(normalized);
-        setStatus("error");
-        throw normalized;
-      }
-    },
-    [],
-  );
+  const signIn = useCallback(async (email: string, password: string) => {
+    const auth = await getFirebaseAuth();
+    setStatus("loading");
+    setError(null);
+    try {
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      const idToken = await credential.user.getIdToken(true);
+      const nextAccess = await createAdminSession(idToken);
+      setUser(credential.user);
+      setAccess(nextAccess);
+      setStatus("ready");
+    } catch (error) {
+      await firebaseSignOut(auth).catch(() => undefined);
+      const normalized =
+        error instanceof AdminApiError
+          ? error
+          : new AdminApiError(
+              "auth/failed",
+              error instanceof Error ? error.message : "Sign in failed."
+            );
+      setError(normalized);
+      setStatus("error");
+      throw normalized;
+    }
+  }, []);
 
   const signOut = useCallback(async () => {
     const auth = await getFirebaseAuth();
@@ -172,7 +165,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       status,
       user,
     }),
-    [access, error, refreshAccess, signIn, signOut, status, user],
+    [access, error, refreshAccess, signIn, signOut, status, user]
   );
 
   return (

@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getSharedCollection } from "@/lib/collectors/collections";
-import { buildProfileDisplayName, loadAccountProfile } from "@/lib/auth/profile-store";
+import {
+  buildProfileDisplayName,
+  loadAccountProfile,
+} from "@/lib/auth/profile-store";
 import { formatMinorUnits } from "@/lib/commerce/money";
 
 export default async function SharedCollectionPage({
@@ -19,7 +22,9 @@ export default async function SharedCollectionPage({
   }
 
   const owner = await loadAccountProfile(collection.ownerUid);
-  const ownerName = owner ? buildProfileDisplayName(owner) : "An EduthArt collector";
+  const ownerName = owner
+    ? buildProfileDisplayName(owner)
+    : "An EduthArt collector";
   const artworks = collection.artworks
     .map((entry) => entry.artwork)
     .filter((artwork) => artwork !== null);
@@ -32,7 +37,9 @@ export default async function SharedCollectionPage({
             <Images className="size-3.5" />
             Shared collection
           </div>
-          <h1 className="text-4xl text-foreground sm:text-5xl">{collection.name}</h1>
+          <h1 className="text-4xl text-foreground sm:text-5xl">
+            {collection.name}
+          </h1>
           <p className="text-base text-muted-foreground">
             Curated by {ownerName} · {artworks.length}{" "}
             {artworks.length === 1 ? "artwork" : "artworks"}
@@ -63,7 +70,9 @@ export default async function SharedCollectionPage({
                 </div>
                 <div className="space-y-1 p-5">
                   <h2 className="text-lg text-foreground">{artwork.title}</h2>
-                  <p className="text-sm text-muted-foreground">by {artwork.artistName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    by {artwork.artistName}
+                  </p>
                   <p className="pt-2 font-semibold text-foreground">
                     {artwork.priceMinor > 0
                       ? formatMinorUnits(artwork.priceMinor, artwork.currency)

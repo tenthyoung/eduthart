@@ -9,13 +9,19 @@ import { getIndexedArtwork } from "@/lib/artists/artwork-index";
  * browser and needs to resolve its keys before a visitor has signed in.
  */
 export async function GET(request: Request) {
-  const keys = new URL(request.url).searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
+  const keys =
+    new URL(request.url).searchParams.get("keys")?.split(",").filter(Boolean) ??
+    [];
 
   if (keys.length === 0) {
     return NextResponse.json({ artworks: [] });
   }
 
-  const artworks = await Promise.all(keys.slice(0, 8).map((key) => getIndexedArtwork(key)));
+  const artworks = await Promise.all(
+    keys.slice(0, 8).map((key) => getIndexedArtwork(key))
+  );
 
-  return NextResponse.json({ artworks: artworks.filter((artwork) => artwork !== null) });
+  return NextResponse.json({
+    artworks: artworks.filter((artwork) => artwork !== null),
+  });
 }

@@ -51,14 +51,21 @@ export function useCollectorResource<T>({
       setError(null);
 
       try {
-        const payload = await collectorRequest<Record<string, unknown>>(path, await user.getIdToken());
+        const payload = await collectorRequest<Record<string, unknown>>(
+          path,
+          await user.getIdToken()
+        );
 
         if (!cancelled) {
           setData(selectRef.current(payload));
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : "Unable to load this page.");
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load this page."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -75,7 +82,10 @@ export function useCollectorResource<T>({
   }, [path, router, signInPath, status, user]);
 
   const mutate = useCallback(
-    async (init: { body?: unknown; method: string; path?: string }, successMessage?: string) => {
+    async (
+      init: { body?: unknown; method: string; path?: string },
+      successMessage?: string
+    ) => {
       if (!user) {
         return false;
       }
@@ -84,7 +94,7 @@ export function useCollectorResource<T>({
         const payload = await collectorRequest<Record<string, unknown>>(
           init.path ?? path,
           await user.getIdToken(),
-          { body: init.body, method: init.method },
+          { body: init.body, method: init.method }
         );
 
         setData(selectRef.current(payload));
@@ -96,12 +106,14 @@ export function useCollectorResource<T>({
         return true;
       } catch (mutateError) {
         toast.error(
-          mutateError instanceof Error ? mutateError.message : "That change could not be saved.",
+          mutateError instanceof Error
+            ? mutateError.message
+            : "That change could not be saved."
         );
         return false;
       }
     },
-    [path, user],
+    [path, user]
   );
 
   return {

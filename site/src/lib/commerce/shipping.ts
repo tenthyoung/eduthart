@@ -1,4 +1,7 @@
-import type { ListingItemDraft, ListingSharedSettings } from "@/lib/artists/listing-flow";
+import type {
+  ListingItemDraft,
+  ListingSharedSettings,
+} from "@/lib/artists/listing-flow";
 import { toMinorUnits } from "@/lib/commerce/money";
 
 /**
@@ -14,7 +17,7 @@ export const DEFAULT_SHIPPING_AMOUNT = 45;
 export function resolveShippingAmountMinor(
   item: ListingItemDraft,
   shared: ListingSharedSettings,
-  currency: string,
+  currency: string
 ) {
   if (item.salesVisibility.digitalDownload) {
     return 0;
@@ -28,7 +31,11 @@ export function resolveShippingAmountMinor(
 
   const stated = Number(domesticShipping);
 
-  if (Number.isFinite(stated) && stated >= 0 && domesticShipping.trim() !== "") {
+  if (
+    Number.isFinite(stated) &&
+    stated >= 0 &&
+    domesticShipping.trim() !== ""
+  ) {
     return toMinorUnits(stated, currency);
   }
 

@@ -17,7 +17,7 @@ export type BreakpointKey = keyof typeof BREAKPOINTS;
 export const useTailwindBreakpoint = () => {
   const { breakpoint, maxWidth, minWidth } = useBreakpoint(
     BREAKPOINTS,
-    "sm", // default breakpoint
+    "sm" // default breakpoint
   );
 
   const safeMaxWidth = maxWidth ?? 0;

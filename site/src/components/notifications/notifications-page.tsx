@@ -33,7 +33,10 @@ import {
   notifyNotificationsChanged,
   setNotificationReadState,
 } from "@/lib/notifications/client";
-import type { NotificationKind, UserNotification } from "@/lib/notifications/types";
+import type {
+  NotificationKind,
+  UserNotification,
+} from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 
 const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
@@ -48,9 +51,9 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
 };
 
 async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as
-    | { error?: { message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: string };
+  } | null;
 
   return payload?.error?.message ?? fallbackMessage;
 }
@@ -62,7 +65,10 @@ function formatNotificationDate(value: string) {
     return "";
   }
 
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
 
 export function NotificationsPage() {
@@ -82,7 +88,7 @@ export function NotificationsPage() {
       setUnreadCount(payload.unreadCount);
       notifyNotificationsChanged();
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -109,7 +115,11 @@ export function NotificationsPage() {
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : "Unable to load your notifications.");
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load your notifications."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -126,8 +136,10 @@ export function NotificationsPage() {
   }, [applyPayload, router, status, user]);
 
   const runAction = async (
-    action: (token: string) => Promise<{ notifications: UserNotification[]; unreadCount: number }>,
-    fallbackMessage: string,
+    action: (
+      token: string
+    ) => Promise<{ notifications: UserNotification[]; unreadCount: number }>,
+    fallbackMessage: string
   ) => {
     if (!user) {
       return;
@@ -136,7 +148,9 @@ export function NotificationsPage() {
     try {
       applyPayload(await action(await user.getIdToken()));
     } catch (actionError) {
-      toast.error(actionError instanceof Error ? actionError.message : fallbackMessage);
+      toast.error(
+        actionError instanceof Error ? actionError.message : fallbackMessage
+      );
     }
   };
 
@@ -154,12 +168,17 @@ export function NotificationsPage() {
       const token = await user.getIdToken();
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ username: usernameDraft }),
       });
 
       if (!response.ok) {
-        throw new Error(await parseApiError(response, "Unable to save your username."));
+        throw new Error(
+          await parseApiError(response, "Unable to save your username.")
+        );
       }
 
       const payload = (await response.json()) as { profile: AccountProfile };
@@ -169,7 +188,10 @@ export function NotificationsPage() {
       applyPayload(await fetchNotifications(token));
       toast.success("Your username has been updated.");
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : "Unable to save your username.";
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save your username.";
       setError(message);
       toast.error(message);
     } finally {
@@ -204,9 +226,12 @@ export function NotificationsPage() {
                 <Bell className="size-3.5" />
                 Notifications
               </div>
-              <h1 className="text-4xl text-foreground sm:text-5xl">Your notification center</h1>
+              <h1 className="text-4xl text-foreground sm:text-5xl">
+                Your notification center
+              </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                Account activity, orders, and updates from the artists you follow.
+                Account activity, orders, and updates from the artists you
+                follow.
               </p>
             </div>
 
@@ -218,7 +243,12 @@ export function NotificationsPage() {
                 <>
                   <Button
                     disabled={unreadCount === 0}
-                    onClick={() => void runAction(markEveryNotificationRead, "Unable to update your notifications.")}
+                    onClick={() =>
+                      void runAction(
+                        markEveryNotificationRead,
+                        "Unable to update your notifications."
+                      )
+                    }
                     type="button"
                     variant="outline"
                   >
@@ -226,7 +256,12 @@ export function NotificationsPage() {
                     Mark all read
                   </Button>
                   <Button
-                    onClick={() => void runAction(clearNotifications, "Unable to clear your notifications.")}
+                    onClick={() =>
+                      void runAction(
+                        clearNotifications,
+                        "Unable to clear your notifications."
+                      )
+                    }
                     type="button"
                     variant="ghost"
                   >
@@ -249,9 +284,12 @@ export function NotificationsPage() {
         {notifications.length === 0 ? (
           <div className="rounded-[2rem] border border-dashed border-border bg-white/70 px-6 py-16 text-center">
             <BellOff className="mx-auto size-8 text-primary/60" />
-            <p className="mt-4 text-lg text-foreground">You are all caught up</p>
+            <p className="mt-4 text-lg text-foreground">
+              You are all caught up
+            </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Follow artists and save artwork to hear about new listings, price drops, and sales.
+              Follow artists and save artwork to hear about new listings, price
+              drops, and sales.
             </p>
           </div>
         ) : (
@@ -259,14 +297,15 @@ export function NotificationsPage() {
             {notifications.map((notification) => {
               const Icon = KIND_ICONS[notification.kind] ?? Bell;
               const isRead = notification.readAt !== null;
-              const isUsernameReminder = notification.kind === "choose_username";
+              const isUsernameReminder =
+                notification.kind === "choose_username";
 
               return (
                 <li
                   key={notification.id}
                   className={cn(
                     "rounded-[2rem] border bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]",
-                    isRead ? "border-white/70" : "border-primary/25",
+                    isRead ? "border-white/70" : "border-primary/25"
                   )}
                 >
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
@@ -276,11 +315,15 @@ export function NotificationsPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-2xl text-foreground">{notification.title}</h2>
+                          <h2 className="text-2xl text-foreground">
+                            {notification.title}
+                          </h2>
                           <span
                             className={cn(
                               "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                              isRead ? "bg-muted text-muted-foreground" : "bg-amber-100 text-amber-900",
+                              isRead
+                                ? "bg-muted text-muted-foreground"
+                                : "bg-amber-100 text-amber-900"
                             )}
                           >
                             {isRead ? "Read" : "Unread"}
@@ -297,19 +340,30 @@ export function NotificationsPage() {
 
                     <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
                       {isUsernameReminder ? (
-                        <Button onClick={() => setIsUsernameDialogOpen(true)} type="button">
+                        <Button
+                          onClick={() => setIsUsernameDialogOpen(true)}
+                          type="button"
+                        >
                           Choose username
                         </Button>
-                      ) : notification.actionHref && notification.actionLabel ? (
+                      ) : notification.actionHref &&
+                        notification.actionLabel ? (
                         <Button asChild>
-                          <Link href={notification.actionHref}>{notification.actionLabel}</Link>
+                          <Link href={notification.actionHref}>
+                            {notification.actionLabel}
+                          </Link>
                         </Button>
                       ) : null}
                       <Button
                         onClick={() =>
                           void runAction(
-                            (token) => setNotificationReadState(token, notification.id, !isRead),
-                            "Unable to update this notification.",
+                            (token) =>
+                              setNotificationReadState(
+                                token,
+                                notification.id,
+                                !isRead
+                              ),
+                            "Unable to update this notification."
                           )
                         }
                         type="button"
@@ -322,8 +376,9 @@ export function NotificationsPage() {
                         aria-label={`Dismiss ${notification.title}`}
                         onClick={() =>
                           void runAction(
-                            (token) => dismissNotification(token, notification.id),
-                            "Unable to dismiss this notification.",
+                            (token) =>
+                              dismissNotification(token, notification.id),
+                            "Unable to dismiss this notification."
                           )
                         }
                         type="button"

@@ -1,5 +1,11 @@
-import { listIndexedArtworks, type IndexedArtwork } from "@/lib/artists/artwork-index";
-import { buildArtworkKey, type ArtworkReference } from "@/lib/collectors/artwork-reference";
+import {
+  listIndexedArtworks,
+  type IndexedArtwork,
+} from "@/lib/artists/artwork-index";
+import {
+  buildArtworkKey,
+  type ArtworkReference,
+} from "@/lib/collectors/artwork-reference";
 import {
   createDocumentId,
   deleteRootDocument,
@@ -43,7 +49,9 @@ function normalizeName(name: string) {
   }
 
   if (trimmed.length > MAX_COLLECTION_NAME_LENGTH) {
-    throw new Error(`Collection names must be ${MAX_COLLECTION_NAME_LENGTH} characters or fewer.`);
+    throw new Error(
+      `Collection names must be ${MAX_COLLECTION_NAME_LENGTH} characters or fewer.`
+    );
   }
 
   return trimmed;
@@ -53,14 +61,19 @@ function buildItemId(collectionId: string, artworkKey: string) {
   return `${collectionId}__${artworkKey}`;
 }
 
-async function readCollectionArtworks(uid: string, collectionId: string, index: Map<string, IndexedArtwork>) {
+async function readCollectionArtworks(
+  uid: string,
+  collectionId: string,
+  index: Map<string, IndexedArtwork>
+) {
   const documents = await listUserDocuments(uid, COLLECTION_ITEMS_COLLECTION, [
     { field: "collectionId", value: collectionId },
   ]);
 
   return documents
     .map((document) => {
-      const key = typeof document.artworkKey === "string" ? document.artworkKey : "";
+      const key =
+        typeof document.artworkKey === "string" ? document.artworkKey : "";
 
       return {
         addedAt: typeof document.addedAt === "string" ? document.addedAt : "",
@@ -74,46 +87,72 @@ async function readCollectionArtworks(uid: string, collectionId: string, index: 
 function toCollection(
   document: Record<string, unknown> & { id: string },
   ownerUid: string,
-  artworks: CollectionArtwork[],
+  artworks: CollectionArtwork[]
 ): ArtworkCollection {
   return {
     artworks,
     createdAt: typeof document.createdAt === "string" ? document.createdAt : "",
-    description: typeof document.description === "string" ? document.description : null,
+    description:
+      typeof document.description === "string" ? document.description : null,
     id: document.id,
     isPublic: document.isPublic === true,
-    name: typeof document.name === "string" ? document.name : "Untitled collection",
+    name:
+      typeof document.name === "string" ? document.name : "Untitled collection",
     ownerUid,
     shareId: typeof document.shareId === "string" ? document.shareId : null,
     updatedAt: typeof document.updatedAt === "string" ? document.updatedAt : "",
   };
 }
 
-export async function listCollections(uid: string): Promise<ArtworkCollection[]> {
+export async function listCollections(
+  uid: string
+): Promise<ArtworkCollection[]> {
   const documents = await listUserDocuments(uid, COLLECTIONS_COLLECTION);
-  const index = new Map((await listIndexedArtworks()).map((artwork) => [artwork.key, artwork]));
+  const index = new Map(
+    (await listIndexedArtworks()).map((artwork) => [artwork.key, artwork])
+  );
 
   const collections = await Promise.all(
     documents.map(async (document) =>
-      toCollection(document, uid, await readCollectionArtworks(uid, document.id, index)),
-    ),
+      toCollection(
+        document,
+        uid,
+        await readCollectionArtworks(uid, document.id, index)
+      )
+    )
   );
 
-  return collections.sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+  return collections.sort((first, second) =>
+    second.createdAt.localeCompare(first.createdAt)
+  );
 }
 
 export async function getCollection(uid: string, collectionId: string) {
-  const document = await getUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
+  const document = await getUserDocument(
+    uid,
+    COLLECTIONS_COLLECTION,
+    collectionId
+  );
 
   if (!document) {
     return null;
   }
 
-  const index = new Map((await listIndexedArtworks()).map((artwork) => [artwork.key, artwork]));
-  return toCollection(document, uid, await readCollectionArtworks(uid, collectionId, index));
+  const index = new Map(
+    (await listIndexedArtworks()).map((artwork) => [artwork.key, artwork])
+  );
+  return toCollection(
+    document,
+    uid,
+    await readCollectionArtworks(uid, collectionId, index)
+  );
 }
 
-export async function createCollection(uid: string, name: string, description?: string | null) {
+export async function createCollection(
+  uid: string,
+  name: string,
+  description?: string | null
+) {
   const now = new Date().toISOString();
   const id = createDocumentId("col");
 
@@ -129,8 +168,16 @@ export async function createCollection(uid: string, name: string, description?: 
   return getCollection(uid, id);
 }
 
-export async function renameCollection(uid: string, collectionId: string, name: string) {
-  const existing = await getUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
+export async function renameCollection(
+  uid: string,
+  collectionId: string,
+  name: string
+) {
+  const existing = await getUserDocument(
+    uid,
+    COLLECTIONS_COLLECTION,
+    collectionId
+  );
 
   if (!existing) {
     throw new Error("That collection could not be found.");
@@ -145,7 +192,11 @@ export async function renameCollection(uid: string, collectionId: string, name: 
 }
 
 export async function deleteCollection(uid: string, collectionId: string) {
-  const existing = await getUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
+  const existing = await getUserDocument(
+    uid,
+    COLLECTIONS_COLLECTION,
+    collectionId
+  );
 
   if (!existing) {
     return;
@@ -160,7 +211,9 @@ export async function deleteCollection(uid: string, collectionId: string) {
   ]);
 
   await Promise.all(
-    items.map((item) => deleteUserDocument(uid, COLLECTION_ITEMS_COLLECTION, item.id)),
+    items.map((item) =>
+      deleteUserDocument(uid, COLLECTION_ITEMS_COLLECTION, item.id)
+    )
   );
   await deleteUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
 }
@@ -172,8 +225,16 @@ export async function deleteCollection(uid: string, collectionId: string) {
  * collector has already sent to someone keeps working if they unpublish and
  * publish again.
  */
-export async function setCollectionVisibility(uid: string, collectionId: string, isPublic: boolean) {
-  const existing = await getUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
+export async function setCollectionVisibility(
+  uid: string,
+  collectionId: string,
+  isPublic: boolean
+) {
+  const existing = await getUserDocument(
+    uid,
+    COLLECTIONS_COLLECTION,
+    collectionId
+  );
 
   if (!existing) {
     throw new Error("That collection could not be found.");
@@ -205,9 +266,13 @@ export async function setCollectionVisibility(uid: string, collectionId: string,
 export async function addArtworkToCollection(
   uid: string,
   collectionId: string,
-  reference: ArtworkReference,
+  reference: ArtworkReference
 ) {
-  const existing = await getUserDocument(uid, COLLECTIONS_COLLECTION, collectionId);
+  const existing = await getUserDocument(
+    uid,
+    COLLECTIONS_COLLECTION,
+    collectionId
+  );
 
   if (!existing) {
     throw new Error("That collection could not be found.");
@@ -215,11 +280,16 @@ export async function addArtworkToCollection(
 
   const artworkKey = buildArtworkKey(reference);
 
-  await saveUserDocument(uid, COLLECTION_ITEMS_COLLECTION, buildItemId(collectionId, artworkKey), {
-    addedAt: new Date().toISOString(),
-    artworkKey,
-    collectionId,
-  });
+  await saveUserDocument(
+    uid,
+    COLLECTION_ITEMS_COLLECTION,
+    buildItemId(collectionId, artworkKey),
+    {
+      addedAt: new Date().toISOString(),
+      artworkKey,
+      collectionId,
+    }
+  );
 
   return getCollection(uid, collectionId);
 }
@@ -227,24 +297,37 @@ export async function addArtworkToCollection(
 export async function removeArtworkFromCollection(
   uid: string,
   collectionId: string,
-  artworkKey: string,
+  artworkKey: string
 ) {
-  await deleteUserDocument(uid, COLLECTION_ITEMS_COLLECTION, buildItemId(collectionId, artworkKey));
+  await deleteUserDocument(
+    uid,
+    COLLECTION_ITEMS_COLLECTION,
+    buildItemId(collectionId, artworkKey)
+  );
   return getCollection(uid, collectionId);
 }
 
 export async function getSharedCollection(shareId: string) {
   const pointer = await getRootDocument(SHARED_COLLECTIONS_COLLECTION, shareId);
 
-  if (!pointer || typeof pointer.ownerUid !== "string" || typeof pointer.collectionId !== "string") {
+  if (
+    !pointer ||
+    typeof pointer.ownerUid !== "string" ||
+    typeof pointer.collectionId !== "string"
+  ) {
     return null;
   }
 
-  const collection = await getCollection(pointer.ownerUid, pointer.collectionId);
+  const collection = await getCollection(
+    pointer.ownerUid,
+    pointer.collectionId
+  );
   return collection?.isPublic ? collection : null;
 }
 
 export async function deleteAllCollections(uid: string) {
   const collections = await listUserDocuments(uid, COLLECTIONS_COLLECTION);
-  await Promise.all(collections.map((collection) => deleteCollection(uid, collection.id)));
+  await Promise.all(
+    collections.map((collection) => deleteCollection(uid, collection.id))
+  );
 }

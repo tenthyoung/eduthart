@@ -61,7 +61,11 @@ function normalizeOptionalUrl(value?: string | null) {
   return trimmed ? trimmed : null;
 }
 
-function normalizeFreeText(value: string | null | undefined, maxLength: number, label: string) {
+function normalizeFreeText(
+  value: string | null | undefined,
+  maxLength: number,
+  label: string
+) {
   if (value === null) {
     return null;
   }
@@ -79,7 +83,11 @@ function normalizeFreeText(value: string | null | undefined, maxLength: number, 
   return trimmed || null;
 }
 
-async function isUsernameTaken(username: string, currentUid: string, isE2E: boolean) {
+async function isUsernameTaken(
+  username: string,
+  currentUid: string,
+  isE2E: boolean
+) {
   const existing = isE2E
     ? await findE2EAccountProfileByUsername(username)
     : await findAccountProfileByUsername(username);
@@ -90,7 +98,7 @@ async function isUsernameTaken(username: string, currentUid: string, isE2E: bool
 async function resolveUsername(
   usernameInput: string | null | undefined,
   currentUid: string,
-  isE2E: boolean,
+  isE2E: boolean
 ) {
   const username = normalizeUsername(usernameInput);
 
@@ -103,7 +111,9 @@ async function resolveUsername(
   }
 
   if (!isValidUsername(username)) {
-    throw new Error("Usernames must be 3-24 characters and use letters, numbers, hyphens, or underscores.");
+    throw new Error(
+      "Usernames must be 3-24 characters and use letters, numbers, hyphens, or underscores."
+    );
   }
 
   if (await isUsernameTaken(username, currentUid, isE2E)) {
@@ -113,9 +123,13 @@ async function resolveUsername(
   return username;
 }
 
-function buildEmptyProfile(session: Awaited<ReturnType<typeof getAuthenticatedSession>>): AccountProfile {
+function buildEmptyProfile(
+  session: Awaited<ReturnType<typeof getAuthenticatedSession>>
+): AccountProfile {
   return {
-    authProviders: session.user.providerData.map((provider) => provider.providerId).filter(Boolean),
+    authProviders: session.user.providerData
+      .map((provider) => provider.providerId)
+      .filter(Boolean),
     bannerURL: null,
     bio: null,
     createdAt: null,
@@ -138,7 +152,10 @@ function buildEmptyProfile(session: Awaited<ReturnType<typeof getAuthenticatedSe
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as AuthProfileBody;
-    const session = await getAuthenticatedSession(request, body.idToken ?? null);
+    const session = await getAuthenticatedSession(
+      request,
+      body.idToken ?? null
+    );
     const isE2E = session.authType === "e2e";
     const existingProfile = await loadAccountProfile(session.uid);
     const firstName = normalizeString(body.firstName);
@@ -160,7 +177,7 @@ export async function POST(request: Request) {
       // every later sign-in sync.
       photoURL: existingProfile?.photoURLManagedByUser
         ? existingProfile.photoURL
-        : session.user.photoURL ?? null,
+        : (session.user.photoURL ?? null),
       authProviders: session.user.providerData
         .map((provider) => provider.providerId)
         .filter(Boolean),
@@ -215,8 +232,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ profile: nextProfile });
     }
 
-    await getFirebaseAdminDb().collection("users").doc(session.uid).set(payload, { merge: true });
-    return NextResponse.json({ profile: await loadAccountProfile(session.uid) });
+    await getFirebaseAdminDb()
+      .collection("users")
+      .doc(session.uid)
+      .set(payload, { merge: true });
+    return NextResponse.json({
+      profile: await loadAccountProfile(session.uid),
+    });
   } catch (error) {
     console.error(error);
     const fallbackMessage =
@@ -231,7 +253,7 @@ export async function POST(request: Request) {
           message: fallbackMessage,
         },
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -248,7 +270,9 @@ export async function GET(request: Request) {
     if (session.authType === "e2e") {
       return NextResponse.json({
         profile: await seedE2EAccountProfile({
-          authProviders: session.user.providerData.map((provider) => provider.providerId),
+          authProviders: session.user.providerData.map(
+            (provider) => provider.providerId
+          ),
           displayName: session.user.displayName,
           email: session.user.email,
           photoURL: session.user.photoURL,
@@ -260,7 +284,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ profile: buildEmptyProfile(session) });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unable to load your account profile.";
+      error instanceof Error
+        ? error.message
+        : "Unable to load your account profile.";
 
     return NextResponse.json(
       {
@@ -269,7 +295,7 @@ export async function GET(request: Request) {
           message,
         },
       },
-      { status: 401 },
+      { status: 401 }
     );
   }
 }
@@ -281,19 +307,32 @@ export async function PATCH(request: Request) {
     const isE2E = session.authType === "e2e";
     const email = normalizeString(body.email)?.toLowerCase();
     const existingProfile =
-      (isE2E ? await getE2EAccountProfile(session.uid) : await loadAccountProfile(session.uid)) ??
-      buildEmptyProfile(session);
+      (isE2E
+        ? await getE2EAccountProfile(session.uid)
+        : await loadAccountProfile(session.uid)) ?? buildEmptyProfile(session);
 
     const firstName =
-      body.firstName !== undefined ? normalizeString(body.firstName) ?? null : existingProfile.firstName;
+      body.firstName !== undefined
+        ? (normalizeString(body.firstName) ?? null)
+        : existingProfile.firstName;
     const lastName =
-      body.lastName !== undefined ? normalizeString(body.lastName) ?? null : existingProfile.lastName;
+      body.lastName !== undefined
+        ? (normalizeString(body.lastName) ?? null)
+        : existingProfile.lastName;
     const bannerURL =
-      body.bannerURL !== undefined ? normalizeOptionalUrl(body.bannerURL) ?? null : existingProfile.bannerURL;
+      body.bannerURL !== undefined
+        ? (normalizeOptionalUrl(body.bannerURL) ?? null)
+        : existingProfile.bannerURL;
     const photoURL =
-      body.photoURL !== undefined ? normalizeOptionalUrl(body.photoURL) ?? null : existingProfile.photoURL;
+      body.photoURL !== undefined
+        ? (normalizeOptionalUrl(body.photoURL) ?? null)
+        : existingProfile.photoURL;
     const bio = normalizeFreeText(body.bio, MAX_BIO_LENGTH, "biography");
-    const location = normalizeFreeText(body.location, MAX_LOCATION_LENGTH, "location");
+    const location = normalizeFreeText(
+      body.location,
+      MAX_LOCATION_LENGTH,
+      "location"
+    );
     const username =
       body.username !== undefined
         ? await resolveUsername(body.username, session.uid, isE2E)
@@ -315,16 +354,22 @@ export async function PATCH(request: Request) {
       ...(body.firstName !== undefined ? { firstName } : {}),
       ...(body.lastName !== undefined ? { lastName } : {}),
       ...(body.location !== undefined ? { location } : {}),
-      ...(body.photoURL !== undefined ? { photoURL, photoURLManagedByUser: true } : {}),
+      ...(body.photoURL !== undefined
+        ? { photoURL, photoURLManagedByUser: true }
+        : {}),
       ...(body.username !== undefined
         ? { username: username ?? null, usernameLower: username ?? null }
         : {}),
     };
 
-    return NextResponse.json({ profile: await saveAccountProfile(session.uid, payload) });
+    return NextResponse.json({
+      profile: await saveAccountProfile(session.uid, payload),
+    });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unable to update your account profile.";
+      error instanceof Error
+        ? error.message
+        : "Unable to update your account profile.";
 
     return NextResponse.json(
       {
@@ -333,7 +378,7 @@ export async function PATCH(request: Request) {
           message,
         },
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }

@@ -9,20 +9,24 @@
 export async function collectorRequest<T>(
   path: string,
   token: string,
-  init?: { body?: unknown; method?: string },
+  init?: { body?: unknown; method?: string }
 ): Promise<T> {
   const response = await fetch(path, {
     body: init?.body === undefined ? undefined : JSON.stringify(init.body),
-    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
     method: init?.method ?? "GET",
   });
 
   const payload = (await response.json().catch(() => null)) as
-    | (T & { error?: { message?: string } })
-    | null;
+    (T & { error?: { message?: string } }) | null;
 
   if (!response.ok || !payload) {
-    throw new Error(payload?.error?.message ?? "That request could not be completed.");
+    throw new Error(
+      payload?.error?.message ?? "That request could not be completed."
+    );
   }
 
   return payload;

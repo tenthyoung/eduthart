@@ -28,7 +28,9 @@ export function formatAddressLines(address: SavedAddress) {
     address.name,
     address.line1,
     address.line2,
-    [address.city, address.region, address.postalCode].filter(Boolean).join(", "),
+    [address.city, address.region, address.postalCode]
+      .filter(Boolean)
+      .join(", "),
     address.country,
   ].filter((line): line is string => Boolean(line));
 }

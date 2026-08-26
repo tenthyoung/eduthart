@@ -39,7 +39,9 @@ async function respond(uid: string) {
 
   return NextResponse.json({
     notifications,
-    unreadCount: notifications.filter((notification) => notification.readAt === null).length,
+    unreadCount: notifications.filter(
+      (notification) => notification.readAt === null
+    ).length,
   });
 }
 
@@ -48,10 +50,13 @@ function unauthorized(error: unknown) {
     {
       error: {
         code: "unauthenticated",
-        message: error instanceof Error ? error.message : "Unable to load your notifications.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to load your notifications.",
       },
     },
-    { status: 401 },
+    { status: 401 }
   );
 }
 
@@ -68,7 +73,11 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const session = await getAuthenticatedSession(request);
-    const body = (await request.json()) as { id?: string; markAllRead?: boolean; read?: boolean };
+    const body = (await request.json()) as {
+      id?: string;
+      markAllRead?: boolean;
+      read?: boolean;
+    };
 
     if (body.markAllRead) {
       await markAllNotificationsRead(session.uid);
@@ -77,8 +86,13 @@ export async function PATCH(request: Request) {
 
     if (!body.id) {
       return NextResponse.json(
-        { error: { code: "invalid-argument", message: "A notification id is required." } },
-        { status: 400 },
+        {
+          error: {
+            code: "invalid-argument",
+            message: "A notification id is required.",
+          },
+        },
+        { status: 400 }
       );
     }
 
@@ -92,7 +106,10 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getAuthenticatedSession(request);
-    const body = (await request.json().catch(() => ({}))) as { all?: boolean; id?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      all?: boolean;
+      id?: string;
+    };
 
     if (body.all) {
       await deleteAllNotifications(session.uid);
@@ -101,8 +118,13 @@ export async function DELETE(request: Request) {
 
     if (!body.id) {
       return NextResponse.json(
-        { error: { code: "invalid-argument", message: "A notification id is required." } },
-        { status: 400 },
+        {
+          error: {
+            code: "invalid-argument",
+            message: "A notification id is required.",
+          },
+        },
+        { status: 400 }
       );
     }
 

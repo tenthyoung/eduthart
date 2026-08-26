@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { getAuthenticatedSession, type AuthenticatedSession } from "@/lib/auth/server-session";
+import {
+  getAuthenticatedSession,
+  type AuthenticatedSession,
+} from "@/lib/auth/server-session";
 
-export function apiError(message: string, status: number, code = "invalid-argument") {
+export function apiError(
+  message: string,
+  status: number,
+  code = "invalid-argument"
+) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
@@ -15,7 +22,7 @@ export function apiError(message: string, status: number, code = "invalid-argume
  */
 export async function withSession(
   request: Request,
-  handler: (session: AuthenticatedSession) => Promise<Response>,
+  handler: (session: AuthenticatedSession) => Promise<Response>
 ): Promise<Response> {
   let session: AuthenticatedSession;
 
@@ -25,7 +32,7 @@ export async function withSession(
     return apiError(
       error instanceof Error ? error.message : "You need to be signed in.",
       401,
-      "unauthenticated",
+      "unauthenticated"
     );
   }
 
@@ -34,8 +41,10 @@ export async function withSession(
   } catch (error) {
     console.error(error);
     return apiError(
-      error instanceof Error ? error.message : "That request could not be completed.",
-      400,
+      error instanceof Error
+        ? error.message
+        : "That request could not be completed.",
+      400
     );
   }
 }

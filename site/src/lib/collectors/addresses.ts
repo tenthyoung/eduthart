@@ -1,4 +1,7 @@
-import type { AddressKind, SavedAddress } from "@/lib/collectors/address-format";
+import type {
+  AddressKind,
+  SavedAddress,
+} from "@/lib/collectors/address-format";
 import {
   createDocumentId,
   deleteUserDocument,
@@ -9,7 +12,10 @@ import {
 
 const ADDRESSES_COLLECTION = "addresses";
 
-export type { AddressKind, SavedAddress } from "@/lib/collectors/address-format";
+export type {
+  AddressKind,
+  SavedAddress,
+} from "@/lib/collectors/address-format";
 
 export type AddressInput = {
   city?: string;
@@ -37,7 +43,9 @@ function readString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function toSavedAddress(document: Record<string, unknown> & { id: string }): SavedAddress {
+function toSavedAddress(
+  document: Record<string, unknown> & { id: string }
+): SavedAddress {
   return {
     city: readString(document.city),
     country: readString(document.country),
@@ -57,20 +65,23 @@ function toSavedAddress(document: Record<string, unknown> & { id: string }): Sav
 }
 
 function validate(input: AddressInput) {
-  const missing = REQUIRED_FIELDS.filter(({ field }) => !readString(input[field])).map(
-    ({ label }) => label,
-  );
+  const missing = REQUIRED_FIELDS.filter(
+    ({ field }) => !readString(input[field])
+  ).map(({ label }) => label);
 
   if (missing.length > 0) {
     throw new Error(`Please add a ${missing.join(", a ")} for this address.`);
   }
 }
 
-export async function listAddresses(uid: string, kind?: AddressKind): Promise<SavedAddress[]> {
+export async function listAddresses(
+  uid: string,
+  kind?: AddressKind
+): Promise<SavedAddress[]> {
   const documents = await listUserDocuments(
     uid,
     ADDRESSES_COLLECTION,
-    kind ? [{ field: "kind", value: kind }] : [],
+    kind ? [{ field: "kind", value: kind }] : []
   );
 
   return documents
@@ -78,7 +89,7 @@ export async function listAddresses(uid: string, kind?: AddressKind): Promise<Sa
     .sort((first, second) =>
       first.isDefault === second.isDefault
         ? second.createdAt.localeCompare(first.createdAt)
-        : Number(second.isDefault) - Number(first.isDefault),
+        : Number(second.isDefault) - Number(first.isDefault)
     );
 }
 
@@ -96,17 +107,29 @@ export async function getAddress(uid: string, id: string) {
  * Only one address per kind can be the default, so promoting one demotes the
  * rest of that kind. Billing and shipping defaults are independent.
  */
-async function clearOtherDefaults(uid: string, kind: AddressKind, keepId: string) {
+async function clearOtherDefaults(
+  uid: string,
+  kind: AddressKind,
+  keepId: string
+) {
   const addresses = await listAddresses(uid, kind);
 
   await Promise.all(
     addresses
       .filter((address) => address.isDefault && address.id !== keepId)
-      .map((address) => saveUserDocument(uid, ADDRESSES_COLLECTION, address.id, { isDefault: false })),
+      .map((address) =>
+        saveUserDocument(uid, ADDRESSES_COLLECTION, address.id, {
+          isDefault: false,
+        })
+      )
   );
 }
 
-export async function saveAddress(uid: string, input: AddressInput, id?: string) {
+export async function saveAddress(
+  uid: string,
+  input: AddressInput,
+  id?: string
+) {
   validate(input);
 
   const kind: AddressKind = input.kind === "billing" ? "billing" : "shipping";
@@ -147,7 +170,10 @@ export async function setDefaultAddress(uid: string, id: string) {
     throw new Error("That address could not be found.");
   }
 
-  await saveUserDocument(uid, ADDRESSES_COLLECTION, id, { isDefault: true, updatedAt: new Date().toISOString() });
+  await saveUserDocument(uid, ADDRESSES_COLLECTION, id, {
+    isDefault: true,
+    updatedAt: new Date().toISOString(),
+  });
   await clearOtherDefaults(uid, address.kind, id);
 
   return getAddress(uid, id);
@@ -167,7 +193,9 @@ export async function deleteAddress(uid: string, id: string) {
     const remaining = await listAddresses(uid, address.kind);
 
     if (remaining[0]) {
-      await saveUserDocument(uid, ADDRESSES_COLLECTION, remaining[0].id, { isDefault: true });
+      await saveUserDocument(uid, ADDRESSES_COLLECTION, remaining[0].id, {
+        isDefault: true,
+      });
     }
   }
 }

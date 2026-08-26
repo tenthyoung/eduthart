@@ -21,7 +21,7 @@ export function OrderStatusBadge({ status }: { status: OrderStatus }) {
     <span
       className={cn(
         "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
-        STATUS_STYLES[status],
+        STATUS_STYLES[status]
       )}
     >
       {status.replaceAll("_", " ")}
@@ -66,7 +66,9 @@ export function DownloadInvoiceButton({ order }: { order: Order }) {
       URL.revokeObjectURL(url);
     } catch (downloadError) {
       toast.error(
-        downloadError instanceof Error ? downloadError.message : "Unable to download that invoice.",
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Unable to download that invoice."
       );
     } finally {
       setDownloading(false);
@@ -74,7 +76,12 @@ export function DownloadInvoiceButton({ order }: { order: Order }) {
   };
 
   return (
-    <Button disabled={downloading} onClick={() => void download()} size="sm" variant="outline">
+    <Button
+      disabled={downloading}
+      onClick={() => void download()}
+      size="sm"
+      variant="outline"
+    >
       {downloading ? <Loader2 className="animate-spin" /> : <Download />}
       {downloading ? "Preparing..." : "Download invoice"}
     </Button>

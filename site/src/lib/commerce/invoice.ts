@@ -35,8 +35,12 @@ export function buildInvoiceFileName(order: Order) {
  */
 export function renderInvoiceHtml(order: Order) {
   const money = (amount: number) => formatMinorUnits(amount, order.currency);
-  const shippingLines = order.shippingAddress ? formatAddressLines(order.shippingAddress) : [];
-  const billingLines = order.billingAddress ? formatAddressLines(order.billingAddress) : shippingLines;
+  const shippingLines = order.shippingAddress
+    ? formatAddressLines(order.shippingAddress)
+    : [];
+  const billingLines = order.billingAddress
+    ? formatAddressLines(order.billingAddress)
+    : shippingLines;
 
   const rows = order.items
     .map(
@@ -46,7 +50,7 @@ export function renderInvoiceHtml(order: Order) {
           <span class="muted">Original artwork by ${escapeHtml(order.sellerName)}</span>
         </td>
         <td class="right">${money(item.unitAmountMinor)}</td>
-      </tr>`,
+      </tr>`
     )
     .join("");
 

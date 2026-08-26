@@ -34,7 +34,10 @@ export type AccountProfile = {
   username: string | null;
 };
 
-export function buildDisplayName(firstName?: string | null, lastName?: string | null) {
+export function buildDisplayName(
+  firstName?: string | null,
+  lastName?: string | null
+) {
   return `${firstName?.trim() ?? ""} ${lastName?.trim() ?? ""}`.trim();
 }
 
@@ -61,13 +64,16 @@ export function buildArtistPageHref(username: string) {
  * Client screens render this when the profile API is unreachable so the page
  * still shows the collector's own name instead of an error shell.
  */
-export function buildFallbackAccountProfile(user: {
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-  providerIds: string[];
-  uid: string;
-}, username: string | null = null): AccountProfile {
+export function buildFallbackAccountProfile(
+  user: {
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
+    providerIds: string[];
+    uid: string;
+  },
+  username: string | null = null
+): AccountProfile {
   return {
     authProviders: user.providerIds,
     bannerURL: null,
@@ -104,6 +110,8 @@ export function splitDisplayName(displayName?: string | null) {
   };
 }
 
-export function isProfileComplete(profile: Pick<AccountProfile, "firstName" | "lastName">) {
+export function isProfileComplete(
+  profile: Pick<AccountProfile, "firstName" | "lastName">
+) {
   return Boolean(profile.firstName?.trim() && profile.lastName?.trim());
 }

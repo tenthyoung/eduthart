@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { deleteE2EAccountProfile, isE2EAuthEnabled } from "@/lib/auth/e2e-store";
+import {
+  deleteE2EAccountProfile,
+  isE2EAuthEnabled,
+} from "@/lib/auth/e2e-store";
 import { getAuthenticatedSession } from "@/lib/auth/server-session";
 import { deleteAllCollections } from "@/lib/collectors/collections";
 import { listFavorites, removeFavorite } from "@/lib/collectors/favorites";
@@ -30,7 +33,7 @@ async function deleteCollectorData(uid: string) {
         artistUid: favorite.artistUid,
         artistUsername: favorite.artistUsername,
         itemId: favorite.itemId,
-      }),
+      })
     ),
     removeAllFollowsForUser(uid),
     deleteAllCollections(uid),
@@ -62,7 +65,11 @@ export async function POST(request: Request) {
     ]);
 
     const db = getFirebaseAdminDb();
-    await db.collection("users").doc(session.uid).delete().catch(() => undefined);
+    await db
+      .collection("users")
+      .doc(session.uid)
+      .delete()
+      .catch(() => undefined);
 
     await getFirebaseAdminAuth().deleteUser(session.uid);
 
@@ -76,7 +83,7 @@ export async function POST(request: Request) {
           message: "Unable to delete your account right now.",
         },
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

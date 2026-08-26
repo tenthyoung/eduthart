@@ -43,7 +43,9 @@ export function ArtworkActions({
 
   useEffect(() => {
     setComparing(isInComparison(artworkKey));
-    return subscribeToComparison((keys) => setComparing(keys.includes(artworkKey)));
+    return subscribeToComparison((keys) =>
+      setComparing(keys.includes(artworkKey))
+    );
   }, [artworkKey]);
 
   useEffect(() => {
@@ -59,11 +61,13 @@ export function ArtworkActions({
         const token = await user.getIdToken();
         const payload = await collectorRequest<{ favorites: FavoriteRecord[] }>(
           "/api/collectors/favorites",
-          token,
+          token
         );
 
         if (!cancelled) {
-          setSaved(payload.favorites.some((favorite) => favorite.key === artworkKey));
+          setSaved(
+            payload.favorites.some((favorite) => favorite.key === artworkKey)
+          );
         }
 
         await collectorRequest("/api/collectors/recently-viewed", token, {
@@ -91,14 +95,26 @@ export function ArtworkActions({
     setBusy(true);
 
     try {
-      await collectorRequest("/api/collectors/favorites", await user.getIdToken(), {
-        body: { itemId, username },
-        method: saved ? "DELETE" : "POST",
-      });
+      await collectorRequest(
+        "/api/collectors/favorites",
+        await user.getIdToken(),
+        {
+          body: { itemId, username },
+          method: saved ? "DELETE" : "POST",
+        }
+      );
       setSaved(!saved);
-      toast.success(saved ? `Removed "${title}" from your favorites.` : `Saved "${title}" to your favorites.`);
+      toast.success(
+        saved
+          ? `Removed "${title}" from your favorites.`
+          : `Saved "${title}" to your favorites.`
+      );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update your favorites.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to update your favorites."
+      );
     } finally {
       setBusy(false);
     }
@@ -123,7 +139,7 @@ export function ArtworkActions({
           toast.success(
             isInComparison(artworkKey)
               ? `"${title}" added to your comparison.`
-              : `"${title}" removed from your comparison.`,
+              : `"${title}" removed from your comparison.`
           );
         }}
         type="button"

@@ -1,5 +1,12 @@
-import { getIndexedArtwork, listIndexedArtworks, type IndexedArtwork } from "@/lib/artists/artwork-index";
-import { buildArtworkKey, type ArtworkReference } from "@/lib/collectors/artwork-reference";
+import {
+  getIndexedArtwork,
+  listIndexedArtworks,
+  type IndexedArtwork,
+} from "@/lib/artists/artwork-index";
+import {
+  buildArtworkKey,
+  type ArtworkReference,
+} from "@/lib/collectors/artwork-reference";
 import {
   deleteRootDocument,
   deleteUserDocument,
@@ -41,7 +48,8 @@ async function readFavorite(uid: string, key: string) {
 async function adjustSaveCount(key: string, delta: number) {
   if (isE2EAuthEnabled()) {
     const existing = await getRootDocument(FAVORITE_STATS_COLLECTION, key);
-    const current = typeof existing?.saveCount === "number" ? existing.saveCount : 0;
+    const current =
+      typeof existing?.saveCount === "number" ? existing.saveCount : 0;
     await saveRootDocument(FAVORITE_STATS_COLLECTION, key, {
       saveCount: Math.max(0, current + delta),
     });
@@ -62,12 +70,18 @@ export async function getArtworkSaveCount(key: string) {
 
 export async function listFavorites(uid: string): Promise<FavoriteRecord[]> {
   const documents = await listUserDocuments(uid, FAVORITES_COLLECTION);
-  const index = new Map((await listIndexedArtworks()).map((artwork) => [artwork.key, artwork]));
+  const index = new Map(
+    (await listIndexedArtworks()).map((artwork) => [artwork.key, artwork])
+  );
 
   return documents
     .map((document) => ({
-      artistUid: typeof document.artistUid === "string" ? document.artistUid : "",
-      artistUsername: typeof document.artistUsername === "string" ? document.artistUsername : "",
+      artistUid:
+        typeof document.artistUid === "string" ? document.artistUid : "",
+      artistUsername:
+        typeof document.artistUsername === "string"
+          ? document.artistUsername
+          : "",
       artwork: index.get(document.id) ?? null,
       itemId: typeof document.itemId === "string" ? document.itemId : "",
       key: document.id,
@@ -124,7 +138,9 @@ export async function listCollectorsWhoSaved(key: string) {
   ]);
 
   return documents
-    .map((document) => (typeof document.collectorUid === "string" ? document.collectorUid : null))
+    .map((document) =>
+      typeof document.collectorUid === "string" ? document.collectorUid : null
+    )
     .filter((collectorUid): collectorUid is string => collectorUid !== null);
 }
 

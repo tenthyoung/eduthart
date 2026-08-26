@@ -1,5 +1,11 @@
-import { listIndexedArtworks, type IndexedArtwork } from "@/lib/artists/artwork-index";
-import { buildArtworkKey, type ArtworkReference } from "@/lib/collectors/artwork-reference";
+import {
+  listIndexedArtworks,
+  type IndexedArtwork,
+} from "@/lib/artists/artwork-index";
+import {
+  buildArtworkKey,
+  type ArtworkReference,
+} from "@/lib/collectors/artwork-reference";
 import {
   deleteUserDocument,
   listUserDocuments,
@@ -17,9 +23,13 @@ export type RecentlyViewedArtwork = {
   viewedAt: string;
 };
 
-export async function listRecentlyViewed(uid: string): Promise<RecentlyViewedArtwork[]> {
+export async function listRecentlyViewed(
+  uid: string
+): Promise<RecentlyViewedArtwork[]> {
   const documents = await listUserDocuments(uid, RECENTLY_VIEWED_COLLECTION);
-  const index = new Map((await listIndexedArtworks()).map((artwork) => [artwork.key, artwork]));
+  const index = new Map(
+    (await listIndexedArtworks()).map((artwork) => [artwork.key, artwork])
+  );
 
   return documents
     .map((document) => ({
@@ -30,7 +40,10 @@ export async function listRecentlyViewed(uid: string): Promise<RecentlyViewedArt
     .sort((first, second) => second.viewedAt.localeCompare(first.viewedAt));
 }
 
-export async function recordArtworkView(uid: string, reference: ArtworkReference) {
+export async function recordArtworkView(
+  uid: string,
+  reference: ArtworkReference
+) {
   const key = buildArtworkKey(reference);
 
   await saveUserDocument(uid, RECENTLY_VIEWED_COLLECTION, key, {
@@ -45,7 +58,9 @@ export async function recordArtworkView(uid: string, reference: ArtworkReference
   await Promise.all(
     history
       .slice(MAX_RECENTLY_VIEWED)
-      .map((entry) => deleteUserDocument(uid, RECENTLY_VIEWED_COLLECTION, entry.key)),
+      .map((entry) =>
+        deleteUserDocument(uid, RECENTLY_VIEWED_COLLECTION, entry.key)
+      )
   );
 
   return history.slice(0, MAX_RECENTLY_VIEWED);
@@ -54,6 +69,8 @@ export async function recordArtworkView(uid: string, reference: ArtworkReference
 export async function clearRecentlyViewed(uid: string) {
   const history = await listUserDocuments(uid, RECENTLY_VIEWED_COLLECTION);
   await Promise.all(
-    history.map((entry) => deleteUserDocument(uid, RECENTLY_VIEWED_COLLECTION, entry.id)),
+    history.map((entry) =>
+      deleteUserDocument(uid, RECENTLY_VIEWED_COLLECTION, entry.id)
+    )
   );
 }

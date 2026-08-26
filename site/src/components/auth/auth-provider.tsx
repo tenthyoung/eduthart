@@ -31,9 +31,7 @@ import {
 } from "react";
 
 import { buildDisplayName, splitDisplayName } from "@/lib/auth/account-profile";
-import {
-  getFirebaseAuth,
-} from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -52,7 +50,10 @@ export type AuthUser = {
 };
 
 type AuthContextValue = {
-  changePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    nextPassword: string
+  ) => Promise<void>;
   requestEmailChange: (nextEmail: string) => Promise<{
     email: string;
     requiresVerification: boolean;
@@ -62,7 +63,7 @@ type AuthContextValue = {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithFederatedProvider: (
     provider: FederatedProvider,
-    mode: FederatedAuthMode,
+    mode: FederatedAuthMode
   ) => Promise<{ isNewUser: boolean }>;
   signOut: () => Promise<void>;
   sendResetLink: (email: string) => Promise<void>;
@@ -130,10 +131,14 @@ function readE2EUser(): AuthUser | null {
       displayName: parsed.displayName ?? null,
       email: parsed.email ?? null,
       emailVerified:
-        parsed.emailVerified ?? parsed.providerIds?.includes("google.com") ?? false,
+        parsed.emailVerified ??
+        parsed.providerIds?.includes("google.com") ??
+        false,
       getIdToken: async () => `e2e:${parsed.uid}`,
       photoURL: parsed.photoURL ?? null,
-      providerIds: parsed.providerIds?.length ? parsed.providerIds : ["password"],
+      providerIds: parsed.providerIds?.length
+        ? parsed.providerIds
+        : ["password"],
       uid: parsed.uid,
     };
   } catch {
@@ -147,7 +152,7 @@ function readE2EUser(): AuthUser | null {
  */
 async function reportSecurityEvent(
   body: { nextEmail?: string; type: "email_changed" | "password_changed" },
-  token?: string,
+  token?: string
 ) {
   try {
     await fetch("/api/auth/security-event", {
@@ -200,7 +205,10 @@ function formatAuthError(error: unknown, fallbackMessage: string) {
     return "Choose a stronger password with at least 8 characters.";
   }
 
-  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+  if (
+    code === "auth/popup-closed-by-user" ||
+    code === "auth/cancelled-popup-request"
+  ) {
     return "The sign-in window closed before it finished. Please try again.";
   }
 
@@ -222,7 +230,7 @@ async function persistUserRecord(
     firstName?: string;
     lastName?: string;
     method?: "apple" | "email_password" | "google";
-  },
+  }
 ) {
   const idToken = await user.getIdToken(true);
   const response = await fetch("/api/auth/profile", {
@@ -247,11 +255,11 @@ async function persistUserRecord(
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { error?: { message?: string } }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
     throw new Error(
-      payload?.error?.message ?? "Unable to sync your account profile.",
+      payload?.error?.message ?? "Unable to sync your account profile."
     );
   }
 }
@@ -302,16 +310,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signInWithEmail = useCallback(async (email: string, password: string) => {
-    const auth = await getFirebaseAuth();
-    const credential = await signInWithEmailAndPassword(
-      auth,
-      email.trim(),
-      password,
-    );
-    setUser(mapFirebaseUser(credential.user));
-    setStatus("authenticated");
-  }, []);
+  const signInWithEmail = useCallback(
+    async (email: string, password: string) => {
+      const auth = await getFirebaseAuth();
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      setUser(mapFirebaseUser(credential.user));
+      setStatus("authenticated");
+    },
+    []
+  );
 
   const signUpWithEmail = useCallback(
     async ({
@@ -329,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const credential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
-        password,
+        password
       );
 
       const displayName = buildDisplayName(firstName, lastName);
@@ -351,7 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(mapFirebaseUser(credential.user));
       setStatus("authenticated");
     },
-    [],
+    []
   );
 
   const signInWithFederatedProvider = useCallback(
@@ -378,7 +389,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         credential = await signInWithPopup(auth, provider);
       } catch (error) {
-        throw new Error(formatAuthError(error, `Unable to continue with ${providerLabel}.`));
+        throw new Error(
+          formatAuthError(error, `Unable to continue with ${providerLabel}.`)
+        );
       }
 
       const additionalInfo = getAdditionalUserInfo(credential);
@@ -387,7 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mode === "login" && isNewUser) {
         await firebaseSignOut(auth);
         throw new Error(
-          `Finish first-time ${providerLabel} sign-up on the sign up page so we can capture your legal consent.`,
+          `Finish first-time ${providerLabel} sign-up on the sign up page so we can capture your legal consent.`
         );
       }
 
@@ -415,7 +428,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { isNewUser };
     },
-    [],
+    []
   );
 
   const sendResetLink = useCallback(async (email: string) => {
@@ -460,7 +473,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextUser = readE2EUser();
 
       if (!nextUser) {
-        throw new Error("You need to be signed in to change your email address.");
+        throw new Error(
+          "You need to be signed in to change your email address."
+        );
       }
 
       const response = await fetch("/api/auth/profile", {
@@ -475,11 +490,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         throw new Error(
-          payload?.error?.message ?? "Unable to change your email address.",
+          payload?.error?.message ?? "Unable to change your email address."
         );
       }
 
@@ -511,12 +526,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await verifyBeforeUpdateEmail(auth.currentUser, normalizedEmail);
     } catch (error) {
-      throw new Error(formatAuthError(error, "Unable to start your email change."));
+      throw new Error(
+        formatAuthError(error, "Unable to start your email change.")
+      );
     }
 
     await reportSecurityEvent(
       { nextEmail: normalizedEmail, type: "email_changed" },
-      await auth.currentUser.getIdToken(),
+      await auth.currentUser.getIdToken()
     );
 
     return {
@@ -528,7 +545,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changePassword = useCallback(
     async (currentPassword: string, nextPassword: string) => {
       if (nextPassword.length < MIN_PASSWORD_LENGTH) {
-        throw new Error(`Choose a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
+        throw new Error(
+          `Choose a password with at least ${MIN_PASSWORD_LENGTH} characters.`
+        );
       }
 
       if (E2E_AUTH_ENABLED) {
@@ -538,7 +557,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("You need to be signed in to change your password.");
         }
 
-        await reportSecurityEvent({ type: "password_changed" }, `e2e:${nextUser.uid}`);
+        await reportSecurityEvent(
+          { type: "password_changed" },
+          `e2e:${nextUser.uid}`
+        );
         return;
       }
 
@@ -546,7 +568,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = auth.currentUser;
 
       if (!currentUser?.email) {
-        throw new Error("You need to be signed in with an email and password to change it.");
+        throw new Error(
+          "You need to be signed in with an email and password to change it."
+        );
       }
 
       try {
@@ -554,17 +578,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // password" message instead of Firebase's requires-recent-login error.
         await reauthenticateWithCredential(
           currentUser,
-          EmailAuthProvider.credential(currentUser.email, currentPassword),
+          EmailAuthProvider.credential(currentUser.email, currentPassword)
         );
         await updatePassword(currentUser, nextPassword);
       } catch (error) {
-        throw new Error(formatAuthError(error, "Unable to change your password."));
+        throw new Error(
+          formatAuthError(error, "Unable to change your password.")
+        );
       }
 
-      await reportSecurityEvent({ type: "password_changed" }, await currentUser.getIdToken(true));
+      await reportSecurityEvent(
+        { type: "password_changed" },
+        await currentUser.getIdToken(true)
+      );
       setUser(mapFirebaseUser(currentUser));
     },
-    [],
+    []
   );
 
   const refreshUser = useCallback(async () => {
@@ -618,7 +647,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
     }),
-    [changePassword, requestEmailChange, refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithFederatedProvider, signOut, signUpWithEmail, status, user],
+    [
+      changePassword,
+      requestEmailChange,
+      refreshUser,
+      sendResetLink,
+      sendVerificationEmail,
+      signInWithEmail,
+      signInWithFederatedProvider,
+      signOut,
+      signUpWithEmail,
+      status,
+      user,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

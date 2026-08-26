@@ -120,19 +120,25 @@ export function ProfileCompletionPage() {
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { error?: { message?: string }; profile?: AccountProfile }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: { message?: string };
+        profile?: AccountProfile;
+      } | null;
 
       if (!response.ok || !payload?.profile) {
-        throw new Error(payload?.error?.message ?? "Unable to save your profile.");
+        throw new Error(
+          payload?.error?.message ?? "Unable to save your profile."
+        );
       }
 
       notifyUsernameUpdated(payload.profile.username ?? null);
       toast.success("Your profile is ready.");
       router.replace("/");
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : "Unable to save your profile.";
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Unable to save your profile.";
       setError(message);
       toast.error(message);
     } finally {
@@ -167,11 +173,13 @@ export function ProfileCompletionPage() {
             <Sparkles className="size-3.5" />
             Welcome
           </div>
-          <h1 className="text-4xl text-foreground sm:text-5xl">Complete your profile</h1>
+          <h1 className="text-4xl text-foreground sm:text-5xl">
+            Complete your profile
+          </h1>
           <p className="text-base text-muted-foreground">
-            Your sign-in provider gave us what it could. Fill in the rest so collectors and
-            artists know who they are dealing with. You can change any of this later in account
-            settings.
+            Your sign-in provider gave us what it could. Fill in the rest so
+            collectors and artists know who they are dealing with. You can
+            change any of this later in account settings.
           </p>
         </div>
 
@@ -253,7 +261,12 @@ export function ProfileCompletionPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button className="flex-1" disabled={saving} size="lg" type="submit">
+            <Button
+              className="flex-1"
+              disabled={saving}
+              size="lg"
+              type="submit"
+            >
               {saving ? (
                 <>
                   <Loader2 className="animate-spin" />

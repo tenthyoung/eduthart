@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { fulfillCheckoutSession, releaseCheckoutSession } from "@/lib/commerce/fulfillment";
-import { getStripeClient, getStripeWebhookSecret, isStripeConfigured } from "@/lib/commerce/stripe";
+import {
+  fulfillCheckoutSession,
+  releaseCheckoutSession,
+} from "@/lib/commerce/fulfillment";
+import {
+  getStripeClient,
+  getStripeWebhookSecret,
+  isStripeConfigured,
+} from "@/lib/commerce/stripe";
 
 /**
  * Stripe's own account of what happened.
@@ -13,21 +20,31 @@ import { getStripeClient, getStripeWebhookSecret, isStripeConfigured } from "@/l
  */
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
-    return NextResponse.json({ error: "Stripe is not configured." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Stripe is not configured." },
+      { status: 503 }
+    );
   }
 
   const webhookSecret = getStripeWebhookSecret();
   const signature = request.headers.get("stripe-signature");
 
   if (!webhookSecret || !signature) {
-    return NextResponse.json({ error: "Missing webhook signature." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing webhook signature." },
+      { status: 400 }
+    );
   }
 
   const payload = await request.text();
   let event: Stripe.Event;
 
   try {
-    event = getStripeClient().webhooks.constructEvent(payload, signature, webhookSecret);
+    event = getStripeClient().webhooks.constructEvent(
+      payload,
+      signature,
+      webhookSecret
+    );
   } catch (error) {
     console.error("Rejected a Stripe webhook with an invalid signature", error);
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });

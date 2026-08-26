@@ -27,7 +27,7 @@ function TabsList({
       data-slot="tabs-list"
       className={cn(
         "bg-muted/50 backdrop-blur-sm text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-xl p-1 shadow-sm border border-border/20",
-        className,
+        className
       )}
       {...props}
     />
@@ -50,7 +50,7 @@ function TabsTrigger({
         "before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-primary/10 before:to-primary/5 before:opacity-0 before:transition-opacity before:duration-200",
         "hover:before:opacity-100 data-[state=active]:before:opacity-0",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className,
+        className
       )}
       {...props}
     />

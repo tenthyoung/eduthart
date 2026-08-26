@@ -6,7 +6,10 @@ import Link from "next/link";
 import { AccountShell } from "@/components/account/account-shell";
 import { CollectorEmptyState } from "@/components/collectors/artwork-card";
 import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
-import { DownloadInvoiceButton, OrderStatusBadge } from "@/components/collectors/order-summary";
+import {
+  DownloadInvoiceButton,
+  OrderStatusBadge,
+} from "@/components/collectors/order-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
@@ -34,7 +37,10 @@ export function OrdersPage() {
 
   if (loading) {
     return (
-      <AccountShell description="Every artwork you have bought." title="Purchases">
+      <AccountShell
+        description="Every artwork you have bought."
+        title="Purchases"
+      >
         <CollectorLoadingPanel label="Loading your purchase history..." />
       </AccountShell>
     );
@@ -77,7 +83,8 @@ export function OrdersPage() {
                     <OrderStatusBadge status={order.status} />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {formatOrderDate(order.paidAt ?? order.createdAt)} · sold by {order.sellerName}
+                    {formatOrderDate(order.paidAt ?? order.createdAt)} · sold by{" "}
+                    {order.sellerName}
                   </p>
                 </div>
 
@@ -88,21 +95,33 @@ export function OrdersPage() {
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/account/orders/${order.id}`}>View order</Link>
                   </Button>
-                  {order.status === "paid" ? <DownloadInvoiceButton order={order} /> : null}
+                  {order.status === "paid" ? (
+                    <DownloadInvoiceButton order={order} />
+                  ) : null}
                 </div>
               </div>
 
               <ul className="mt-5 grid gap-3 sm:grid-cols-2">
                 {order.items.map((item) => (
-                  <li key={item.artworkKey} className="flex gap-3 rounded-2xl border border-border/70 p-3">
+                  <li
+                    key={item.artworkKey}
+                    className="flex gap-3 rounded-2xl border border-border/70 p-3"
+                  >
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img alt="" className="size-16 rounded-xl object-cover" src={item.imageUrl} />
+                      <img
+                        alt=""
+                        className="size-16 rounded-xl object-cover"
+                        src={item.imageUrl}
+                      />
                     ) : (
                       <div className="size-16 rounded-xl bg-muted" />
                     )}
                     <div className="min-w-0">
-                      <Link className="line-clamp-2 text-sm font-medium hover:underline" href={item.href}>
+                      <Link
+                        className="line-clamp-2 text-sm font-medium hover:underline"
+                        href={item.href}
+                      >
                         {item.title}
                       </Link>
                       <p className="mt-1 text-sm text-muted-foreground">

@@ -1,11 +1,30 @@
 export const DEFAULT_CURRENCY = "USD";
 
 /** Currencies EduthArt prices in that have no minor unit. */
-const ZERO_DECIMAL_CURRENCIES = new Set(["BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF"]);
+const ZERO_DECIMAL_CURRENCIES = new Set([
+  "BIF",
+  "CLP",
+  "DJF",
+  "GNF",
+  "JPY",
+  "KMF",
+  "KRW",
+  "MGA",
+  "PYG",
+  "RWF",
+  "UGX",
+  "VND",
+  "VUV",
+  "XAF",
+  "XOF",
+  "XPF",
+]);
 
 export function normalizeCurrency(currency?: string | null) {
   const normalized = currency?.trim().toUpperCase();
-  return normalized && /^[A-Z]{3}$/.test(normalized) ? normalized : DEFAULT_CURRENCY;
+  return normalized && /^[A-Z]{3}$/.test(normalized)
+    ? normalized
+    : DEFAULT_CURRENCY;
 }
 
 export function getCurrencyExponent(currency: string) {

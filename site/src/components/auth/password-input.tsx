@@ -8,11 +8,7 @@ import { cn } from "@/lib/utils";
 
 type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, "type">;
 
-export function PasswordInput({
-  className,
-  id,
-  ...props
-}: PasswordInputProps) {
+export function PasswordInput({ className, id, ...props }: PasswordInputProps) {
   const generatedId = useId();
   const [isVisible, setIsVisible] = useState(false);
   const inputId = id ?? generatedId;

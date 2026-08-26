@@ -160,7 +160,9 @@ function createId() {
   );
 }
 
-export function createEmptyListingItem(seed?: Partial<ListingItemDraft>): ListingItemDraft {
+export function createEmptyListingItem(
+  seed?: Partial<ListingItemDraft>
+): ListingItemDraft {
   return {
     artworkDetails: {
       aiDisclosure: "",

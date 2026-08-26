@@ -21,21 +21,30 @@ function formatViewedAt(value: string) {
 
   return Number.isNaN(date.getTime())
     ? ""
-    : new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    : new Intl.DateTimeFormat("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
 }
 
 export function RecentlyViewedPage() {
-  const { data, error, loading, mutate } = useCollectorResource<RecentlyViewedArtwork[]>({
+  const { data, error, loading, mutate } = useCollectorResource<
+    RecentlyViewedArtwork[]
+  >({
     initialData: [],
     path: "/api/collectors/recently-viewed",
-    select: (payload) => (payload.recentlyViewed as RecentlyViewedArtwork[]) ?? [],
+    select: (payload) =>
+      (payload.recentlyViewed as RecentlyViewedArtwork[]) ?? [],
     signInPath: "/account/recently-viewed",
   });
   const visible = data.filter((entry) => entry.artwork !== null);
 
   if (loading) {
     return (
-      <AccountShell description="Artwork you looked at recently." title="Recently viewed">
+      <AccountShell
+        description="Artwork you looked at recently."
+        title="Recently viewed"
+      >
         <CollectorLoadingPanel label="Loading your recent views..." />
       </AccountShell>
     );
@@ -46,7 +55,12 @@ export function RecentlyViewedPage() {
       action={
         visible.length > 0 ? (
           <Button
-            onClick={() => void mutate({ method: "DELETE" }, "Your viewing history has been cleared.")}
+            onClick={() =>
+              void mutate(
+                { method: "DELETE" },
+                "Your viewing history has been cleared."
+              )
+            }
             variant="outline"
           >
             <Trash2 />
@@ -82,17 +96,23 @@ export function RecentlyViewedPage() {
               <ArtworkCard
                 key={entry.key}
                 actions={
-                  <Button onClick={() => addToComparison(entry.key)} size="sm" variant="outline">
+                  <Button
+                    onClick={() => addToComparison(entry.key)}
+                    size="sm"
+                    variant="outline"
+                  >
                     <Scale />
                     Compare
                   </Button>
                 }
                 artwork={entry.artwork}
                 footnote={
-                  <p className="text-xs text-muted-foreground">Viewed {formatViewedAt(entry.viewedAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Viewed {formatViewedAt(entry.viewedAt)}
+                  </p>
                 }
               />
-            ) : null,
+            ) : null
           )}
         </ArtworkCardGrid>
       )}

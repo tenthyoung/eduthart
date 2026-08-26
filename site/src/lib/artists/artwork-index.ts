@@ -1,4 +1,7 @@
-import type { ListingItemDraft, ListingStudioDraft } from "@/lib/artists/listing-flow";
+import type {
+  ListingItemDraft,
+  ListingStudioDraft,
+} from "@/lib/artists/listing-flow";
 import { isPubliclyListed } from "@/lib/artists/listing-store";
 import { buildArtworkHref } from "@/lib/artists/public-artwork";
 import { buildArtworkKey } from "@/lib/collectors/artwork-reference";
@@ -42,7 +45,8 @@ export type IndexedArtwork = {
 };
 
 function toIndexedArtwork(document: StoredDocument): IndexedArtwork {
-  const read = (field: string) => (typeof document[field] === "string" ? (document[field] as string) : "");
+  const read = (field: string) =>
+    typeof document[field] === "string" ? (document[field] as string) : "";
 
   return {
     artistName: read("artistName"),
@@ -56,7 +60,8 @@ function toIndexedArtwork(document: StoredDocument): IndexedArtwork {
     itemId: read("itemId"),
     key: document.id,
     medium: read("medium"),
-    priceMinor: typeof document.priceMinor === "number" ? document.priceMinor : 0,
+    priceMinor:
+      typeof document.priceMinor === "number" ? document.priceMinor : 0,
     style: read("style"),
     subject: read("subject"),
     tags: Array.isArray(document.tags)
@@ -69,7 +74,7 @@ function toIndexedArtwork(document: StoredDocument): IndexedArtwork {
 
 function buildIndexEntry(
   item: ListingItemDraft,
-  artist: { artistName: string; artistUid: string; artistUsername: string },
+  artist: { artistName: string; artistUid: string; artistUsername: string }
 ) {
   const currency = normalizeCurrency(item.pricingInventory.currency);
 
@@ -103,7 +108,9 @@ export async function listIndexedArtworks(): Promise<IndexedArtwork[]> {
   return documents.map(toIndexedArtwork);
 }
 
-export async function listIndexedArtworksByArtist(artistUid: string): Promise<IndexedArtwork[]> {
+export async function listIndexedArtworksByArtist(
+  artistUid: string
+): Promise<IndexedArtwork[]> {
   const documents = await listRootDocuments(ARTWORK_INDEX_COLLECTION, [
     { field: "artistUid", value: artistUid },
   ]);
@@ -124,7 +131,7 @@ export type ArtworkIndexChange = {
  */
 export async function syncArtworkIndex(
   artist: { artistName: string; artistUid: string; artistUsername: string },
-  studio: ListingStudioDraft,
+  studio: ListingStudioDraft
 ): Promise<ArtworkIndexChange[]> {
   const existing = await listIndexedArtworksByArtist(artist.artistUid);
   const existingByKey = new Map(existing.map((entry) => [entry.key, entry]));
@@ -132,10 +139,15 @@ export async function syncArtworkIndex(
   const changes: ArtworkIndexChange[] = [];
 
   for (const item of published) {
-    const key = buildArtworkKey({ artistUid: artist.artistUid, itemId: item.id });
+    const key = buildArtworkKey({
+      artistUid: artist.artistUid,
+      itemId: item.id,
+    });
     const previous = existingByKey.get(key) ?? null;
     const data = buildIndexEntry(item, artist);
-    const saved = toIndexedArtwork(await saveRootDocument(ARTWORK_INDEX_COLLECTION, key, data));
+    const saved = toIndexedArtwork(
+      await saveRootDocument(ARTWORK_INDEX_COLLECTION, key, data)
+    );
 
     if (!previous) {
       changes.push({ entry: saved, previousPriceMinor: null, type: "listed" });
@@ -144,9 +156,17 @@ export async function syncArtworkIndex(
       previous.priceMinor > 0 &&
       saved.priceMinor < previous.priceMinor
     ) {
-      changes.push({ entry: saved, previousPriceMinor: previous.priceMinor, type: "price_drop" });
+      changes.push({
+        entry: saved,
+        previousPriceMinor: previous.priceMinor,
+        type: "price_drop",
+      });
     } else {
-      changes.push({ entry: saved, previousPriceMinor: previous.priceMinor, type: "updated" });
+      changes.push({
+        entry: saved,
+        previousPriceMinor: previous.priceMinor,
+        type: "updated",
+      });
     }
 
     existingByKey.delete(key);
@@ -154,13 +174,18 @@ export async function syncArtworkIndex(
 
   // Anything left was unpublished, deleted, or made private.
   await Promise.all(
-    Array.from(existingByKey.keys()).map((key) => deleteRootDocument(ARTWORK_INDEX_COLLECTION, key)),
+    Array.from(existingByKey.keys()).map((key) =>
+      deleteRootDocument(ARTWORK_INDEX_COLLECTION, key)
+    )
   );
 
   return changes;
 }
 
-export async function setIndexedArtworkAvailability(key: string, availability: string) {
+export async function setIndexedArtworkAvailability(
+  key: string,
+  availability: string
+) {
   const existing = await getRootDocument(ARTWORK_INDEX_COLLECTION, key);
 
   if (!existing) {
@@ -171,6 +196,6 @@ export async function setIndexedArtworkAvailability(key: string, availability: s
     await saveRootDocument(ARTWORK_INDEX_COLLECTION, key, {
       availability,
       updatedAt: new Date().toISOString(),
-    }),
+    })
   );
 }

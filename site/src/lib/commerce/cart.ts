@@ -1,4 +1,8 @@
-import { getPublicArtwork, toCartArtwork, type CartArtwork } from "@/lib/artists/public-artwork";
+import {
+  getPublicArtwork,
+  toCartArtwork,
+  type CartArtwork,
+} from "@/lib/artists/public-artwork";
 import { buildArtworkKey } from "@/lib/collectors/artwork-reference";
 import {
   deleteUserCollection,
@@ -20,7 +24,10 @@ async function readReferences(uid: string): Promise<CartReference[]> {
 
   return documents.map((document) => ({
     artistUid: typeof document.artistUid === "string" ? document.artistUid : "",
-    artistUsername: typeof document.artistUsername === "string" ? document.artistUsername : "",
+    artistUsername:
+      typeof document.artistUsername === "string"
+        ? document.artistUsername
+        : "",
     itemId: typeof document.itemId === "string" ? document.itemId : "",
   }));
 }
@@ -34,7 +41,9 @@ async function readReferences(uid: string): Promise<CartReference[]> {
 export async function readCart(uid: string): Promise<CartArtwork[]> {
   const references = await readReferences(uid);
   const records = await Promise.all(
-    references.map((reference) => getPublicArtwork(reference.artistUsername, reference.itemId)),
+    references.map((reference) =>
+      getPublicArtwork(reference.artistUsername, reference.itemId)
+    )
   );
 
   return records.filter((record) => record !== null).map(toCartArtwork);

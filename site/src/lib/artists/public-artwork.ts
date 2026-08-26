@@ -1,5 +1,8 @@
 import type { ListingItemDraft } from "@/lib/artists/listing-flow";
-import { isPubliclyListed, loadListingStudio } from "@/lib/artists/listing-store";
+import {
+  isPubliclyListed,
+  loadListingStudio,
+} from "@/lib/artists/listing-store";
 import {
   buildProfileDisplayName,
   findAccountProfileByUsername,
@@ -20,7 +23,7 @@ export function buildArtworkHref(username: string, itemId: string) {
 
 export async function getPublicArtwork(
   username: string,
-  itemId: string,
+  itemId: string
 ): Promise<PublicArtworkRecord | null> {
   const profile = await findAccountProfileByUsername(username);
 
@@ -29,7 +32,8 @@ export async function getPublicArtwork(
   }
 
   const studio = await loadListingStudio(profile.uid);
-  const item = studio?.items.find((candidate) => candidate.id === itemId) ?? null;
+  const item =
+    studio?.items.find((candidate) => candidate.id === itemId) ?? null;
 
   if (!item || !isPubliclyListed(item)) {
     return null;
@@ -46,7 +50,7 @@ export async function getPublicArtwork(
 /** Look up a published artwork when only the seller's uid is known. */
 export async function getPublicArtworkByUid(
   artistUid: string,
-  itemId: string,
+  itemId: string
 ): Promise<PublicArtworkRecord | null> {
   const profile = await loadAccountProfile(artistUid);
 
@@ -55,7 +59,8 @@ export async function getPublicArtworkByUid(
   }
 
   const studio = await loadListingStudio(artistUid);
-  const item = studio?.items.find((candidate) => candidate.id === itemId) ?? null;
+  const item =
+    studio?.items.find((candidate) => candidate.id === itemId) ?? null;
 
   if (!item) {
     return null;

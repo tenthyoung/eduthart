@@ -37,11 +37,13 @@ export function FollowArtistButton({
       try {
         const payload = await collectorRequest<{ following: FollowedArtist[] }>(
           "/api/collectors/follows",
-          await user.getIdToken(),
+          await user.getIdToken()
         );
 
         if (!cancelled) {
-          setFollowing(payload.following.some((artist) => artist.artistUid === artistUid));
+          setFollowing(
+            payload.following.some((artist) => artist.artistUid === artistUid)
+          );
         }
       } catch {
         // Leaving the button in its default state is better than an error here.
@@ -64,16 +66,26 @@ export function FollowArtistButton({
     setBusy(true);
 
     try {
-      await collectorRequest("/api/collectors/follows", await user.getIdToken(), {
-        body: { artistUid },
-        method: following ? "DELETE" : "POST",
-      });
+      await collectorRequest(
+        "/api/collectors/follows",
+        await user.getIdToken(),
+        {
+          body: { artistUid },
+          method: following ? "DELETE" : "POST",
+        }
+      );
       setFollowing(!following);
       toast.success(
-        following ? `You no longer follow ${artistName}.` : `You now follow ${artistName}.`,
+        following
+          ? `You no longer follow ${artistName}.`
+          : `You now follow ${artistName}.`
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to update who you follow.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to update who you follow."
+      );
     } finally {
       setBusy(false);
     }

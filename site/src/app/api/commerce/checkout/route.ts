@@ -12,7 +12,7 @@ export function POST(request: Request) {
       return apiError(
         "Payment checkout is not configured on this environment yet.",
         503,
-        "unavailable",
+        "unavailable"
       );
     }
 
@@ -34,7 +34,11 @@ export function POST(request: Request) {
     });
 
     if (!url) {
-      return apiError("Stripe did not return a checkout URL.", 502, "bad-gateway");
+      return apiError(
+        "Stripe did not return a checkout URL.",
+        502,
+        "bad-gateway"
+      );
     }
 
     return NextResponse.json({ orderId: order.id, url });

@@ -21,10 +21,15 @@ function readString(value: unknown) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-export function toAccountProfile(data: Record<string, unknown>, fallbackUid = ""): AccountProfile {
+export function toAccountProfile(
+  data: Record<string, unknown>,
+  fallbackUid = ""
+): AccountProfile {
   return {
     authProviders: Array.isArray(data.authProviders)
-      ? data.authProviders.filter((value): value is string => typeof value === "string")
+      ? data.authProviders.filter(
+          (value): value is string => typeof value === "string"
+        )
       : [],
     bannerURL: readString(data.bannerURL),
     bio: readString(data.bio),
@@ -38,14 +43,18 @@ export function toAccountProfile(data: Record<string, unknown>, fallbackUid = ""
     location: readString(data.location),
     photoURL: readString(data.photoURL),
     photoURLManagedByUser: data.photoURLManagedByUser === true,
-    shippingOriginAddress: normalizeShippingOriginAddress(data.shippingOriginAddress),
+    shippingOriginAddress: normalizeShippingOriginAddress(
+      data.shippingOriginAddress
+    ),
     uid: readString(data.uid) ?? fallbackUid,
     updatedAt: readString(data.updatedAt),
     username: readString(data.username),
   };
 }
 
-export function normalizeShippingOriginAddress(value: unknown): ShippingOriginAddress | null {
+export function normalizeShippingOriginAddress(
+  value: unknown
+): ShippingOriginAddress | null {
   if (typeof value !== "object" || value === null) {
     return null;
   }
@@ -56,18 +65,27 @@ export function normalizeShippingOriginAddress(value: unknown): ShippingOriginAd
     city: typeof record.city === "string" ? record.city.trim() : "",
     country: typeof record.country === "string" ? record.country.trim() : "",
     line1: typeof record.line1 === "string" ? record.line1.trim() : "",
-    line2: typeof record.line2 === "string" && record.line2.trim() ? record.line2.trim() : null,
-    postalCode: typeof record.postalCode === "string" ? record.postalCode.trim() : "",
+    line2:
+      typeof record.line2 === "string" && record.line2.trim()
+        ? record.line2.trim()
+        : null,
+    postalCode:
+      typeof record.postalCode === "string" ? record.postalCode.trim() : "",
     region: typeof record.region === "string" ? record.region.trim() : "",
   };
 }
 
-export async function loadAccountProfile(uid: string): Promise<AccountProfile | null> {
+export async function loadAccountProfile(
+  uid: string
+): Promise<AccountProfile | null> {
   if (isE2EAuthEnabled()) {
     return getE2EAccountProfile(uid);
   }
 
-  const snapshot = await getFirebaseAdminDb().collection("users").doc(uid).get();
+  const snapshot = await getFirebaseAdminDb()
+    .collection("users")
+    .doc(uid)
+    .get();
 
   if (!snapshot.exists) {
     return null;
@@ -76,7 +94,9 @@ export async function loadAccountProfile(uid: string): Promise<AccountProfile | 
   return toAccountProfile(snapshot.data() as Record<string, unknown>, uid);
 }
 
-export async function findAccountProfileByUsername(username: string): Promise<AccountProfile | null> {
+export async function findAccountProfileByUsername(
+  username: string
+): Promise<AccountProfile | null> {
   const normalized = username.trim().toLowerCase();
 
   if (!normalized) {
@@ -99,23 +119,44 @@ export async function findAccountProfileByUsername(username: string): Promise<Ac
     return null;
   }
 
-  return toAccountProfile(document.data() as Record<string, unknown>, document.id);
+  return toAccountProfile(
+    document.data() as Record<string, unknown>,
+    document.id
+  );
 }
 
 export async function findAccountProfileByUid(uid: string) {
   return loadAccountProfile(uid);
 }
 
-export async function saveAccountProfile(uid: string, payload: Record<string, unknown>) {
+export async function saveAccountProfile(
+  uid: string,
+  payload: Record<string, unknown>
+) {
   if (isE2EAuthEnabled()) {
     return updateE2EAccountProfile(uid, payload as Partial<AccountProfile>);
   }
 
-  await getFirebaseAdminDb().collection("users").doc(uid).set(payload, { merge: true });
+  await getFirebaseAdminDb()
+    .collection("users")
+    .doc(uid)
+    .set(payload, { merge: true });
   return loadAccountProfile(uid);
 }
 
-export function buildProfileDisplayName(profile: Pick<AccountProfile, "displayName" | "firstName" | "lastName" | "username">) {
-  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
-  return profile.displayName || fullName || (profile.username ? `@${profile.username}` : "EduthArt Collector");
+export function buildProfileDisplayName(
+  profile: Pick<
+    AccountProfile,
+    "displayName" | "firstName" | "lastName" | "username"
+  >
+) {
+  const fullName = [profile.firstName, profile.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return (
+    profile.displayName ||
+    fullName ||
+    (profile.username ? `@${profile.username}` : "EduthArt Collector")
+  );
 }

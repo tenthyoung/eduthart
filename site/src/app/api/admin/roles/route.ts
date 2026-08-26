@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { handleAdminRouteError, requireAdminSession } from "@/lib/admin/route";
-import { grantAdminRole, listAdminRoles, requireAdmin, requireSuperAdmin } from "@/lib/admin/server";
+import {
+  grantAdminRole,
+  listAdminRoles,
+  requireAdmin,
+  requireSuperAdmin,
+} from "@/lib/admin/server";
 
 export async function GET() {
   try {
@@ -24,7 +29,7 @@ export async function POST(request: Request) {
     const result = await grantAdminRole(
       access.uid,
       body?.email?.toString() ?? "",
-      role,
+      role
     );
     return NextResponse.json(result);
   } catch (error) {

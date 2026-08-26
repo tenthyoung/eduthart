@@ -14,7 +14,7 @@ export const Heading = ({
       <h1
         className={cn(
           "mb-3 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-primary sm:text-5xl lg:text-6xl",
-          className,
+          className
         )}
       >
         {children}
@@ -26,7 +26,7 @@ export const Heading = ({
       <h2
         className={cn(
           "mb-6 text-3xl font-semibold leading-[1.1] tracking-[-0.035em] text-primary md:text-4xl",
-          className,
+          className
         )}
       >
         {children}
@@ -38,7 +38,7 @@ export const Heading = ({
       <h3
         className={cn(
           "mb-5 text-2xl font-semibold leading-[1.14] tracking-[-0.025em] text-primary md:text-3xl",
-          className,
+          className
         )}
       >
         {children}
@@ -49,7 +49,7 @@ export const Heading = ({
     <h2
       className={cn(
         "mb-6 text-3xl font-semibold leading-[1.1] tracking-[-0.035em] text-primary md:text-4xl",
-        className,
+        className
       )}
     >
       {children}

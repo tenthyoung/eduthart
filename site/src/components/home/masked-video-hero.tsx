@@ -33,7 +33,7 @@ export function MaskedVideoHero({ muxPlaybackId }: MaskedVideoHeroProps) {
         fontSize: "8vw",
         duration: 1.5,
         delay: 0.3,
-      },
+      }
     );
 
     // * Scroll-triggered animation - grow the text and reveal video, and zoom the video

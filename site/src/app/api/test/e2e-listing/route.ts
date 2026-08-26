@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 
 import { syncArtworkIndex } from "@/lib/artists/artwork-index";
 import { notifyFollowersOfListingChanges } from "@/lib/artists/listing-notifications";
-import { createEmptyListingItem, createEmptyListingStudio } from "@/lib/artists/listing-flow";
-import { buildProfileDisplayName, loadAccountProfile } from "@/lib/auth/profile-store";
+import {
+  createEmptyListingItem,
+  createEmptyListingStudio,
+} from "@/lib/artists/listing-flow";
+import {
+  buildProfileDisplayName,
+  loadAccountProfile,
+} from "@/lib/auth/profile-store";
 import { isE2EAuthEnabled, updateE2EListingFlow } from "@/lib/auth/e2e-store";
 
 type SeedListingBody = {
@@ -28,7 +34,10 @@ type SeedListingBody = {
  */
 export async function POST(request: Request) {
   if (!isE2EAuthEnabled()) {
-    return NextResponse.json({ error: { code: "not-found", message: "Not found." } }, { status: 404 });
+    return NextResponse.json(
+      { error: { code: "not-found", message: "Not found." } },
+      { status: 404 }
+    );
   }
 
   const body = (await request.json()) as SeedListingBody;
@@ -36,7 +45,7 @@ export async function POST(request: Request) {
   if (!body.uid?.trim()) {
     return NextResponse.json(
       { error: { code: "invalid-argument", message: "A uid is required." } },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -44,17 +53,25 @@ export async function POST(request: Request) {
 
   if (!profile?.username) {
     return NextResponse.json(
-      { error: { code: "not-found", message: "Seed the artist profile with a username first." } },
-      { status: 404 },
+      {
+        error: {
+          code: "not-found",
+          message: "Seed the artist profile with a username first.",
+        },
+      },
+      { status: 404 }
     );
   }
 
-  const item = createEmptyListingItem(body.itemId ? { id: body.itemId } : undefined);
+  const item = createEmptyListingItem(
+    body.itemId ? { id: body.itemId } : undefined
+  );
   item.artworkDetails.title = body.title ?? "Harbour Light";
   item.artworkDetails.medium = body.medium ?? "Oil on canvas";
   item.artworkDetails.style = body.style ?? "Contemporary";
   item.artworkDetails.category = "Painting";
-  item.artworkDetails.description = "A study of morning light across the water.";
+  item.artworkDetails.description =
+    "A study of morning light across the water.";
   item.artworkDetails.tags = body.tags ?? ["coastal", "light"];
   item.artworkDetails.yearCreated = "2026";
   item.dimensions.width = "24";
@@ -79,7 +96,7 @@ export async function POST(request: Request) {
   // the real index sync and follower alerts rather than a shortcut.
   const changes = await syncArtworkIndex(
     { artistName, artistUid: body.uid, artistUsername: profile.username },
-    studio,
+    studio
   );
   await notifyFollowersOfListingChanges(body.uid, artistName, changes);
 
