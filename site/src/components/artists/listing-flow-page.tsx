@@ -57,7 +57,9 @@ import {
   createEmptyListingItem,
   createEmptyListingStudio,
   getItemDisplayTitle,
+  getItemMissingRequirements,
   getItemProgressPercent,
+  getItemRequirements,
   isSharedShippingComplete,
   normalizeListingStudio,
   type ListingItemDraft,
@@ -459,59 +461,18 @@ function getItemChecklist(
   item: ListingItemDraft,
   shared: ListingSharedSettings
 ) {
-  const checklist: ChecklistItem[] = [
-    { label: "Title", done: Boolean(item.artworkDetails.title.trim()) },
-    {
-      label: "Photos",
-      done: Boolean(item.media.mainImageUrl),
-    },
-    { label: "Price", done: Boolean(item.pricingInventory.price) },
-    { label: "Medium", done: Boolean(item.artworkDetails.medium) },
-    {
-      label: "Dimensions",
-      done: Boolean(item.dimensions.width && item.dimensions.height),
-    },
-    { label: "Shipping information", done: isSharedShippingComplete(shared) },
-  ];
-
-  return checklist;
+  return getItemRequirements(item, shared).map(
+    ({ done, label }): ChecklistItem => ({ done, label })
+  );
 }
 
 function getMissingFieldMessages(
   item: ListingItemDraft,
   shared: ListingSharedSettings
 ) {
-  const messages: string[] = [];
-
-  if (!item.artworkDetails.title.trim()) {
-    messages.push("Add an artwork title.");
-  }
-  if (!item.artworkDetails.description.trim()) {
-    messages.push("Add a clear artwork description.");
-  }
-  if (!item.media.mainImageUrl) {
-    messages.push("Upload a cover image.");
-  }
-  if (!item.artworkDetails.medium) {
-    messages.push("Choose a medium.");
-  }
-  if (!item.artworkDetails.category) {
-    messages.push("Choose a category.");
-  }
-  if (!item.artworkDetails.subject) {
-    messages.push("Choose a subject.");
-  }
-  if (!item.dimensions.width || !item.dimensions.height) {
-    messages.push("Enter width and height.");
-  }
-  if (!item.pricingInventory.price) {
-    messages.push("Set a price.");
-  }
-  if (!isSharedShippingComplete(shared)) {
-    messages.push("Complete shared shipping settings.");
-  }
-
-  return messages;
+  return getItemMissingRequirements(item, shared).map(
+    (requirement) => requirement.message
+  );
 }
 
 function sectionState(done: boolean, warning: boolean) {
