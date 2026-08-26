@@ -7,17 +7,19 @@ import { toast } from "sonner";
 
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { GoogleIcon } from "@/components/auth/google-icon";
-import { useAuth } from "@/components/auth/auth-provider";
+import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
+import { useAuth, type FederatedProvider } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const PROFILE_COMPLETION_PATH = "/welcome";
+
 export default function SignupPage() {
   const router = useRouter();
-  const { signInWithGoogle, signUpWithEmail, status } = useAuth();
+  const { signInWithFederatedProvider, signUpWithEmail, status } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,10 +29,10 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && !isSubmitting) {
       router.replace("/");
     }
-  }, [router, status]);
+  }, [isSubmitting, router, status]);
 
   const requireLegalAcceptance = () => {
     if (legalAccepted) {
@@ -75,23 +77,26 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleFederatedSignUp = async (provider: FederatedProvider) => {
     if (!requireLegalAcceptance()) {
       return;
     }
 
+    const providerName = provider === "apple.com" ? "Apple" : "Google";
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await signInWithGoogle("signup");
-      toast.success("Your Google account is connected.");
-      router.replace("/");
+      await signInWithFederatedProvider(provider, "signup");
+      toast.success(`Your ${providerName} account is connected.`);
+      // Neither provider reliably supplies everything the profile needs, so a
+      // federated sign-up always lands on the completion step.
+      router.replace(PROFILE_COMPLETION_PATH);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Unable to continue with Google.";
+          : `Unable to continue with ${providerName}.`;
       setError(message);
       toast.error(message);
     } finally {
@@ -227,17 +232,11 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <Button
-          className="w-full"
+        <FederatedAuthButtons
           disabled={isSubmitting}
-          onClick={handleGoogle}
-          size="lg"
-          type="button"
-          variant="outline"
-        >
-          <GoogleIcon />
-          Sign up with Google
-        </Button>
+          onSelect={(provider) => void handleFederatedSignUp(provider)}
+          verb="Sign up with"
+        />
 
         <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white to-secondary/45 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">

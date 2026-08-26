@@ -38,7 +38,7 @@ export function AuthShell({
               Email and password with Firebase-backed sessions.
             </div>
             <div className="rounded-2xl border border-border/60 bg-card/65 p-4 shadow-[0_18px_40px_-34px_rgba(47,36,28,0.35)] backdrop-blur-sm">
-              Google sign-in plus privacy and terms acceptance on sign up.
+              Google and Apple sign-in plus privacy and terms acceptance on sign up.
             </div>
           </div>
           <p className="text-sm text-muted-foreground">

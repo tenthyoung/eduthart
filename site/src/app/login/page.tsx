@@ -7,8 +7,8 @@ import { toast } from "sonner";
 
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { GoogleIcon } from "@/components/auth/google-icon";
-import { useAuth } from "@/components/auth/auth-provider";
+import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
+import { useAuth, type FederatedProvider } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signInWithEmail, signInWithGoogle, status } = useAuth();
+  const { signInWithEmail, signInWithFederatedProvider, status } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,17 +49,18 @@ function LoginContent() {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleFederatedSignIn = async (provider: FederatedProvider) => {
+    const providerName = provider === "apple.com" ? "Apple" : "Google";
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await signInWithGoogle("login");
-      toast.success("Signed in with Google.");
+      await signInWithFederatedProvider(provider, "login");
+      toast.success(`Signed in with ${providerName}.`);
       router.replace("/");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to sign in with Google.";
+        error instanceof Error ? error.message : `Unable to sign in with ${providerName}.`;
       setError(message);
       toast.error(message);
     } finally {
@@ -147,20 +148,14 @@ function LoginContent() {
           </div>
         </div>
 
-        <Button
-          className="w-full"
+        <FederatedAuthButtons
           disabled={isSubmitting}
-          onClick={handleGoogle}
-          size="lg"
-          type="button"
-          variant="outline"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </Button>
+          onSelect={(provider) => void handleFederatedSignIn(provider)}
+          verb="Continue with"
+        />
 
         <p className="text-sm text-muted-foreground">
-          First-time Google registration lives on the{" "}
+          First-time Google and Apple registration lives on the{" "}
           <Link className="font-medium text-primary hover:underline" href="/signup">
             sign up page
           </Link>{" "}

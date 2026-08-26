@@ -2,16 +2,20 @@
 
 import {
   type ActionCodeSettings,
+  EmailAuthProvider,
   GoogleAuthProvider,
+  OAuthProvider,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
+  updatePassword,
   updateProfile,
   verifyBeforeUpdateEmail,
   type User as FirebaseUser,
@@ -26,14 +30,16 @@ import {
   type ReactNode,
 } from "react";
 
-import { buildDisplayName } from "@/lib/auth/account-profile";
+import { buildDisplayName, splitDisplayName } from "@/lib/auth/account-profile";
 import {
   getFirebaseAuth,
 } from "@/lib/firebase/client";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-type GoogleAuthMode = "login" | "signup";
+type FederatedAuthMode = "login" | "signup";
+
+export type FederatedProvider = "apple.com" | "google.com";
 
 export type AuthUser = {
   displayName: string | null;
@@ -46,6 +52,7 @@ export type AuthUser = {
 };
 
 type AuthContextValue = {
+  changePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
   requestEmailChange: (nextEmail: string) => Promise<{
     email: string;
     requiresVerification: boolean;
@@ -53,7 +60,10 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: (mode: GoogleAuthMode) => Promise<void>;
+  signInWithFederatedProvider: (
+    provider: FederatedProvider,
+    mode: FederatedAuthMode,
+  ) => Promise<{ isNewUser: boolean }>;
   signOut: () => Promise<void>;
   sendResetLink: (email: string) => Promise<void>;
   signUpWithEmail: (args: {
@@ -73,6 +83,7 @@ const E2E_STORAGE_KEY = "eduthart:e2e-user";
 const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
 const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
 const RESET_PASSWORD_RETURN_PATH = "/login?reset=success";
+export const MIN_PASSWORD_LENGTH = 8;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -130,6 +141,28 @@ function readE2EUser(): AuthUser | null {
   }
 }
 
+/**
+ * Tell the server a security-sensitive change happened so it can notify the
+ * account owner. Failure here must not surface as a failed password change.
+ */
+async function reportSecurityEvent(
+  body: { nextEmail?: string; type: "email_changed" | "password_changed" },
+  token?: string,
+) {
+  try {
+    await fetch("/api/auth/security-event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    console.error("Unable to report a security event", error);
+  }
+}
+
 function notifyE2EAuthChanged() {
   if (typeof window === "undefined") {
     return;
@@ -156,7 +189,23 @@ function formatAuthError(error: unknown, fallbackMessage: string) {
   }
 
   if (code === "auth/requires-recent-login") {
-    return "For security, please sign out and sign back in before changing your email address.";
+    return "For security, please sign out and sign back in before making this change.";
+  }
+
+  if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+    return "That current password is not correct.";
+  }
+
+  if (code === "auth/weak-password") {
+    return "Choose a stronger password with at least 8 characters.";
+  }
+
+  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+    return "The sign-in window closed before it finished. Please try again.";
+  }
+
+  if (code === "auth/operation-not-allowed") {
+    return "That sign-in method is not enabled for EduthArt yet.";
   }
 
   if (error instanceof Error && error.message) {
@@ -172,7 +221,7 @@ async function persistUserRecord(
     acceptedLegal?: boolean;
     firstName?: string;
     lastName?: string;
-    method?: "email_password" | "google";
+    method?: "apple" | "email_password" | "google";
   },
 ) {
   const idToken = await user.getIdToken(true);
@@ -305,32 +354,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const signInWithGoogle = useCallback(async (mode: GoogleAuthMode) => {
-    const auth = await getFirebaseAuth();
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
+  const signInWithFederatedProvider = useCallback(
+    async (providerId: FederatedProvider, mode: FederatedAuthMode) => {
+      const auth = await getFirebaseAuth();
+      const providerLabel = providerId === "apple.com" ? "Apple" : "Google";
+      let provider: GoogleAuthProvider | OAuthProvider;
 
-    const credential = await signInWithPopup(auth, provider);
-    const additionalInfo = getAdditionalUserInfo(credential);
-    const isNewUser = additionalInfo?.isNewUser ?? false;
+      if (providerId === "apple.com") {
+        const appleProvider = new OAuthProvider("apple.com");
+        // Apple only returns a name and email on the very first authorization,
+        // so both scopes have to be requested up front.
+        appleProvider.addScope("email");
+        appleProvider.addScope("name");
+        provider = appleProvider;
+      } else {
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: "select_account" });
+        provider = googleProvider;
+      }
 
-    if (mode === "login" && isNewUser) {
-      await firebaseSignOut(auth);
-      throw new Error(
-        "Finish first-time Google sign-up on the sign up page so we can capture your legal consent.",
-      );
-    }
+      let credential;
 
-    if (mode === "signup") {
-      await persistUserRecord(credential.user, {
-        acceptedLegal: true,
-        method: "google",
-      });
-    }
+      try {
+        credential = await signInWithPopup(auth, provider);
+      } catch (error) {
+        throw new Error(formatAuthError(error, `Unable to continue with ${providerLabel}.`));
+      }
 
-    setUser(mapFirebaseUser(credential.user));
-    setStatus("authenticated");
-  }, []);
+      const additionalInfo = getAdditionalUserInfo(credential);
+      const isNewUser = additionalInfo?.isNewUser ?? false;
+
+      if (mode === "login" && isNewUser) {
+        await firebaseSignOut(auth);
+        throw new Error(
+          `Finish first-time ${providerLabel} sign-up on the sign up page so we can capture your legal consent.`,
+        );
+      }
+
+      if (mode === "signup") {
+        // Google returns given_name/family_name in the provider profile, while
+        // Apple only ever supplies a display name, and only on the very first
+        // authorization. Take whichever is available so the completion step
+        // starts prefilled rather than blank.
+        const profile = (additionalInfo?.profile ?? {}) as {
+          family_name?: string;
+          given_name?: string;
+        };
+        const splitName = splitDisplayName(credential.user.displayName);
+
+        await persistUserRecord(credential.user, {
+          acceptedLegal: true,
+          firstName: profile.given_name ?? splitName.firstName,
+          lastName: profile.family_name ?? splitName.lastName,
+          method: providerId === "apple.com" ? "apple" : "google",
+        });
+      }
+
+      setUser(mapFirebaseUser(credential.user));
+      setStatus("authenticated");
+
+      return { isNewUser };
+    },
+    [],
+  );
 
   const sendResetLink = useCallback(async (email: string) => {
     if (E2E_AUTH_ENABLED) {
@@ -428,11 +514,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(formatAuthError(error, "Unable to start your email change."));
     }
 
+    await reportSecurityEvent(
+      { nextEmail: normalizedEmail, type: "email_changed" },
+      await auth.currentUser.getIdToken(),
+    );
+
     return {
       email: normalizedEmail,
       requiresVerification: true,
     };
   }, []);
+
+  const changePassword = useCallback(
+    async (currentPassword: string, nextPassword: string) => {
+      if (nextPassword.length < MIN_PASSWORD_LENGTH) {
+        throw new Error(`Choose a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
+      }
+
+      if (E2E_AUTH_ENABLED) {
+        const nextUser = readE2EUser();
+
+        if (!nextUser) {
+          throw new Error("You need to be signed in to change your password.");
+        }
+
+        await reportSecurityEvent({ type: "password_changed" }, `e2e:${nextUser.uid}`);
+        return;
+      }
+
+      const auth = await getFirebaseAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser?.email) {
+        throw new Error("You need to be signed in with an email and password to change it.");
+      }
+
+      try {
+        // Re-authenticating first turns a stale session into a clear "wrong
+        // password" message instead of Firebase's requires-recent-login error.
+        await reauthenticateWithCredential(
+          currentUser,
+          EmailAuthProvider.credential(currentUser.email, currentPassword),
+        );
+        await updatePassword(currentUser, nextPassword);
+      } catch (error) {
+        throw new Error(formatAuthError(error, "Unable to change your password."));
+      }
+
+      await reportSecurityEvent({ type: "password_changed" }, await currentUser.getIdToken(true));
+      setUser(mapFirebaseUser(currentUser));
+    },
+    [],
+  );
 
   const refreshUser = useCallback(async () => {
     if (E2E_AUTH_ENABLED) {
@@ -473,18 +606,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
+      changePassword,
       requestEmailChange,
       sendResetLink,
       sendVerificationEmail,
       refreshUser,
       signInWithEmail,
-      signInWithGoogle,
+      signInWithFederatedProvider,
       signOut,
       signUpWithEmail,
       status,
       user,
     }),
-    [requestEmailChange, refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithGoogle, signOut, signUpWithEmail, status, user],
+    [changePassword, requestEmailChange, refreshUser, sendResetLink, sendVerificationEmail, signInWithEmail, signInWithFederatedProvider, signOut, signUpWithEmail, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

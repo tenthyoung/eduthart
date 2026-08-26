@@ -159,6 +159,15 @@ function AuthActionContent() {
     try {
       const auth = await getFirebaseAuth();
       await confirmPasswordReset(auth, actionCode, password);
+
+      // The reset finishes signed out, so the server verifies the change
+      // really happened before it notifies the account owner.
+      await fetch("/api/auth/security-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: accountEmail, type: "password_changed" }),
+      }).catch(() => undefined);
+
       setStatus("success");
       toast.success("Password updated. You can sign in now.");
     } catch (resetError) {
