@@ -39,7 +39,6 @@
     "clsx": "^2.1.1",
     "firebase": "^12.15.0",
     "firebase-admin": "^12.7.0",
-    "gsap": "^3.13.0",
     "leaflet": "^1.9.4",
     "locomotive-scroll": "^4.1.4",
     "lucide-react": "^0.544.0",
