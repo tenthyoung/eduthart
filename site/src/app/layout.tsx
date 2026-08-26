@@ -24,11 +24,6 @@ export const metadata: Metadata = {
   title: "EduthArt - Buy Original Art Online",
   description:
     "Browse curated original art online with room-based discovery, thoughtful collections, and collector-friendly guidance.",
-  icons: {
-    icon: "/logo/pure-logo-icon.png",
-    apple: "/logo/pure-logo-icon.png",
-    shortcut: "/logo/pure-logo-icon.png",
-  },
 };
 
 export default function RootLayout({
