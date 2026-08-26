@@ -16,6 +16,8 @@ import {
 } from "@/lib/collectors/comparison";
 import { formatMinorUnits } from "@/lib/commerce/money";
 
+// The table hugs its columns (w-fit) so comparing two pieces does not stretch
+// them across the page, and scrolls once there are four.
 const ROWS: Array<{ label: string; read: (artwork: IndexedArtwork) => string }> = [
   { label: "Artist", read: (artwork) => artwork.artistName },
   {
@@ -113,7 +115,7 @@ export function ComparePage() {
             title="Nothing to compare yet"
           />
         ) : (
-          <div className="overflow-x-auto rounded-[2rem] border border-border/70">
+          <div className="w-fit max-w-full overflow-x-auto rounded-[2rem] border border-border/70">
             <table className="w-full min-w-max border-collapse bg-white">
               <thead>
                 <tr>

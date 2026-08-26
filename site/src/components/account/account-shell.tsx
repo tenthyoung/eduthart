@@ -32,11 +32,49 @@ const SECTIONS = [
 ];
 
 /**
- * Chrome shared by every collector screen.
+ * Links between the account sections.
  *
- * The account area grew from one page to ten, so the navigation between them
- * lives here rather than being repeated, and each page supplies only its own
- * heading and body.
+ * The account area grew from one page to ten, so this is rendered by the
+ * settings page as well as by every screen built on AccountShell; without it on
+ * settings there is no way to reach the rest.
+ */
+export function AccountSectionNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav aria-label="Account sections" className="overflow-x-auto">
+      <ul className="flex min-w-max gap-2">
+        {SECTIONS.map((section) => {
+          const Icon = section.icon;
+          const isActive =
+            section.href === "/account" ? pathname === "/account" : pathname.startsWith(section.href);
+
+          return (
+            <li key={section.href}>
+              <Link
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "border-primary/30 bg-primary/10 text-primary"
+                    : "border-border/70 bg-white text-muted-foreground hover:text-foreground",
+                )}
+                href={section.href}
+              >
+                <Icon className="size-4" />
+                {section.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/**
+ * Chrome shared by every collector screen: the section nav plus a heading, so
+ * each page supplies only its own body.
  */
 export function AccountShell({
   action,
@@ -49,38 +87,12 @@ export function AccountShell({
   description: string;
   title: string;
 }) {
-  const pathname = usePathname();
-
   return (
     <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <nav aria-label="Account sections" className="mb-8 overflow-x-auto">
-          <ul className="flex min-w-max gap-2">
-            {SECTIONS.map((section) => {
-              const Icon = section.icon;
-              const isActive =
-                section.href === "/account" ? pathname === "/account" : pathname.startsWith(section.href);
-
-              return (
-                <li key={section.href}>
-                  <Link
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-border/70 bg-white text-muted-foreground hover:text-foreground",
-                    )}
-                    href={section.href}
-                  >
-                    <Icon className="size-4" />
-                    {section.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <div className="mb-8">
+          <AccountSectionNav />
+        </div>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">

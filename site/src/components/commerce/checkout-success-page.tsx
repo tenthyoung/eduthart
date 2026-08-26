@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { DownloadInvoiceButton } from "@/components/collectors/order-summary";
+import { notifyCartChanged } from "@/components/commerce/cart-drawer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { collectorRequest } from "@/lib/collectors/client";
@@ -51,6 +52,9 @@ export function CheckoutSuccessPage() {
 
         if (!cancelled) {
           setOrder(payload.order);
+          // Fulfilment emptied the cart server-side, so the drawer's badge
+          // would otherwise keep counting the artwork that was just bought.
+          notifyCartChanged();
           notifyNotificationsChanged();
         }
       } catch (confirmError) {

@@ -11,6 +11,14 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import type { CartItem } from "@/components/commerce/cart-page";
 
 export const CART_OPEN_EVENT = "eduthart:cart-open";
+/** Fired when the cart changed somewhere other than the drawer, such as checkout. */
+export const CART_CHANGED_EVENT = "eduthart:cart-changed";
+
+export function notifyCartChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CART_CHANGED_EVENT));
+  }
+}
 
 export function CartDrawer() {
   const { status, user } = useAuth();
@@ -40,8 +48,13 @@ export function CartDrawer() {
 
   useEffect(() => {
     const handleOpen = () => { setOpen(true); void load(); };
+    const handleChanged = () => { void load(); };
     window.addEventListener(CART_OPEN_EVENT, handleOpen);
-    return () => window.removeEventListener(CART_OPEN_EVENT, handleOpen);
+    window.addEventListener(CART_CHANGED_EVENT, handleChanged);
+    return () => {
+      window.removeEventListener(CART_OPEN_EVENT, handleOpen);
+      window.removeEventListener(CART_CHANGED_EVENT, handleChanged);
+    };
   }, [load]);
 
   const remove = async (itemId: string) => {

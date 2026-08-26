@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 
+import { AccountSectionNav } from "@/components/account/account-shell";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { ImageCropDialog } from "@/components/account/image-crop-dialog";
 import { ProfileImageField } from "@/components/account/profile-image-field";
@@ -492,6 +493,8 @@ export function AccountPage() {
   return (
     <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
+        <AccountSectionNav />
+
         <div className="space-y-4">
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
