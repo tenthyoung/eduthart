@@ -16,7 +16,13 @@ export function GET(request: Request) {
 
 export function POST(request: Request) {
   return withSession(request, async (session) => {
-    const body = (await request.json()) as { itemId?: string; username?: string };
+    // Recording a view is fire-and-forget from the artwork page, so navigating
+    // away can cut the request off mid-body. That is not worth logging as a
+    // parse failure.
+    const body = (await request.json().catch(() => ({}))) as {
+      itemId?: string;
+      username?: string;
+    };
 
     if (!body.itemId || !body.username) {
       return apiError("An artwork is required.", 400);

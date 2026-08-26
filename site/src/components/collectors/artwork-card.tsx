@@ -39,7 +39,14 @@ export function ArtworkCard({
 }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-shadow hover:shadow-lg">
-      <Link className="block aspect-[4/3] overflow-hidden bg-muted/30" href={artwork.href}>
+      {/* The title link below points to the same place, so this one is hidden
+          from assistive technology rather than announced twice. */}
+      <Link
+        aria-hidden="true"
+        className="block aspect-[4/3] overflow-hidden bg-muted/30"
+        href={artwork.href}
+        tabIndex={-1}
+      >
         {artwork.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

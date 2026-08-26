@@ -160,7 +160,7 @@ function createId() {
   );
 }
 
-export function createEmptyListingItem(seed?: Partial<ListingItemDraft>) {
+export function createEmptyListingItem(seed?: Partial<ListingItemDraft>): ListingItemDraft {
   return {
     artworkDetails: {
       aiDisclosure: "",
@@ -289,7 +289,7 @@ export function createDefaultSharedSettings(
 export function createEmptyListingStudio(options?: {
   existingAddress?: ShippingOriginAddress | null;
   includeStarterItem?: boolean;
-}) {
+}): ListingStudioDraft {
   return {
     items:
       options?.includeStarterItem === false ? [] : [createEmptyListingItem()],

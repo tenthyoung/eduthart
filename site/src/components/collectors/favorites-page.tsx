@@ -3,6 +3,7 @@
 import { FolderPlus, Heart, HeartOff, Scale } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { AccountShell } from "@/components/account/account-shell";
 import {
@@ -60,7 +61,7 @@ export function FavoritesPage() {
   };
 
   const addToCollection = async (collectionId: string) => {
-    if (!organizing?.artwork || !user) {
+    if (!organizing || !user) {
       return;
     }
 
@@ -81,13 +82,18 @@ export function FavoritesPage() {
       );
       setCollections(payload.collections);
       setOrganizing(null);
+      toast.success("Added to your collection.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to add that to a collection.");
     } finally {
       setBusy(false);
     }
   };
 
   const createAndAdd = async () => {
-    if (!user || !newCollectionName.trim()) {
+    const name = newCollectionName.trim();
+
+    if (!user || !name) {
       return;
     }
 
@@ -97,16 +103,20 @@ export function FavoritesPage() {
       const created = await collectorRequest<{ collections: ArtworkCollection[] }>(
         "/api/collectors/collections",
         await user.getIdToken(),
-        { body: { name: newCollectionName }, method: "POST" },
+        { body: { name }, method: "POST" },
       );
       setCollections(created.collections);
-      setNewCollectionName("");
 
-      const newest = created.collections.find((collection) => collection.name === newCollectionName.trim());
+      const newest = created.collections.find((collection) => collection.name === name);
 
-      if (newest) {
-        await addToCollection(newest.id);
+      if (!newest) {
+        throw new Error("The collection was created but could not be opened.");
       }
+
+      setNewCollectionName("");
+      await addToCollection(newest.id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create that collection.");
     } finally {
       setBusy(false);
     }

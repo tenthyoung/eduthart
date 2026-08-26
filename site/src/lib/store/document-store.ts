@@ -201,6 +201,11 @@ export async function clearDocumentStore() {
   await fs.rm(E2E_STORE_DIR, { force: true, recursive: true });
 }
 
+/** Drop every collection belonging to one user. Used to reset a test account. */
+export async function clearUserDocuments(uid: string) {
+  await fs.rm(join(E2E_STORE_DIR, encodeURIComponent(uid)), { force: true, recursive: true });
+}
+
 export function createDocumentId(prefix: string) {
   const random = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12);
   return `${prefix}_${random.replaceAll("-", "").slice(0, 20)}`;

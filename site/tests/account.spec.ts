@@ -1,81 +1,6 @@
-import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const E2E_STORAGE_KEY = "eduthart:e2e-user";
-const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
-
-type TestAccountOptions = {
-  authProviders?: string[];
-  bannerURL?: string | null;
-  displayName?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  photoURL?: string | null;
-  shippingOriginAddress?: ShippingOriginAddress | null;
-  uid: string;
-  username?: string | null;
-};
-
-async function seedAccount(page: Page, options: TestAccountOptions) {
-  const displayName = options.displayName ?? "Jordan Collector";
-  const defaultNameParts = displayName.trim().split(/\s+/);
-  const defaultFirstName = defaultNameParts[0] ?? "Jordan";
-  const defaultLastName = defaultNameParts.slice(1).join(" ") || "Collector";
-  const profilePayload = {
-    authProviders: options.authProviders ?? ["password"],
-    bannerURL: options.bannerURL ?? null,
-    displayName,
-    email: options.email ?? `${options.uid}@example.com`,
-    firstName: options.firstName ?? defaultFirstName,
-    lastName: options.lastName ?? defaultLastName,
-    photoURL: options.photoURL ?? null,
-    shippingOriginAddress: options.shippingOriginAddress ?? null,
-    uid: options.uid,
-    username: options.username ?? null,
-  };
-
-  const response = await page.request.post("/api/test/e2e-auth", {
-    data: profilePayload,
-  });
-  expect(response.ok()).toBeTruthy();
-
-  await page.goto("/");
-  await page.evaluate(
-    ({ authEventName, storageKey, user }) => {
-      window.localStorage.setItem(storageKey, JSON.stringify(user));
-      window.dispatchEvent(new Event(authEventName));
-    },
-    {
-      authEventName: E2E_AUTH_EVENT,
-      storageKey: E2E_STORAGE_KEY,
-      user: {
-        displayName: profilePayload.displayName,
-        email: profilePayload.email,
-        photoURL: profilePayload.photoURL,
-        providerIds: profilePayload.authProviders,
-        uid: profilePayload.uid,
-      },
-    },
-  );
-
-  await page.waitForFunction(
-    ({ storageKey, expectedUid }) => {
-      const raw = window.localStorage.getItem(storageKey);
-
-      if (!raw) {
-        return false;
-      }
-
-      const parsed = JSON.parse(raw) as { uid?: string };
-      return parsed.uid === expectedUid;
-    },
-    {
-      storageKey: E2E_STORAGE_KEY,
-      expectedUid: profilePayload.uid,
-    },
-  );
-}
+import { seedAccount, TINY_PNG } from "./support/accounts";
 
 test("redirects unauthenticated visitors away from account settings", async ({ page }) => {
   await page.goto("/account");
@@ -88,7 +13,7 @@ test("opens account settings from the desktop profile controls", async ({ page }
   await seedAccount(page, { uid: "desktop-user" });
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Account" }).click();
+  await page.getByRole("link", { name: "Jordan Collector" }).click();
 
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByRole("heading", { name: "Jordan Collector" })).toBeVisible();
@@ -114,18 +39,26 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await page.getByRole("button", { name: "Edit profile" }).click();
   await page.getByLabel("First name").fill("Avery");
   await page.getByLabel("Last name").fill("Curator");
-  await page.getByLabel("Username tag").fill("@avery-curator");
+  await page.getByLabel("Location").fill("Brooklyn, New York");
+  await page.getByLabel("Biography").fill("Collecting coastal light since 2019.");
   await page.getByRole("button", { name: "Save profile" }).click();
 
   await expect(page.getByLabel("First name")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Choose username" }).click();
+  await page.getByRole("textbox", { name: "Username" }).fill("@avery-curator");
+  await page.getByRole("button", { name: "Save username" }).click();
+  await expect(page.getByText("Your username has been updated.")).toBeVisible();
+
   await page.reload();
 
   await expect(page.getByRole("heading", { name: "Avery Curator" })).toBeVisible();
   await expect(page.getByRole("link", { name: "View your personal art page" })).toHaveAttribute("href", "/artists/avery-curator");
+  await expect(page.getByText("Brooklyn, New York").first()).toBeVisible();
+  await expect(page.getByText("Collecting coastal light since 2019.")).toBeVisible();
   await page.getByRole("button", { name: "Edit profile" }).click();
   await expect(page.getByLabel("First name")).toHaveValue("Avery");
   await expect(page.getByLabel("Last name")).toHaveValue("Curator");
-  await expect(page.getByLabel("Username tag")).toHaveValue("avery-curator");
 });
 
 test("shows a navbar link to the personal art page using the chosen username", async ({ page }) => {
@@ -153,14 +86,11 @@ test("crops, uploads, and removes a profile banner from account settings", async
   await page.getByLabel("Upload profile banner").setInputFiles({
     mimeType: "image/png",
     name: "banner.png",
-    buffer: Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==",
-      "base64",
-    ),
+    buffer: TINY_PNG,
   });
 
   await expect(page.getByRole("heading", { name: "Position your banner" })).toBeVisible();
-  await expect(page.getByText("Banners are saved at 1500 × 500 pixels (3:1).")).toBeVisible();
+  await expect(page.getByText("Banners are saved at 1500 × 500 pixels (3:1).").last()).toBeVisible();
   await page.getByRole("button", { name: "Save banner" }).click();
 
   await expect(page.getByText("Your profile banner has been updated.")).toBeVisible();
@@ -189,8 +119,9 @@ test("shows provider-aware security messaging for google-only users", async ({ p
 
   await page.goto("/account");
 
-  await expect(page.getByText("This account signs in with Google, so there is no EduthArt password reset to send.")).toBeVisible();
+  await expect(page.getByText("This account signs in with Google, so there is no EduthArt password to change or reset.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Send password reset email" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Change password" })).toHaveCount(0);
 });
 
 test("updates the account email from account settings and persists it across reload", async ({ page }) => {
