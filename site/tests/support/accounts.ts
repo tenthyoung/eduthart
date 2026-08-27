@@ -129,7 +129,15 @@ export async function addAddress(
 /** Publish an artwork for an artist account that already has a username. */
 export async function seedPublishedArtwork(
   page: Page,
-  options: { itemId?: string; price?: string; title?: string; uid: string }
+  options: {
+    category?: string;
+    itemId?: string;
+    price?: string;
+    subject?: string;
+    tags?: string[];
+    title?: string;
+    uid: string;
+  }
 ) {
   const response = await page.request.post("/api/test/e2e-listing", {
     data: options,
