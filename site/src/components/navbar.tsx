@@ -450,16 +450,6 @@ export function Navbar() {
                 </Button>
               </div>
             )}
-            {isHomepage ? (
-              <Button
-                asChild
-                variant="gradient"
-                size="lg"
-                className="hidden xl:inline-flex"
-              >
-                <Link href="/browse">Shop</Link>
-              </Button>
-            ) : null}
             <Button
               ref={mobileMenuToggleRef}
               variant="ghost"
@@ -595,16 +585,6 @@ export function Navbar() {
                     </Button>
                   </>
                 )}
-                {isHomepage ? (
-                  <Button asChild className="w-full" variant="gradient">
-                    <Link
-                      href="/browse"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Shop
-                    </Link>
-                  </Button>
-                ) : null}
               </div>
 
               {/* Mobile Social Icons */}
