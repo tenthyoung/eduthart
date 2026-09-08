@@ -68,7 +68,6 @@ export function Navbar() {
   // Anchors into homepage sections, so they only make sense on the homepage.
   const homepageNavItems: NavItem[] = [
     { name: "Categories", href: "/#collections" },
-    { name: "Advisory", href: "/#advisory" },
   ];
   const guestNavItems: NavItem[] = [
     { name: "About", href: "/about" },

@@ -1,12 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Frame, Ruler, ShieldCheck, Star } from "lucide-react";
-import Link from "next/link";
-
-const advisoryPoints = [
-  "Personal recommendations based on room, scale, and budget",
-  "Guidance for first-time buyers who want confidence",
-  "Clear return, shipping, and framing information",
-];
+import { Frame, Ruler, ShieldCheck } from "lucide-react";
 
 const assurancePoints = [
   {
@@ -29,56 +21,7 @@ const assurancePoints = [
 export function MarketplaceSections() {
   return (
     <div className="bg-background">
-      <section
-        id="advisory"
-        className="border-y border-border/40 bg-background py-18 lg:py-24"
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-primary/70">
-              Advisory layer
-            </p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
-              Keep it ecommerce-friendly, but never generic.
-            </h2>
-            <p className="mt-5 text-lg text-muted-foreground">
-              This is where EduthArt can feel more elevated than a normal decor
-              site: thoughtful curation, warmer editorial copy, and a visible
-              “we can help you choose” path.
-            </p>
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Button asChild variant="gradient" size="lg">
-                <Link href="/contact">
-                  Start a consultation
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/about">See the brand story</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-border/60 bg-card p-8 shadow-[0_24px_50px_-40px_rgba(60,44,28,0.14)] lg:p-10">
-            <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em] text-primary/70">
-              <Star className="h-4 w-4" />
-              Suggested service language
-            </div>
-            <div className="mt-6 space-y-4">
-              {advisoryPoints.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-border/60 bg-muted/60 px-5 py-4 text-muted-foreground"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-18 lg:py-24">
+      <section className="border-t border-border/40 py-18 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-4 lg:grid-cols-3">
             {assurancePoints.map((point) => {

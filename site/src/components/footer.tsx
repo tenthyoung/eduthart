@@ -22,7 +22,6 @@ const navigationLinks = [
   { name: "About", href: "/about" },
   { name: "Browse Art", href: "/#browse" },
   { name: "Collections", href: "/#collections" },
-  { name: "Advisory", href: "/#advisory" },
   { name: "Contact", href: "/contact" },
 ];
 
@@ -219,7 +218,7 @@ export function Footer() {
                 </div>
                 <div className="text-muted-foreground">
                   <p className="mb-2">
-                    Follow new collections, fresh arrivals, and advisory updates
+                    Follow new collections, fresh arrivals, and gallery updates
                   </p>
                   <p className="mb-3">
                     Online-first art marketplace with a curated point of view
