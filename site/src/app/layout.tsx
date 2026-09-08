@@ -3,21 +3,20 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Geist, Outfit } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const manrope = Manrope({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-geist",
   display: "swap",
 });
 
-const cormorantGaramond = Cormorant_Garamond({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-cormorant-garamond",
+  variable: "--font-outfit",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -34,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} ${cormorantGaramond.variable} antialiased`}
+        className={`${geist.variable} ${outfit.variable} antialiased`}
       >
         <AuthProvider>
           <ThemeProvider defaultTheme="light">
