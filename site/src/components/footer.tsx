@@ -1,12 +1,12 @@
 "use client";
 
+import { BrandMark } from "@/components/brand-mark";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
 import { AlertCircle, CheckCircle, Linkedin, Loader2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -148,14 +148,11 @@ export function Footer() {
         <div className="py-12 lg:py-16">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="space-y-8">
-              <div>
-                <Image
-                  src="/logo/eduthart-logo.png"
-                  alt="EduthArt Gallery"
-                  width={80}
-                  height={80}
-                  className="h-16 w-auto"
-                />
+              <div className="flex items-center gap-2">
+                <BrandMark className="h-10" />
+                <span className="font-serif text-3xl font-bold tracking-[-0.03em] text-foreground">
+                  EduthArt
+                </span>
               </div>
 
               <div className="flex flex-wrap gap-8">
@@ -202,9 +199,6 @@ export function Footer() {
 
               <div className="space-y-3">
                 <div className="text-muted-foreground">
-                  <p className="mb-2 font-serif text-xl font-semibold tracking-[-0.03em] text-foreground">
-                    EDUTHART
-                  </p>
                   <p className="mb-2">
                     For collecting inquiries, artist questions, and brand
                     partnerships.

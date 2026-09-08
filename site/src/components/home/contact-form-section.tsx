@@ -1,7 +1,7 @@
 "use client";
 
+import { BrandMark } from "@/components/brand-mark";
 import { ContactForm } from "@/components/form/contact-form";
-import Image from "next/image";
 import { MotionFade } from "../motion/motion-fade";
 import { Heading } from "../text/heading";
 
@@ -45,14 +45,9 @@ export const ContactFormSection = () => {
           {/* Image */}
           <div className="order-2 lg:order-2">
             <MotionFade delay={0.4}>
-              <div className="relative flex h-96 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#fafafa] via-[#e4e4e7] to-[#a1a1aa] shadow-lg shadow-primary/10 dark:from-[#18181b] dark:via-[#27272a] dark:to-[#3f3f46] lg:h-[500px]">
-                <Image
-                  src="/logo/eduthart-logo.png"
-                  alt="EduthArt Gallery"
-                  width={300}
-                  height={300}
-                  className="w-64 h-auto"
-                />
+              <div className="relative flex h-96 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-[#faf8f3] via-[#e8e2d9] to-[#aaa39a] shadow-lg shadow-primary/10 dark:from-[#292827] dark:via-[#33312e] dark:to-[#3c3935] lg:h-[500px]">
+                <BrandMark className="h-64 w-auto" />
+
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/18 to-transparent" />
               </div>
             </MotionFade>
