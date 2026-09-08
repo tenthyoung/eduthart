@@ -30,9 +30,9 @@ export async function DiscoverySections() {
   const featured = available.slice(0, HOMEPAGE_ARTWORK_LIMIT);
 
   return (
-    <div className="bg-background">
+    <div className="bg-white dark:bg-background">
       <section
-        className="border-y border-border/40 bg-background py-18 lg:py-24"
+        className="border-y border-border/40 py-18 lg:py-24"
         id="collections"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

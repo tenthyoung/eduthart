@@ -20,7 +20,7 @@ const assurancePoints = [
 
 export function MarketplaceSections() {
   return (
-    <div className="bg-background">
+    <div className="bg-white dark:bg-background">
       <section className="border-t border-border/40 py-18 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-4 lg:grid-cols-3">
