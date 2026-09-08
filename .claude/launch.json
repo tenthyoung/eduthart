@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site-e2e",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "E2E_AUTH=1",
+        "NEXT_PUBLIC_E2E_AUTH=1",
+        "npm",
+        "--prefix",
+        "site",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3005"
+      ],
+      "port": 3005
+    }
+  ]
+}
