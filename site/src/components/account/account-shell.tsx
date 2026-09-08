@@ -12,13 +12,10 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-
-// Shared with the navbar profile dropdown so the two menus never drift apart.
+// Shared with the navbar profile dropdown and the account workspace sidebar
+// so the menus never drift apart.
 export const ACCOUNT_SECTIONS = [
   { href: "/account", icon: Settings, label: "Settings" },
   { href: "/account/favorites", icon: Heart, label: "Favorites" },
@@ -36,52 +33,24 @@ export const ACCOUNT_SECTIONS = [
   { href: "/notifications", icon: Bell, label: "Notifications" },
 ];
 
-/**
- * Links between the account sections.
- *
- * The account area grew from one page to ten, so this is rendered by the
- * settings page as well as by every screen built on AccountShell; without it on
- * settings there is no way to reach the rest.
- */
-export function AccountSectionNav() {
-  const pathname = usePathname();
-
-  return (
-    <nav aria-label="Account sections" className="overflow-x-auto">
-      <ul className="flex min-w-max gap-2">
-        {ACCOUNT_SECTIONS.map((section) => {
-          const Icon = section.icon;
-          const isActive =
-            section.href === "/account"
-              ? pathname === "/account"
-              : pathname.startsWith(section.href);
-
-          return (
-            <li key={section.href}>
-              <Link
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border/70 bg-white text-muted-foreground hover:text-foreground"
-                )}
-                href={section.href}
-              >
-                <Icon className="size-4" />
-                {section.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
+export function isAccountSectionActive(href: string, pathname: string) {
+  return href === "/account"
+    ? pathname === "/account"
+    : pathname.startsWith(href);
 }
 
 /**
- * Chrome shared by every collector screen: the section nav plus a heading, so
- * each page supplies only its own body.
+ * Content container for the account screens. The surrounding sidebar and
+ * header come from AccountWorkspaceShell, which SiteShell wraps around every
+ * /account route.
+ */
+export function AccountArea({ children }: { children: ReactNode }) {
+  return <div className="mx-auto w-full max-w-6xl">{children}</div>;
+}
+
+/**
+ * AccountArea plus a heading, so each collector page supplies only its own
+ * body.
  */
 export function AccountShell({
   action,
@@ -95,24 +64,18 @@ export function AccountShell({
   title: string;
 }) {
   return (
-    <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8">
-          <AccountSectionNav />
+    <AccountArea>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-4xl text-foreground sm:text-5xl">{title}</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            {description}
+          </p>
         </div>
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-4xl text-foreground sm:text-5xl">{title}</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              {description}
-            </p>
-          </div>
-          {action}
-        </div>
-
-        <div className="mt-8">{children}</div>
+        {action}
       </div>
-    </section>
+
+      <div className="mt-8">{children}</div>
+    </AccountArea>
   );
 }

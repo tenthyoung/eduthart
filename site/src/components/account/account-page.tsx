@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 
-import { AccountSectionNav } from "@/components/account/account-shell";
+import { AccountArea } from "@/components/account/account-shell";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { ImageCropDialog } from "@/components/account/image-crop-dialog";
 import { ProfileImageField } from "@/components/account/profile-image-field";
@@ -536,14 +536,14 @@ export function AccountPage() {
 
   if (status === "loading" || loading) {
     return (
-      <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-4xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+      <AccountArea>
+        <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your account settings...
           </div>
         </div>
-      </section>
+      </AccountArea>
     );
   }
 
@@ -552,10 +552,8 @@ export function AccountPage() {
   }
 
   return (
-    <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <AccountSectionNav />
-
+    <AccountArea>
+      <div className="space-y-8">
         <div className="space-y-4">
           <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
@@ -1148,6 +1146,6 @@ export function AccountPage() {
           pendingImage?.kind === "avatar" ? AVATAR_CROP_SPEC : BANNER_CROP_SPEC
         }
       />
-    </section>
+    </AccountArea>
   );
 }

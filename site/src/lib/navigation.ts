@@ -1,6 +1,7 @@
 import type { AccountProfile } from "@/lib/auth/account-profile";
 
 export type NavContext =
+  | "account"
   | "admin"
   | "artist-public"
   | "artist-workspace"
@@ -34,6 +35,10 @@ export function extractArtistUsernameFromPath(pathname: string) {
 export function getNavContext(pathname: string): NavContext {
   if (pathname.startsWith("/admin")) {
     return "admin";
+  }
+
+  if (pathname === "/account" || pathname.startsWith("/account/")) {
+    return "account";
   }
 
   if (ARTIST_WORKSPACE_ROUTE.test(pathname)) {

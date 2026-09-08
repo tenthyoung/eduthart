@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { AccountWorkspaceShell } from "@/components/account/account-workspace-shell";
 import { ArtistWorkspaceShell } from "@/components/artist-workspace-shell";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
@@ -17,6 +18,10 @@ export function SiteShell({ children }: SiteShellProps) {
 
   if (navContext === "admin") {
     return <main>{children}</main>;
+  }
+
+  if (navContext === "account") {
+    return <AccountWorkspaceShell>{children}</AccountWorkspaceShell>;
   }
 
   if (navContext === "artist-workspace") {
