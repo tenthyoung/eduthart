@@ -5,6 +5,7 @@ import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ACCOUNT_SECTIONS } from "@/components/account/account-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AsteriskMark } from "@/components/asterisk-mark";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -294,14 +295,8 @@ export function Navbar() {
       >
         <div className="flex items-center justify-between h-20 gap-6">
           {/* Left - Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-3">
-            {/* <Image
-              src="/logo/eduthart-logo.png"
-              alt="EduthArt"
-              width={48}
-              height={48}
-              priority
-            /> */}
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <AsteriskMark className="text-primary" />
             <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
               EduthArt
             </span>
