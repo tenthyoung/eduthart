@@ -18,7 +18,8 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-const SECTIONS = [
+// Shared with the navbar profile dropdown so the two menus never drift apart.
+export const ACCOUNT_SECTIONS = [
   { href: "/account", icon: Settings, label: "Settings" },
   { href: "/account/favorites", icon: Heart, label: "Favorites" },
   { href: "/account/collections", icon: Images, label: "Collections" },
@@ -48,7 +49,7 @@ export function AccountSectionNav() {
   return (
     <nav aria-label="Account sections" className="overflow-x-auto">
       <ul className="flex min-w-max gap-2">
-        {SECTIONS.map((section) => {
+        {ACCOUNT_SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive =
             section.href === "/account"

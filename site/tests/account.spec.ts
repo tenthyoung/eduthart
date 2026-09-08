@@ -19,7 +19,9 @@ test("opens account settings from the desktop profile controls", async ({
   await seedAccount(page, { uid: "desktop-user" });
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Jordan Collector" }).click();
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await expect(page.getByText("Jordan Collector")).toBeVisible();
+  await page.getByRole("menuitem", { name: "Settings" }).click();
 
   await expect(page).toHaveURL(/\/account$/);
   await expect(
@@ -94,11 +96,12 @@ test("shows a navbar link to the personal art page using the chosen username", a
   });
 
   await page.goto("/");
+  await page.getByRole("button", { name: "Account menu" }).click();
   await expect(
-    page.getByRole("link", { name: "@maya-studio" })
+    page.getByRole("menuitem", { name: /@maya-studio/ })
   ).toHaveAttribute("href", "/artists/maya-studio");
 
-  await page.getByRole("link", { name: "@maya-studio" }).click();
+  await page.getByRole("menuitem", { name: /@maya-studio/ }).click();
   await expect(page).toHaveURL(/\/artists\/maya-studio$/);
   await expect(
     page.getByRole("heading", { name: "Maya Studio" })

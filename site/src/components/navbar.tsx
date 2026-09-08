@@ -3,8 +3,17 @@
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ACCOUNT_SECTIONS } from "@/components/account/account-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
 import {
@@ -12,6 +21,7 @@ import {
   ChevronRight,
   CircleUserRound,
   LayoutDashboard,
+  LifeBuoy,
   Linkedin,
   Loader2,
   LogOut,
@@ -47,6 +57,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
@@ -148,6 +159,7 @@ export function Navbar() {
   useEffect(() => {
     if (status !== "authenticated" || !user) {
       setUsername(null);
+      setPhotoURL(null);
       return;
     }
 
@@ -170,10 +182,12 @@ export function Navbar() {
 
         if (!cancelled) {
           setUsername(payload.profile.username ?? null);
+          setPhotoURL(payload.profile.photoURL ?? null);
         }
       } catch {
         if (!cancelled) {
           setUsername(null);
+          setPhotoURL(null);
         }
       }
     };
@@ -232,6 +246,21 @@ export function Navbar() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  // The profile payload wins over the Firebase user so a freshly uploaded
+  // avatar shows up without a re-login; the auth photo covers the first render.
+  const avatarUrl = photoURL ?? user?.photoURL ?? null;
+  const displayLabel = user?.displayName || user?.email || "Account";
+  const profileBadge = (
+    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-primary/10 text-primary">
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-full w-full object-cover" src={avatarUrl} />
+      ) : (
+        <CircleUserRound className="size-5" />
+      )}
+    </span>
+  );
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -326,30 +355,96 @@ export function Navbar() {
                     ) : null}
                   </Link>
                 </Button>
-                {username ? (
-                  <Button asChild size="lg" variant="ghost">
-                    <Link href={`/artists/${username}`}>@{username}</Link>
-                  </Button>
-                ) : null}
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/account">
-                    <CircleUserRound />
-                    {user?.displayName || user?.email || "Account"}
-                  </Link>
-                </Button>
-                <Button
-                  disabled={isSigningOut}
-                  onClick={handleSignOut}
-                  size="lg"
-                  variant="outline"
-                >
-                  {isSigningOut ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <LogOut />
-                  )}
-                  Log out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      aria-label="Account menu"
+                      className="overflow-hidden rounded-full"
+                      size="icon"
+                      variant="outline"
+                    >
+                      {avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          alt=""
+                          className="h-full w-full object-cover"
+                          src={avatarUrl}
+                        />
+                      ) : (
+                        <CircleUserRound />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    {username ? (
+                      <DropdownMenuItem asChild className="p-2">
+                        <Link href={`/artists/${username}`}>
+                          {profileBadge}
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-foreground">
+                              {displayLabel}
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              @{username}
+                            </span>
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuLabel className="flex items-center gap-2 p-2 font-normal">
+                        {profileBadge}
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-foreground">
+                            {displayLabel}
+                          </span>
+                          {user?.email ? (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {user.email}
+                            </span>
+                          ) : null}
+                        </span>
+                      </DropdownMenuLabel>
+                    )}
+                    <DropdownMenuSeparator />
+                    {ACCOUNT_SECTIONS.map((section) => {
+                      const Icon = section.icon;
+
+                      return (
+                        <DropdownMenuItem asChild key={section.href}>
+                          <Link href={section.href}>
+                            <Icon />
+                            {section.label}
+                            {section.href === "/notifications" &&
+                            unreadNotifications > 0 ? (
+                              <span className="ml-auto inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                                {unreadNotifications}
+                              </span>
+                            ) : null}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/contact">
+                        <LifeBuoy />
+                        Customer support
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={isSigningOut}
+                      onSelect={() => void handleSignOut()}
+                    >
+                      {isSigningOut ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <LogOut />
+                      )}
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="hidden items-center gap-2 lg:flex">
