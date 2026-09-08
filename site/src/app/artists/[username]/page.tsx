@@ -9,6 +9,7 @@ import {
   buildProfileDisplayName,
   findAccountProfileByUsername,
 } from "@/lib/auth/profile-store";
+import { EditArtistPageButton } from "@/components/artists/edit-artist-page-button";
 import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
 import { countArtistFollowers } from "@/lib/collectors/follows";
 import { cn } from "@/lib/utils";
@@ -103,6 +104,7 @@ export default async function ArtistPage({
             </div>
 
             <div className="space-y-3">
+              <EditArtistPageButton artistUid={profile.uid} />
               <FollowArtistButton
                 artistName={displayName}
                 artistUid={profile.uid}
