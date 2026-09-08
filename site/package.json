@@ -7,6 +7,8 @@
   },
   "scripts": {
     "check:node": "node ./scripts/check-node.js",
+    "db:seed-fake": "node ./scripts/seed-fake-listings.mjs",
+    "db:delete-fake": "node ./scripts/seed-fake-listings.mjs --delete",
     "dev": "npm run check:node && next dev",
     "dev:turbo": "npm run check:node && next dev --turbopack",
     "build": "npm run check:node && next build",
