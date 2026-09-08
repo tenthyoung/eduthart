@@ -44,12 +44,13 @@ export function CartDrawer() {
       const response = await fetch("/api/cart", {
         headers: { authorization: `Bearer ${await user.getIdToken()}` },
       });
-      const payload = (await response.json()) as {
+      // An errored server can answer with an HTML page, so never assume JSON.
+      const payload = (await response.json().catch(() => null)) as {
         error?: string;
         items?: CartItem[];
-      };
-      if (!response.ok)
-        throw new Error(payload.error || "Unable to load cart.");
+      } | null;
+      if (!response.ok || !payload)
+        throw new Error(payload?.error || "Unable to load cart.");
       setItems(payload.items ?? []);
     } catch (error) {
       toast.error(
@@ -91,12 +92,12 @@ export function CartDrawer() {
       },
       body: JSON.stringify({ itemId }),
     });
-    const payload = (await response.json()) as {
+    const payload = (await response.json().catch(() => null)) as {
       error?: string;
       items?: CartItem[];
-    };
-    if (!response.ok)
-      return toast.error(payload.error || "Unable to remove artwork.");
+    } | null;
+    if (!response.ok || !payload)
+      return toast.error(payload?.error || "Unable to remove artwork.");
     setItems(payload.items ?? []);
   };
 
