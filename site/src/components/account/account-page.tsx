@@ -886,10 +886,6 @@ export function AccountPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Change email
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Open the email update flow in a focused modal instead of
-                      keeping another form in this panel.
-                    </p>
                   </div>
                   <DialogTrigger asChild>
                     <Button className="mt-4" type="button" variant="outline">
