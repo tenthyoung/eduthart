@@ -11,12 +11,10 @@
         "--prefix",
         "site",
         "run",
-        "dev",
-        "--",
-        "--port",
-        "3005"
+        "dev"
       ],
-      "port": 3005
+      "port": 3005,
+      "autoPort": true
     }
   ]
 }
