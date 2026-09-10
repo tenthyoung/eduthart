@@ -67,7 +67,7 @@ const progressPercentage = 20;
 export default function ApplyToBeAnArtistPage() {
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="border-b border-border/70 bg-white">
+      <section className="border-b border-border/70 bg-white dark:bg-background">
         <div className="container mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
           <MotionFade>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -168,7 +168,7 @@ export default function ApplyToBeAnArtistPage() {
           </MotionStaggerFade>
 
           <MotionFade delay={0.4}>
-            <div className="rounded-[2rem] border border-primary/15 bg-white p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
+            <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
               <Heading variant="h2" className="mb-3 text-foreground">
                 Have these ready before you begin
               </Heading>

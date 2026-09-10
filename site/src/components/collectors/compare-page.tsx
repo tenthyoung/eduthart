@@ -95,7 +95,7 @@ export function ComparePage() {
   }, [load]);
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
@@ -134,7 +134,7 @@ export function ComparePage() {
           />
         ) : (
           <div className="w-fit max-w-full overflow-x-auto rounded-[2rem] border border-border/70">
-            <table className="w-full min-w-max border-collapse bg-white">
+            <table className="w-full min-w-max border-collapse bg-white dark:bg-card">
               <thead>
                 <tr>
                   <th className="w-40 border-b border-border/70 p-4 text-left align-bottom text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">

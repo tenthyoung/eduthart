@@ -95,7 +95,7 @@ export function ProfileImageField({
 
       <div
         className={cn(
-          "overflow-hidden border border-dashed border-primary/20 bg-white/70",
+          "overflow-hidden border border-dashed border-primary/20 bg-white/70 dark:bg-card/70",
           circular ? "mx-auto w-40 rounded-full" : "rounded-2xl"
         )}
       >

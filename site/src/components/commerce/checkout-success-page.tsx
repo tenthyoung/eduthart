@@ -80,7 +80,7 @@ export function CheckoutSuccessPage() {
   }, [sessionId, status, user]);
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl space-y-8">
         {confirming ? (
           <div className="flex items-center justify-center gap-3 rounded-[2rem] border border-border/70 p-12 text-muted-foreground">

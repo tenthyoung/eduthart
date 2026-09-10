@@ -57,7 +57,7 @@ export function FollowingPage() {
           {data.map((artist) => (
             <li
               key={artist.artistUid}
-              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white p-5"
+              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white dark:bg-card p-5"
             >
               <div className="min-w-0">
                 <Link

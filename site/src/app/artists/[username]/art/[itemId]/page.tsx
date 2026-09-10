@@ -56,7 +56,7 @@ export default async function PublicArtworkPage({
   }).toString()}`;
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <Link
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -98,7 +98,7 @@ export default async function PublicArtworkPage({
           </section>
 
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <div className="rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_-48px_rgba(47,36,28,0.4)] sm:p-8">
+            <div className="rounded-[2rem] border border-border/60 bg-white dark:bg-card p-6 shadow-[0_30px_80px_-48px_rgba(47,36,28,0.4)] sm:p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">
                 Original artwork
               </p>
@@ -228,7 +228,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function CopySection({ title, copy }: { title: string; copy: string }) {
   return (
-    <section className="rounded-[2rem] border border-border/60 bg-white p-7">
+    <section className="rounded-[2rem] border border-border/60 bg-white dark:bg-card p-7">
       <h2 className="text-2xl text-foreground">{title}</h2>
       <p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">
         {copy}

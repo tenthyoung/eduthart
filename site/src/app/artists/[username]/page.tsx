@@ -47,9 +47,9 @@ export default async function ArtistPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
             <ShareArtistPageButton
               artistName={displayName}
@@ -66,7 +66,7 @@ export default async function ArtistPage({
                 className="h-full w-full object-cover"
                 src={profile.bannerURL}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-card/60 via-transparent to-transparent" />
             </div>
           ) : null}
 
@@ -110,7 +110,7 @@ export default async function ArtistPage({
         </div>
 
         {profile.bio ? (
-          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
               About
             </p>
@@ -120,7 +120,7 @@ export default async function ArtistPage({
           </section>
         ) : null}
 
-        <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
           <div className="max-w-3xl space-y-3">
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
               Gallery
@@ -141,7 +141,7 @@ export default async function ArtistPage({
                     key={item.id}
                     aria-label={`View ${item.artworkDetails.title || "artwork"}`}
                     href={`/artists/${profile.username}/art/${item.id}`}
-                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <div className="aspect-[4/3] overflow-hidden bg-muted/30">
                       {item.media.mainImageUrl ? (
