@@ -102,8 +102,7 @@
 }
 
 :root {
-  --font-geist:
-    "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-geist: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-outfit:
     "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-jetbrains-mono:

@@ -32,9 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geist.variable} ${outfit.variable} antialiased`}
-      >
+      <body className={`${geist.variable} ${outfit.variable} antialiased`}>
         <AuthProvider>
           <ThemeProvider defaultTheme="light">
             <LocomotiveScrollProvider>
