@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 
 import { type ListingItemDraft } from "@/lib/artists/listing-flow";
 import { listPublishedArtworks } from "@/lib/artists/listing-store";
-import { buildArtistPageHref } from "@/lib/auth/account-profile";
 import {
   buildProfileDisplayName,
   findAccountProfileByUsername,
 } from "@/lib/auth/profile-store";
 import { EditArtistPageButton } from "@/components/artists/edit-artist-page-button";
+import { ShareArtistPageButton } from "@/components/artists/share-artist-page-button";
 import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
 import { countArtistFollowers } from "@/lib/collectors/follows";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,15 @@ export default async function ArtistPage({
   return (
     <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
+            <ShareArtistPageButton
+              artistName={displayName}
+              username={profile.username}
+            />
+            <EditArtistPageButton artistUid={profile.uid} />
+          </div>
+
           {profile.bannerURL ? (
             <div className="relative aspect-[3/1] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -103,23 +111,11 @@ export default async function ArtistPage({
               </div>
             </div>
 
-            <div className="space-y-3">
-              <EditArtistPageButton artistUid={profile.uid} />
-              <FollowArtistButton
-                artistName={displayName}
-                artistUid={profile.uid}
-                username={profile.username}
-              />
-              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
-                Personal art page URL:{" "}
-                <Link
-                  className="font-medium text-foreground underline decoration-primary/30 underline-offset-4"
-                  href={buildArtistPageHref(profile.username)}
-                >
-                  {buildArtistPageHref(profile.username)}
-                </Link>
-              </div>
-            </div>
+            <FollowArtistButton
+              artistName={displayName}
+              artistUid={profile.uid}
+              username={profile.username}
+            />
           </div>
         </div>
 
