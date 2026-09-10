@@ -106,7 +106,9 @@ test("shows a navbar link to the personal art page using the chosen username", a
   await expect(
     page.getByRole("heading", { name: "Maya Studio" })
   ).toBeVisible();
-  await expect(page.getByText("Personal art page URL:")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Share this page" })
+  ).toBeVisible();
 });
 
 test("crops, uploads, and removes a profile banner from account settings", async ({
@@ -202,12 +204,13 @@ test("updates the account email from account settings and persists it across rel
     page.getByText("Your email address has been updated.")
   ).toBeVisible();
   await expect(page.getByLabel("New email address")).toHaveCount(0);
-  await expect(page.getByText("new.address@example.com")).toHaveCount(2);
+  // Header card, profile section, and the account sidebar footer.
+  await expect(page.getByText("new.address@example.com")).toHaveCount(3);
 
   await page.reload();
 
   await page.getByRole("button", { name: "Change email address" }).click();
-  await expect(page.getByText("new.address@example.com")).toHaveCount(2);
+  await expect(page.getByText("new.address@example.com")).toHaveCount(3);
   await expect(page.getByLabel("New email address")).toHaveValue(
     "new.address@example.com"
   );
