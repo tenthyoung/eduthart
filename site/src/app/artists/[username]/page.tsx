@@ -8,6 +8,7 @@ import {
   buildProfileDisplayName,
   findAccountProfileByUsername,
 } from "@/lib/auth/profile-store";
+import { ArtistAvatar } from "@/components/artists/artist-avatar";
 import { EditArtistPageButton } from "@/components/artists/edit-artist-page-button";
 import { ShareArtistPageButton } from "@/components/artists/share-artist-page-button";
 import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
@@ -71,23 +72,12 @@ export default async function ArtistPage({
 
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8">
             <div className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg",
-                  profile.bannerURL && "-mt-16"
-                )}
-              >
-                {profile.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                    src={profile.photoURL}
-                  />
-                ) : (
-                  (displayName.trim()[0] ?? "@").toUpperCase()
-                )}
-              </div>
+              <ArtistAvatar
+                artistUid={profile.uid}
+                className={cn(profile.bannerURL && "-mt-16")}
+                displayName={displayName}
+                photoURL={profile.photoURL}
+              />
               <div className="space-y-1">
                 <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
                   Artist Page

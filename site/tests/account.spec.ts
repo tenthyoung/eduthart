@@ -147,6 +147,97 @@ test("crops, uploads, and removes a profile banner from account settings", async
   await expect(page.getByText("No banner uploaded yet.")).toBeVisible();
 });
 
+test("uploads and removes a profile picture through the avatar modal", async ({
+  page,
+}) => {
+  await seedAccount(page, { uid: "avatar-user" });
+
+  await page.goto("/account");
+  await page
+    .getByRole("button", { name: "Change profile picture" })
+    .first()
+    .click();
+
+  await expect(
+    page.getByRole("heading", { name: "Profile picture" })
+  ).toBeVisible();
+  await expect(page.getByText("No profile picture yet.")).toBeVisible();
+
+  await page.getByLabel("Upload profile picture").setInputFiles({
+    mimeType: "image/png",
+    name: "avatar.png",
+    buffer: TINY_PNG,
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "Position your profile picture" })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Save picture" }).click();
+
+  await expect(
+    page.getByText("Your profile picture has been updated.")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Profile picture preview", exact: true })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Remove picture" }).click();
+  await expect(
+    page.getByText("Your profile picture has been removed.")
+  ).toBeVisible();
+  await expect(page.getByText("No profile picture yet.")).toBeVisible();
+});
+
+test("lets the artist change their picture from their own artist page", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "artist-avatar-user",
+    displayName: "Pia Painter",
+    username: "pia-painter",
+  });
+
+  await page.goto("/artists/pia-painter");
+  await page
+    .getByRole("button", { name: "Change your profile picture" })
+    .click();
+
+  await page.getByLabel("Upload profile picture").setInputFiles({
+    mimeType: "image/png",
+    name: "avatar.png",
+    buffer: TINY_PNG,
+  });
+  await page.getByRole("button", { name: "Save picture" }).click();
+
+  await expect(
+    page.getByText("Your profile picture has been updated.")
+  ).toBeVisible();
+});
+
+test("shows a plain avatar on an artist page the visitor does not own", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "artist-avatar-owner",
+    displayName: "Nia Sculptor",
+    username: "nia-sculptor",
+  });
+
+  // Sign out by clearing the e2e user, then view the page as a visitor.
+  await page.evaluate(() => {
+    window.localStorage.removeItem("eduthart:e2e-user");
+    window.dispatchEvent(new Event("eduthart:e2e-auth-changed"));
+  });
+
+  await page.goto("/artists/nia-sculptor");
+  await expect(
+    page.getByRole("heading", { name: "Nia Sculptor" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Change your profile picture" })
+  ).toHaveCount(0);
+});
+
 test("sends a password reset action for password users", async ({ page }) => {
   await seedAccount(page, {
     uid: "password-user",
