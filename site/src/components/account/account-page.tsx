@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   BadgeCheck,
+  Camera,
   Loader2,
   LogOut,
   Mail,
@@ -22,6 +23,7 @@ import { AccountArea } from "@/components/account/account-shell";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { ImageCropDialog } from "@/components/account/image-crop-dialog";
 import { ProfileImageField } from "@/components/account/profile-image-field";
+import { ProfilePictureDialog } from "@/components/account/profile-picture-dialog";
 import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -46,8 +48,6 @@ import {
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
 import {
-  AVATAR_CROP_SPEC,
-  AVATAR_DIMENSIONS_LABEL,
   BANNER_CROP_SPEC,
   BANNER_DIMENSIONS_LABEL,
 } from "@/lib/profile/images";
@@ -59,8 +59,6 @@ const PROVIDER_LABELS: Record<string, string> = {
   "google.com": "Google",
   password: "Email and password",
 };
-
-type PendingImage = { file: File; kind: "avatar" | "banner" };
 
 function formatAccountDate(value: string | null) {
   if (!value) {
@@ -119,14 +117,13 @@ export function AccountPage() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
+  const [isPictureDialogOpen, setIsPictureDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingUsername, setSavingUsername] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState<
-    "avatar" | "banner" | null
-  >(null);
-  const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [pendingBanner, setPendingBanner] = useState<File | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [refreshingVerification, setRefreshingVerification] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -317,29 +314,26 @@ export function AccountPage() {
     }
   };
 
-  const handleCroppedImage = async (file: File) => {
-    if (!user || !pendingImage) {
+  const handleCroppedBanner = async (file: File) => {
+    if (!user) {
       return;
     }
 
-    const { kind } = pendingImage;
-    setUploadingImage(kind);
+    setUploadingBanner(true);
     setError(null);
 
     try {
       const url = await uploadProfileImage({
         file,
-        folder: kind === "banner" ? "profile-banners" : "profile-pictures",
+        folder: "profile-banners",
         uid: user.uid,
       });
 
       await patchProfile(
-        kind === "banner" ? { bannerURL: url } : { photoURL: url },
-        kind === "banner"
-          ? "Your profile banner has been updated."
-          : "Your profile picture has been updated."
+        { bannerURL: url },
+        "Your profile banner has been updated."
       );
-      setPendingImage(null);
+      setPendingBanner(null);
     } catch (uploadError) {
       const message =
         uploadError instanceof Error
@@ -348,20 +342,18 @@ export function AccountPage() {
       setError(message);
       toast.error(message);
     } finally {
-      setUploadingImage(null);
+      setUploadingBanner(false);
     }
   };
 
-  const handleRemoveImage = async (kind: "avatar" | "banner") => {
-    setUploadingImage(kind);
+  const handleRemoveBanner = async () => {
+    setUploadingBanner(true);
     setError(null);
 
     try {
       await patchProfile(
-        kind === "banner" ? { bannerURL: null } : { photoURL: null },
-        kind === "banner"
-          ? "Your profile banner has been removed."
-          : "Your profile picture has been removed."
+        { bannerURL: null },
+        "Your profile banner has been removed."
       );
     } catch (removeError) {
       const message =
@@ -371,7 +363,7 @@ export function AccountPage() {
       setError(message);
       toast.error(message);
     } finally {
-      setUploadingImage(null);
+      setUploadingBanner(false);
     }
   };
 
@@ -573,11 +565,14 @@ export function AccountPage() {
 
             <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
               <div className="flex items-center gap-4">
-                <div
+                <button
+                  aria-label="Change profile picture"
                   className={cn(
-                    "flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg",
+                    "group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                     profile?.bannerURL && "-mt-16"
                   )}
+                  onClick={() => setIsPictureDialogOpen(true)}
+                  type="button"
                 >
                   {profile?.photoURL ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -589,7 +584,10 @@ export function AccountPage() {
                   ) : (
                     initialsForProfile(profile, user?.email)
                   )}
-                </div>
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <Camera className="size-6 text-white" />
+                  </span>
+                </button>
                 <div className="space-y-1">
                   <h1 className="text-4xl text-foreground sm:text-5xl">
                     {displayNamePreview}
@@ -727,34 +725,37 @@ export function AccountPage() {
               )}
             </div>
 
-            <ProfileImageField
-              aspectClassName="aspect-square"
-              busy={uploadingImage === "avatar"}
-              circular
-              description="Your picture appears next to your name across EduthArt. You can reposition and zoom before saving."
-              emptyLabel="No profile picture yet."
-              helpText={`Use a JPG, PNG, or WebP image up to 5 MB, ideally at least ${AVATAR_DIMENSIONS_LABEL} pixels.`}
-              imageUrl={profile?.photoURL ?? null}
-              inputId="profile-picture-upload"
-              onError={handleImageError}
-              onRemove={() => void handleRemoveImage("avatar")}
-              onSelect={(file) => setPendingImage({ file, kind: "avatar" })}
-              removeLabel="Remove picture"
-              title="Profile picture"
-              uploadLabel="Upload profile picture"
-            />
+            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Profile picture
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your picture appears next to your name across EduthArt. Click
+                your photo above to change it.
+              </p>
+              <Button
+                className="mt-3"
+                onClick={() => setIsPictureDialogOpen(true)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Camera />
+                Change profile picture
+              </Button>
+            </div>
 
             <ProfileImageField
               aspectClassName="aspect-[3/1]"
-              busy={uploadingImage === "banner"}
+              busy={uploadingBanner}
               description={`Add a wide image for the personal page where people can view your art. Banners are saved at ${BANNER_DIMENSIONS_LABEL} pixels (3:1).`}
               emptyLabel="No banner uploaded yet."
               helpText={`Use a JPG, PNG, or WebP image up to 5 MB. For the sharpest result, start from an image at least ${BANNER_DIMENSIONS_LABEL} pixels.`}
               imageUrl={profile?.bannerURL ?? null}
               inputId="profile-banner-upload"
               onError={handleImageError}
-              onRemove={() => void handleRemoveImage("banner")}
-              onSelect={(file) => setPendingImage({ file, kind: "banner" })}
+              onRemove={() => void handleRemoveBanner()}
+              onSelect={setPendingBanner}
               removeLabel="Remove banner"
               title="Profile banner"
               uploadLabel="Upload profile banner"
@@ -1138,13 +1139,18 @@ export function AccountPage() {
         </section>
       </div>
 
+      <ProfilePictureDialog
+        onOpenChange={setIsPictureDialogOpen}
+        onProfileUpdated={setProfile}
+        open={isPictureDialogOpen}
+        photoURL={profile?.photoURL ?? null}
+      />
+
       <ImageCropDialog
-        file={pendingImage?.file ?? null}
-        onCancel={() => setPendingImage(null)}
-        onCropped={handleCroppedImage}
-        spec={
-          pendingImage?.kind === "avatar" ? AVATAR_CROP_SPEC : BANNER_CROP_SPEC
-        }
+        file={pendingBanner}
+        onCancel={() => setPendingBanner(null)}
+        onCropped={handleCroppedBanner}
+        spec={BANNER_CROP_SPEC}
       />
     </AccountArea>
   );
