@@ -131,6 +131,7 @@ test("tells a collector when artwork they saved is sold to someone else", async 
 
   await page.goto(artwork.href);
   await page.getByRole("button", { name: "Add to cart" }).click();
+  await expect(page.getByText("Artwork added to your cart.")).toBeVisible();
   await page.goto("/checkout");
   await page.getByRole("button", { name: "Pay with Stripe" }).click();
   await expect(
@@ -177,6 +178,7 @@ test("bills the card to the shipping address when the collector asks it to", asy
 
   await page.goto(artwork.href);
   await page.getByRole("button", { name: "Add to cart" }).click();
+  await expect(page.getByText("Artwork added to your cart.")).toBeVisible();
   await page.goto("/checkout");
 
   // A saved billing address is used as-is until the collector says otherwise.
@@ -221,6 +223,7 @@ test("refuses to check out without a shipping address", async ({ page }) => {
 
   await page.goto(artwork.href);
   await page.getByRole("button", { name: "Add to cart" }).click();
+  await expect(page.getByText("Artwork added to your cart.")).toBeVisible();
   await page.goto("/checkout");
 
   await expect(page.getByText("Add a shipping address")).toBeVisible();
