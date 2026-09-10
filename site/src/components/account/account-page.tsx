@@ -569,7 +569,7 @@ export function AccountPage() {
                   aria-label="Change profile picture"
                   className={cn(
                     "group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                    profile?.bannerURL && "-mt-16"
+                    profile?.bannerURL && "-mt-16 self-start"
                   )}
                   onClick={() => setIsPictureDialogOpen(true)}
                   type="button"
