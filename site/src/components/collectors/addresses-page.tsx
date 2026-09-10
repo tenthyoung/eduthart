@@ -192,7 +192,7 @@ export function AddressesPage() {
                   {addresses.map((address) => (
                     <li
                       key={address.id}
-                      className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white p-5"
+                      className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white dark:bg-card p-5"
                     >
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">

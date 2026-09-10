@@ -84,9 +84,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(136,98,247,0.18),_transparent_32%),linear-gradient(180deg,#faf8ff_0%,#f3f4f6_100%)] text-foreground">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(136,98,247,0.18),_transparent_32%),linear-gradient(180deg,#faf8ff_0%,#f3f4f6_100%)] text-foreground dark:bg-[radial-gradient(circle_at_top,_rgba(136,98,247,0.12),_transparent_32%),linear-gradient(180deg,#26232e_0%,#1f1f1f_100%)]">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-6 px-4 py-4 lg:px-6">
-        <aside className="hidden w-72 shrink-0 rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:flex lg:flex-col">
+        <aside className="hidden w-72 shrink-0 rounded-[28px] border border-white/70 bg-white/85 dark:border-border dark:bg-card/85 p-5 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:flex lg:flex-col">
           <div className="mb-8">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
               EduthArt Internal
@@ -146,7 +146,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <div className="rounded-[28px] border border-white/70 bg-white/85 px-5 py-4 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:hidden">
+          <div className="rounded-[28px] border border-white/70 bg-white/85 dark:border-border dark:bg-card/85 px-5 py-4 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:hidden">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-primary">
@@ -203,7 +203,7 @@ export function AdminPage({
 }) {
   return (
     <section className="space-y-6">
-      <header className="rounded-[28px] border border-white/70 bg-white/85 p-6 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur">
+      <header className="rounded-[28px] border border-white/70 bg-white/85 dark:border-border dark:bg-card/85 p-6 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
@@ -234,7 +234,7 @@ export function AdminCard({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-white/70 bg-white/90 p-6 shadow-[0_18px_60px_rgba(91,64,182,0.08)] backdrop-blur",
+        "rounded-[28px] border border-white/70 bg-white/90 dark:border-border dark:bg-card/90 p-6 shadow-[0_18px_60px_rgba(91,64,182,0.08)] backdrop-blur",
         className
       )}
     >
@@ -287,7 +287,7 @@ export function AdminEmptyState({
 export function AdminLoadingState({ label }: { label: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#faf8ff_0%,#f3f4f6_100%)] px-6">
-      <div className="rounded-[28px] border border-white/70 bg-white/90 px-8 py-10 text-center shadow-[0_18px_60px_rgba(91,64,182,0.10)]">
+      <div className="rounded-[28px] border border-white/70 bg-white/90 dark:border-border dark:bg-card/90 px-8 py-10 text-center shadow-[0_18px_60px_rgba(91,64,182,0.10)]">
         <div className="mx-auto mb-4 size-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
         <p className="text-sm text-muted-foreground">{label}</p>
       </div>
@@ -310,7 +310,7 @@ export function AdminCenteredState({
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#faf8ff_0%,#f3f4f6_100%)] px-6">
-      <div className="w-full max-w-xl rounded-[32px] border border-white/70 bg-white/90 p-8 shadow-[0_18px_60px_rgba(91,64,182,0.10)]">
+      <div className="w-full max-w-xl rounded-[32px] border border-white/70 bg-white/90 dark:border-border dark:bg-card/90 p-8 shadow-[0_18px_60px_rgba(91,64,182,0.10)]">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
           EduthArt Internal
         </p>

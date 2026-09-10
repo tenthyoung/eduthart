@@ -241,7 +241,7 @@ export default function SignupPage() {
           verb="Sign up with"
         />
 
-        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white to-secondary/45 p-5">
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white dark:via-card to-secondary/45 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
             For Artists
           </p>

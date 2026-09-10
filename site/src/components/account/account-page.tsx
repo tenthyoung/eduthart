@@ -537,7 +537,7 @@ export function AccountPage() {
   if (status === "loading" || loading) {
     return (
       <AccountArea>
-        <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 dark:border-border dark:bg-card/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your account settings...
@@ -555,10 +555,10 @@ export function AccountPage() {
     <AccountArea>
       <div className="space-y-8">
         <div className="space-y-4">
-          <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
+          <div className="inline-flex rounded-full border border-primary/15 bg-white/80 dark:bg-card/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
             Account Settings
           </div>
-          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
             {profile?.bannerURL ? (
               <div className="relative aspect-[3/1] w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -567,7 +567,7 @@ export function AccountPage() {
                   className="h-full w-full object-cover"
                   src={profile.bannerURL}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-card/60 via-transparent to-transparent" />
               </div>
             ) : null}
 
@@ -636,7 +636,7 @@ export function AccountPage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+          <section className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <UserRound className="size-5 text-primary" />
@@ -862,7 +862,7 @@ export function AccountPage() {
           </section>
 
           <div className="space-y-6">
-            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="size-5 text-primary" />
                 <h2 className="text-2xl text-foreground">Security</h2>
@@ -1064,7 +1064,7 @@ export function AccountPage() {
               </Button>
             </section>
 
-            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="size-5 text-primary" />
                 <h2 className="text-2xl text-foreground">
@@ -1096,7 +1096,7 @@ export function AccountPage() {
           </div>
         </div>
 
-        <section className="space-y-5 rounded-[2rem] border border-destructive/20 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <section className="space-y-5 rounded-[2rem] border border-destructive/20 bg-white/92 dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
           <div className="flex items-center gap-3 text-destructive">
             <AlertTriangle className="size-5" />
             <h2 className="text-2xl">Delete account</h2>

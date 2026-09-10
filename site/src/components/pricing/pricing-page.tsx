@@ -13,7 +13,7 @@ export function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="relative overflow-hidden bg-white">
+      <section className="relative overflow-hidden bg-white dark:bg-background">
         <div className="relative container mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-4 py-2 text-sm font-medium text-primary">
