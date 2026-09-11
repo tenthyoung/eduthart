@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { CART_OPEN_EVENT } from "@/components/commerce/cart-drawer";
+import { collectorRequest } from "@/lib/collectors/client";
 
 export function AddToCartButton({
   itemId,
@@ -29,19 +30,10 @@ export function AddToCartButton({
     }
     setAdding(true);
     try {
-      const response = await fetch("/api/cart", {
+      await collectorRequest<unknown>("/api/cart", await user.getIdToken(), {
+        body: { itemId, username },
         method: "POST",
-        headers: {
-          authorization: `Bearer ${await user.getIdToken()}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ itemId, username }),
       });
-      const payload = (await response.json().catch(() => null)) as {
-        error?: string;
-      } | null;
-      if (!response.ok || !payload)
-        throw new Error(payload?.error || "Unable to add artwork to cart.");
       toast.success("Artwork added to your cart.");
       window.dispatchEvent(new Event(CART_OPEN_EVENT));
     } catch (error) {
