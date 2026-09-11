@@ -344,8 +344,18 @@ export async function PATCH(request: Request) {
       session.user.email ||
       null;
     const updatedAt = new Date().toISOString();
+    const authProviders = session.user.providerData
+      .map((provider) => provider.providerId)
+      .filter(Boolean);
 
     const payload: Record<string, unknown> = {
+      // Restore the identity fields on every edit so a document that was
+      // recreated by a PATCH after deletion heals instead of staying thin.
+      uid: session.uid,
+      ...(session.user.email
+        ? { email: session.user.email.trim().toLowerCase() }
+        : {}),
+      ...(authProviders.length > 0 ? { authProviders } : {}),
       displayName,
       updatedAt,
       ...(body.bannerURL !== undefined ? { bannerURL } : {}),
