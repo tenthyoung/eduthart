@@ -176,14 +176,17 @@ function notifyE2EAuthChanged() {
   window.dispatchEvent(new Event(E2E_AUTH_EVENT));
 }
 
-function formatAuthError(error: unknown, fallbackMessage: string) {
-  const code =
-    typeof error === "object" &&
+function getAuthErrorCode(error: unknown) {
+  return typeof error === "object" &&
     error !== null &&
     "code" in error &&
     typeof error.code === "string"
-      ? error.code
-      : null;
+    ? error.code
+    : null;
+}
+
+function formatAuthError(error: unknown, fallbackMessage: string) {
+  const code = getAuthErrorCode(error);
 
   if (code === "auth/email-already-in-use") {
     return "That email address is already in use by another account.";
@@ -216,11 +219,43 @@ function formatAuthError(error: unknown, fallbackMessage: string) {
     return "That sign-in method is not enabled for EduthArt yet.";
   }
 
+  if (code === "auth/network-request-failed") {
+    return "We could not reach the sign-in service. Check your connection and try again.";
+  }
+
+  if (code === "auth/too-many-requests") {
+    return "Too many attempts. Wait a few minutes before trying again.";
+  }
+
+  // An unmapped Firebase code would surface as an opaque
+  // "Firebase: Error (auth/...)" string, so prefer the fallback for those.
+  if (code !== null) {
+    return fallbackMessage;
+  }
+
   if (error instanceof Error && error.message) {
     return error.message;
   }
 
   return fallbackMessage;
+}
+
+function formatSignInError(error: unknown) {
+  const code = getAuthErrorCode(error);
+
+  if (
+    code === "auth/invalid-credential" ||
+    code === "auth/wrong-password" ||
+    code === "auth/user-not-found"
+  ) {
+    return "That email and password combination is not correct.";
+  }
+
+  if (code === "auth/user-disabled") {
+    return "This account has been disabled. Contact support if you need help.";
+  }
+
+  return formatAuthError(error, "Unable to sign you in.");
 }
 
 async function persistUserRecord(
@@ -313,11 +348,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
       const auth = await getFirebaseAuth();
-      const credential = await signInWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
+      let credential;
+
+      try {
+        credential = await signInWithEmailAndPassword(
+          auth,
+          email.trim(),
+          password
+        );
+      } catch (error) {
+        throw new Error(formatSignInError(error));
+      }
+
       setUser(mapFirebaseUser(credential.user));
       setStatus("authenticated");
     },
@@ -337,11 +379,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password: string;
     }) => {
       const auth = await getFirebaseAuth();
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
+      let credential;
+
+      try {
+        credential = await createUserWithEmailAndPassword(
+          auth,
+          email.trim(),
+          password
+        );
+      } catch (error) {
+        throw new Error(
+          formatAuthError(error, "Unable to create your account.")
+        );
+      }
 
       const displayName = buildDisplayName(firstName, lastName);
 

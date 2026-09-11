@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import {
   AdminCenteredState,
@@ -11,14 +14,37 @@ import {
 import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+
+const adminLoginFormSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type AdminLoginFormData = z.infer<typeof adminLoginFormSchema>;
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { error, signIn, status } = useAdminAuth();
-  const [email, setEmail] = useState("izzy@hendecalabs.com");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+
+  const form = useForm<AdminLoginFormData>({
+    resolver: zodResolver(adminLoginFormSchema),
+    defaultValues: {
+      email: "izzy@hendecalabs.com",
+      password: "",
+    },
+  });
 
   useEffect(() => {
     if (status === "ready") {
@@ -30,16 +56,12 @@ export default function AdminLoginPage() {
     return <AdminLoadingState label="Preparing admin sign-in..." />;
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
+  const onSubmit = async ({ email, password }: AdminLoginFormData) => {
     try {
       await signIn(email, password);
       router.replace("/admin");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sign in failed.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -48,43 +70,65 @@ export default function AdminLoginPage() {
       title="Sign in to the admin console"
       description="Use your Firebase account for the live EduthArt project. Admin access is verified server-side before the console is opened."
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="email">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium" htmlFor="email">
+                  Email
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="password">
-            Password
-          </label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium" htmlFor="password">
+                  Password
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        {error ? (
-          <Alert variant="destructive">
-            <AlertTitle>Sign-in failed</AlertTitle>
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-        ) : null}
-        <Button className="w-full" size="lg" disabled={submitting}>
-          {submitting ? "Signing in..." : "Open admin console"}
-        </Button>
-      </form>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertTitle>Sign-in failed</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          ) : null}
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting
+              ? "Signing in..."
+              : "Open admin console"}
+          </Button>
+        </form>
+      </Form>
     </AdminCenteredState>
   );
 }
