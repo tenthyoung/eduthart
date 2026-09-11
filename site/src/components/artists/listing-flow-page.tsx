@@ -54,6 +54,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { parseApiError } from "@/lib/api/parse-api-error";
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
@@ -315,14 +316,6 @@ const ARTWORK_DETAIL_HELP: Record<
     examples: ["Draft", "Public", "Unlisted"],
   },
 };
-
-async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: string };
-  } | null;
-
-  return payload?.error?.message ?? fallbackMessage;
-}
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {

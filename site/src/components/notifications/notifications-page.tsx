@@ -23,6 +23,7 @@ import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { parseApiError } from "@/lib/api/parse-api-error";
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import {
@@ -49,14 +50,6 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
   password_changed: KeyRound,
   saved_artwork_sold: ImageIcon,
 };
-
-async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: string };
-  } | null;
-
-  return payload?.error?.message ?? fallbackMessage;
-}
 
 function formatNotificationDate(value: string) {
   const date = new Date(value);
