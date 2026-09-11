@@ -3,20 +3,19 @@ import { expect, test } from "@playwright/test";
 import { createAccount, seedPublishedArtwork } from "./support/accounts";
 
 /**
- * Publish one original for an artist created just for this test.
+ * What the browser has to get right about discovery: the hero's controls build
+ * the query string, and the browse page renders what comes back for it.
  *
- * The store is shared across the suite and the homepage lists everything that
- * is for sale, so each test seeds its own titles and asserts on those rather
- * than on totals it does not control.
+ * Which artwork a given query, category, or budget actually matches is settled
+ * in tests/integration/discovery.test.ts, against the same index this page
+ * reads. Re-checking each filter through a page load only bought slower proof
+ * of the same thing.
  */
+
+/** Publish one original for an artist created just for this test. */
 async function seedArtwork(
   page: import("@playwright/test").Page,
-  options: {
-    category?: string;
-    price?: string;
-    suffix: string;
-    title: string;
-  }
+  options: { category?: string; price?: string; suffix: string; title: string }
 ) {
   const artist = await createAccount(page, {
     displayName: "Marina Vale",
@@ -60,9 +59,6 @@ test("the homepage shows available art and its categories", async ({
   await expect(
     categories.getByRole("link", { name: "Painting artwork" })
   ).toBeVisible();
-  await expect(
-    categories.getByRole("link", { name: "Sculpture artwork" })
-  ).toBeVisible();
 
   // A category tile narrows the gallery to that category.
   await categories.getByRole("link", { name: "Sculpture artwork" }).click();
@@ -73,25 +69,28 @@ test("the homepage shows available art and its categories", async ({
   ).toBeHidden();
 });
 
-test("searching from the homepage returns the matching artwork", async ({
+test("the hero's search box and budget filter build the browse query", async ({
   page,
 }) => {
   await seedArtwork(page, {
+    price: "400",
     suffix: "search-match",
     title: "Marsh Lantern",
   });
   await seedArtwork(page, {
+    price: "8200",
     suffix: "search-miss",
     title: "Quarry Steps",
   });
 
   await page.goto("/");
   await page.getByLabel("Search artwork").fill("marsh lantern");
+  await page.getByLabel("Budget").click();
+  await page.getByRole("option", { name: "Under $500" }).click();
   await page.getByRole("button", { name: "Search" }).click();
 
-  await expect(page).toHaveURL(/\/browse\?q=marsh\+lantern/);
+  await expect(page).toHaveURL(/\/browse\?q=marsh\+lantern&budget=under-500/);
   await expect(page.getByRole("link", { name: "Marsh Lantern" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Quarry Steps" })).toBeHidden();
   await expect(page.getByText("1 artwork for “marsh lantern”")).toBeVisible();
 });
 
@@ -113,32 +112,4 @@ test("a search that matches nothing explains itself and offers a way back", asyn
   await page.getByRole("link", { name: "See all available art" }).click();
   await expect(page).toHaveURL("/browse");
   await expect(page.getByRole("link", { name: "Copper Hollow" })).toBeVisible();
-});
-
-test("the budget filter keeps only artwork inside the band", async ({
-  page,
-}) => {
-  await seedArtwork(page, {
-    price: "400",
-    suffix: "budget-low",
-    title: "Small Study In Grey",
-  });
-  await seedArtwork(page, {
-    price: "8200",
-    suffix: "budget-high",
-    title: "Large Study In Grey",
-  });
-
-  await page.goto("/");
-  await page.getByLabel("Search artwork").fill("study in grey");
-  await page.getByLabel("Budget").click();
-  await page.getByRole("option", { name: "Under $500" }).click();
-  await page.getByRole("button", { name: "Search" }).click();
-
-  await expect(
-    page.getByRole("link", { name: "Small Study In Grey" })
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Large Study In Grey" })
-  ).toBeHidden();
 });
