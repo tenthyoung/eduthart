@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -11,9 +12,14 @@ import { collectorRequest } from "@/lib/collectors/client";
  * Load and mutate one collector API resource.
  *
  * All the collector screens follow the same shape: send the visitor to sign in
- * if they are not, fetch once on mount, then re-render from whatever the API
+ * if they are not, fetch on mount, then re-render from whatever the API
  * returns after each mutation. Sharing that here keeps the pages down to their
  * own markup, and means a mutation never has to guess the new state locally.
+ *
+ * Backed by React Query, so a resource fetched once is cached per user and
+ * path: navigating back to a page paints the cached data immediately and
+ * revalidates in the background, and each mutation writes the payload the API
+ * returns straight into that cache.
  */
 export function useCollectorResource<T>({
   initialData,
@@ -27,59 +33,48 @@ export function useCollectorResource<T>({
   signInPath: string;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { status, user } = useAuth();
-  const [data, setData] = useState<T>(initialData);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const selectRef = useRef(select);
   selectRef.current = select;
+  const initialDataRef = useRef(initialData);
+  initialDataRef.current = initialData;
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace(`/login?next=${encodeURIComponent(signInPath)}`);
-      return;
     }
+  }, [router, signInPath, status]);
 
-    if (status !== "authenticated" || !user) {
-      return;
-    }
+  const queryKey = ["collector", path, user?.uid];
 
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const payload = await collectorRequest<Record<string, unknown>>(
-          path,
-          await user.getIdToken()
-        );
-
-        if (!cancelled) {
-          setData(selectRef.current(payload));
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Unable to load this page."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+  const query = useQuery<T>({
+    enabled: status === "authenticated" && Boolean(user),
+    queryKey,
+    queryFn: async () => {
+      if (!user) {
+        throw new Error("You need to be signed in to load this page.");
       }
-    };
 
-    void load();
+      const payload = await collectorRequest<Record<string, unknown>>(
+        path,
+        await user.getIdToken()
+      );
+      return selectRef.current(payload);
+    },
+  });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [path, router, signInPath, status, user]);
+  const setData = useCallback(
+    (action: T | ((current: T) => T)) => {
+      queryClient.setQueryData<T>(["collector", path, user?.uid], (current) => {
+        const base = current ?? initialDataRef.current;
+        return typeof action === "function"
+          ? (action as (value: T) => T)(base)
+          : action;
+      });
+    },
+    [path, queryClient, user?.uid]
+  );
 
   const mutate = useCallback(
     async (
@@ -97,7 +92,15 @@ export function useCollectorResource<T>({
           { body: init.body, method: init.method }
         );
 
-        setData(selectRef.current(payload));
+        // A background refetch that started before this mutation could land
+        // after it and overwrite the fresh payload with pre-mutation data.
+        await queryClient.cancelQueries({
+          queryKey: ["collector", path, user.uid],
+        });
+        queryClient.setQueryData<T>(
+          ["collector", path, user.uid],
+          selectRef.current(payload)
+        );
 
         if (successMessage) {
           toast.success(successMessage);
@@ -113,14 +116,21 @@ export function useCollectorResource<T>({
         return false;
       }
     },
-    [path, user]
+    [path, queryClient, user]
   );
 
+  const loading = status !== "authenticated" || query.isPending;
+
   return {
-    data,
-    error,
-    isReady: status === "authenticated" && !loading,
-    loading: loading || status === "loading",
+    data: query.data ?? initialData,
+    error:
+      query.error === null
+        ? null
+        : query.error instanceof Error
+          ? query.error.message
+          : "Unable to load this page.",
+    isReady: status === "authenticated" && !query.isPending,
+    loading,
     setData,
     mutate,
     user,
