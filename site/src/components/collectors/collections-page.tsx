@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Check,
   Copy,
@@ -13,7 +14,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { AccountShell } from "@/components/account/account-shell";
 import {
@@ -23,10 +26,23 @@ import {
 import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
 import type { ArtworkCollection } from "@/lib/collectors/collections";
+
+const collectionNameSchema = z.object({
+  name: z.string().min(1, "Collection name is required"),
+});
+
+type CollectionNameValues = z.infer<typeof collectionNameSchema>;
 
 function buildShareUrl(shareId: string) {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
@@ -42,9 +58,37 @@ export function CollectionsPage() {
     select: (payload) => (payload.collections as ArtworkCollection[]) ?? [],
     signInPath: "/account/collections",
   });
-  const [newName, setNewName] = useState("");
+  const createForm = useForm<CollectionNameValues>({
+    resolver: zodResolver(collectionNameSchema),
+    defaultValues: { name: "" },
+  });
+  const renameForm = useForm<CollectionNameValues>({
+    resolver: zodResolver(collectionNameSchema),
+    defaultValues: { name: "" },
+  });
+  const newName = createForm.watch("name");
+  const renameDraft = renameForm.watch("name");
   const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameDraft, setRenameDraft] = useState("");
+
+  const onCreate = (values: CollectionNameValues) => {
+    void mutate(
+      { body: { name: values.name }, method: "POST" },
+      "Collection created."
+    ).then((ok) => ok && createForm.reset({ name: "" }));
+  };
+
+  const onRename = (values: CollectionNameValues) => {
+    void mutate(
+      {
+        body: {
+          collectionId: renamingId,
+          name: values.name,
+        },
+        method: "PATCH",
+      },
+      "Collection renamed."
+    ).then((ok) => ok && setRenamingId(null));
+  };
 
   const copyShareLink = async (shareId: string) => {
     try {
@@ -78,30 +122,34 @@ export function CollectionsPage() {
         </Alert>
       ) : null}
 
-      <form
-        className="flex flex-col gap-3 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:flex-row sm:items-end"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void mutate(
-            { body: { name: newName }, method: "POST" },
-            "Collection created."
-          ).then((ok) => ok && setNewName(""));
-        }}
-      >
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="collection-name">New collection</Label>
-          <Input
-            id="collection-name"
-            onChange={(event) => setNewName(event.target.value)}
-            placeholder="Coastal light"
-            value={newName}
+      <Form {...createForm}>
+        <form
+          className="flex flex-col gap-3 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:flex-row sm:items-end"
+          onSubmit={createForm.handleSubmit(onCreate)}
+        >
+          <FormField
+            control={createForm.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="block flex-1 space-y-2">
+                <FormLabel htmlFor="collection-name">New collection</FormLabel>
+                <FormControl>
+                  <Input
+                    id="collection-name"
+                    placeholder="Coastal light"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        <Button disabled={!newName.trim()} type="submit">
-          <Plus />
-          Create collection
-        </Button>
-      </form>
+          <Button disabled={!newName.trim()} type="submit">
+            <Plus />
+            Create collection
+          </Button>
+        </form>
+      </Form>
 
       <div className="mt-8 space-y-6">
         {data.length === 0 ? (
@@ -119,53 +167,53 @@ export function CollectionsPage() {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 space-y-2">
                   {renamingId === collection.id ? (
-                    <form
-                      className="flex flex-wrap items-center gap-2"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        void mutate(
-                          {
-                            body: {
-                              collectionId: collection.id,
-                              name: renameDraft,
-                            },
-                            method: "PATCH",
-                          },
-                          "Collection renamed."
-                        ).then((ok) => ok && setRenamingId(null));
-                      }}
-                    >
-                      <Label
-                        className="sr-only"
-                        htmlFor={`rename-${collection.id}`}
+                    <Form {...renameForm}>
+                      <form
+                        className="flex flex-wrap items-center gap-2"
+                        onSubmit={renameForm.handleSubmit(onRename)}
                       >
-                        Collection name
-                      </Label>
-                      <Input
-                        autoFocus
-                        className="max-w-xs"
-                        id={`rename-${collection.id}`}
-                        onChange={(event) => setRenameDraft(event.target.value)}
-                        value={renameDraft}
-                      />
-                      <Button
-                        disabled={!renameDraft.trim()}
-                        size="sm"
-                        type="submit"
-                      >
-                        <Check />
-                        Save
-                      </Button>
-                      <Button
-                        onClick={() => setRenamingId(null)}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <X />
-                        Cancel
-                      </Button>
-                    </form>
+                        <FormField
+                          control={renameForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem className="contents">
+                              <FormLabel
+                                className="sr-only"
+                                htmlFor={`rename-${collection.id}`}
+                              >
+                                Collection name
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  autoFocus
+                                  className="max-w-xs"
+                                  id={`rename-${collection.id}`}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          disabled={!renameDraft.trim()}
+                          size="sm"
+                          type="submit"
+                        >
+                          <Check />
+                          Save
+                        </Button>
+                        <Button
+                          onClick={() => setRenamingId(null)}
+                          size="sm"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <X />
+                          Cancel
+                        </Button>
+                      </form>
+                    </Form>
                   ) : (
                     <div className="flex flex-wrap items-center gap-3">
                       <h2 className="text-2xl text-foreground">
@@ -202,7 +250,7 @@ export function CollectionsPage() {
                   <Button
                     onClick={() => {
                       setRenamingId(collection.id);
-                      setRenameDraft(collection.name);
+                      renameForm.reset({ name: collection.name });
                     }}
                     size="sm"
                     variant="outline"

@@ -13,9 +13,12 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 import Link from "next/link";
 
 import { AccountArea } from "@/components/account/account-shell";
@@ -35,6 +38,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,6 +72,21 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 type PendingImage = { file: File; kind: "avatar" | "banner" };
+
+const profileFormSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  location: z.string(),
+  bio: z.string(),
+});
+
+type ProfileFormData = z.infer<typeof profileFormSchema>;
+
+const emailFormSchema = z.object({
+  nextEmail: z.string(),
+});
+
+type EmailFormData = z.infer<typeof emailFormSchema>;
 
 function formatAccountDate(value: string | null) {
   if (!value) {
@@ -110,19 +136,10 @@ export function AccountPage() {
     user,
   } = useAuth();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [location, setLocation] = useState("");
-  const [bio, setBio] = useState("");
-  const [usernameDraft, setUsernameDraft] = useState("");
-  const [nextEmail, setNextEmail] = useState("");
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingUsername, setSavingUsername] = useState(false);
-  const [changingEmail, setChangingEmail] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<
     "avatar" | "banner" | null
   >(null);
@@ -135,6 +152,23 @@ export function AccountPage() {
   const [suppressAuthRedirect, setSuppressAuthRedirect] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      location: "",
+      bio: "",
+    },
+  });
+  const emailForm = useForm<EmailFormData>({
+    resolver: zodResolver(emailFormSchema),
+    defaultValues: { nextEmail: "" },
+  });
+
+  const { firstName, lastName, location, bio } = profileForm.watch();
+  const nextEmail = emailForm.watch("nextEmail");
 
   const hasPasswordProvider = user?.providerIds.includes("password") ?? false;
   const isEmailVerified = user?.emailVerified ?? false;
@@ -185,12 +219,15 @@ export function AccountPage() {
         }
 
         setProfile(payload.profile);
-        setFirstName(payload.profile.firstName ?? "");
-        setLastName(payload.profile.lastName ?? "");
-        setLocation(payload.profile.location ?? "");
-        setBio(payload.profile.bio ?? "");
-        setUsernameDraft(payload.profile.username ?? "");
-        setNextEmail(payload.profile.email ?? user.email ?? "");
+        profileForm.reset({
+          firstName: payload.profile.firstName ?? "",
+          lastName: payload.profile.lastName ?? "",
+          location: payload.profile.location ?? "",
+          bio: payload.profile.bio ?? "",
+        });
+        emailForm.reset({
+          nextEmail: payload.profile.email ?? user.email ?? "",
+        });
       } catch (loadError) {
         if (!cancelled) {
           const message =
@@ -211,7 +248,16 @@ export function AccountPage() {
     return () => {
       cancelled = true;
     };
-  }, [deletingAccount, router, signingOut, status, suppressAuthRedirect, user]);
+  }, [
+    deletingAccount,
+    emailForm,
+    profileForm,
+    router,
+    signingOut,
+    status,
+    suppressAuthRedirect,
+    user,
+  ]);
 
   const providerLabel = useMemo(() => {
     const providers = profile?.authProviders.length
@@ -257,22 +303,27 @@ export function AccountPage() {
     return payload.profile;
   };
 
-  const handleSaveProfile = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSavingProfile(true);
+  const handleSaveProfile = async (values: ProfileFormData) => {
     setError(null);
 
     try {
       const updated = await patchProfile(
-        { bio, firstName, lastName, location },
+        {
+          bio: values.bio,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          location: values.location,
+        },
         "Your account profile has been updated."
       );
 
       if (updated) {
-        setFirstName(updated.firstName ?? "");
-        setLastName(updated.lastName ?? "");
-        setLocation(updated.location ?? "");
-        setBio(updated.bio ?? "");
+        profileForm.reset({
+          firstName: updated.firstName ?? "",
+          lastName: updated.lastName ?? "",
+          location: updated.location ?? "",
+          bio: updated.bio ?? "",
+        });
       }
 
       setIsProfileDialogOpen(false);
@@ -283,24 +334,19 @@ export function AccountPage() {
           : "Unable to save your profile.";
       setError(message);
       toast.error(message);
-    } finally {
-      setSavingProfile(false);
     }
   };
 
-  const handleSaveUsername = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSavingUsername(true);
+  const handleSaveUsername = async (username: string) => {
     setError(null);
 
     try {
       const updated = await patchProfile(
-        { username: usernameDraft },
+        { username },
         "Your username has been updated."
       );
 
       if (updated) {
-        setUsernameDraft(updated.username ?? "");
         notifyUsernameUpdated(updated.username ?? null);
       }
 
@@ -312,8 +358,6 @@ export function AccountPage() {
           : "Unable to save your username.";
       setError(message);
       toast.error(message);
-    } finally {
-      setSavingUsername(false);
     }
   };
 
@@ -412,13 +456,11 @@ export function AccountPage() {
     }
   };
 
-  const handleEmailChange = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setChangingEmail(true);
+  const handleEmailChange = async (values: EmailFormData) => {
     setError(null);
 
     try {
-      const result = await requestEmailChange(nextEmail);
+      const result = await requestEmailChange(values.nextEmail);
 
       if (result.requiresVerification) {
         setIsEmailDialogOpen(false);
@@ -429,7 +471,7 @@ export function AccountPage() {
         setProfile((current) =>
           current ? { ...current, email: result.email } : current
         );
-        setNextEmail(result.email);
+        emailForm.reset({ nextEmail: result.email });
         setIsEmailDialogOpen(false);
         toast.success("Your email address has been updated.");
       }
@@ -440,8 +482,6 @@ export function AccountPage() {
           : "Unable to change your email address.";
       setError(message);
       toast.error(message);
-    } finally {
-      setChangingEmail(false);
     }
   };
 
@@ -778,86 +818,124 @@ export function AccountPage() {
                     keeping the full form visible on the account page.
                   </DialogDescription>
                 </DialogHeader>
-                <form className="space-y-4" onSubmit={handleSaveProfile}>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="account-first-name">First name</Label>
-                      <Input
-                        id="account-first-name"
-                        value={firstName}
-                        onChange={(event) => setFirstName(event.target.value)}
+                <Form {...profileForm}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={profileForm.handleSubmit(handleSaveProfile)}
+                  >
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={profileForm.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel htmlFor="account-first-name">
+                              First name
+                            </FormLabel>
+                            <FormControl>
+                              <Input id="account-first-name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={profileForm.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel htmlFor="account-last-name">
+                              Last name
+                            </FormLabel>
+                            <FormControl>
+                              <Input id="account-last-name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="account-last-name">Last name</Label>
-                      <Input
-                        id="account-last-name"
-                        value={lastName}
-                        onChange={(event) => setLastName(event.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="account-location">Location</Label>
-                    <Input
-                      id="account-location"
-                      autoComplete="address-level2"
-                      maxLength={MAX_LOCATION_LENGTH}
-                      onChange={(event) => setLocation(event.target.value)}
-                      placeholder="Brooklyn, New York"
-                      value={location}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="account-bio">Biography</Label>
-                    <Textarea
-                      id="account-bio"
-                      maxLength={MAX_BIO_LENGTH}
-                      onChange={(event) => setBio(event.target.value)}
-                      placeholder="Tell collectors what you make, collect, or care about."
-                      rows={4}
-                      value={bio}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {bio.length}/{MAX_BIO_LENGTH} characters
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                      Display name preview
-                    </p>
-                    <p className="mt-2 text-base text-foreground">
-                      {displayNamePreview}
-                    </p>
-                  </div>
-                  <DialogFooter>
-                    <Button disabled={savingProfile} type="submit">
-                      {savingProfile ? (
-                        <>
-                          <Loader2 className="animate-spin" />
-                          Saving profile...
-                        </>
-                      ) : (
-                        "Save profile"
+                    <FormField
+                      control={profileForm.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="account-location">
+                            Location
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              id="account-location"
+                              autoComplete="address-level2"
+                              maxLength={MAX_LOCATION_LENGTH}
+                              placeholder="Brooklyn, New York"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </Button>
-                  </DialogFooter>
-                </form>
+                    />
+                    <FormField
+                      control={profileForm.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="account-bio">Biography</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              id="account-bio"
+                              maxLength={MAX_BIO_LENGTH}
+                              placeholder="Tell collectors what you make, collect, or care about."
+                              rows={4}
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            {bio.length}/{MAX_BIO_LENGTH} characters
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                        Display name preview
+                      </p>
+                      <p className="mt-2 text-base text-foreground">
+                        {displayNamePreview}
+                      </p>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        disabled={profileForm.formState.isSubmitting}
+                        type="submit"
+                      >
+                        {profileForm.formState.isSubmitting ? (
+                          <>
+                            <Loader2 className="animate-spin" />
+                            Saving profile...
+                          </>
+                        ) : (
+                          "Save profile"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
             <UsernameDialog
+              defaultUsername={profile?.username ?? ""}
               description="Pick the tag that will be used for your public gallery page and artist link."
               onOpenChange={setIsUsernameDialogOpen}
               onSubmit={handleSaveUsername}
               open={isUsernameDialogOpen}
-              onUsernameChange={setUsernameDraft}
-              saving={savingUsername}
               title={
                 profile?.username
                   ? "Change your username"
                   : "Choose your username"
               }
-              username={usernameDraft}
             />
           </section>
 
@@ -900,39 +978,52 @@ export function AccountPage() {
                       confirmation link before the change takes effect.
                     </DialogDescription>
                   </DialogHeader>
-                  <form className="space-y-4" onSubmit={handleEmailChange}>
-                    <div className="space-y-2">
-                      <Label htmlFor="account-next-email">
-                        New email address
-                      </Label>
-                      <Input
-                        id="account-next-email"
-                        type="email"
-                        autoComplete="email"
-                        onChange={(event) => setNextEmail(event.target.value)}
-                        value={nextEmail}
-                      />
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        disabled={
-                          changingEmail ||
-                          nextEmail.trim().toLowerCase() ===
-                            (currentEmail ?? "").trim().toLowerCase()
-                        }
-                        type="submit"
-                      >
-                        {changingEmail ? (
-                          <>
-                            <Loader2 className="animate-spin" />
-                            Updating email...
-                          </>
-                        ) : (
-                          "Continue"
+                  <Form {...emailForm}>
+                    <form
+                      className="space-y-4"
+                      onSubmit={emailForm.handleSubmit(handleEmailChange)}
+                    >
+                      <FormField
+                        control={emailForm.control}
+                        name="nextEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel htmlFor="account-next-email">
+                              New email address
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                id="account-next-email"
+                                type="email"
+                                autoComplete="email"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
+                      />
+                      <DialogFooter>
+                        <Button
+                          disabled={
+                            emailForm.formState.isSubmitting ||
+                            nextEmail.trim().toLowerCase() ===
+                              (currentEmail ?? "").trim().toLowerCase()
+                          }
+                          type="submit"
+                        >
+                          {emailForm.formState.isSubmitting ? (
+                            <>
+                              <Loader2 className="animate-spin" />
+                              Updating email...
+                            </>
+                          ) : (
+                            "Continue"
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
                 </DialogContent>
               </Dialog>
               <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">

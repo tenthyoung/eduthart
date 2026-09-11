@@ -1,7 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Pencil, Plus, Star, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { AccountShell } from "@/components/account/account-shell";
 import { CollectorEmptyState } from "@/components/collectors/artwork-card";
@@ -16,8 +19,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
 import {
   formatAddressLines,
@@ -25,23 +35,26 @@ import {
   type SavedAddress,
 } from "@/lib/collectors/address-format";
 
-type AddressDraft = {
-  city: string;
-  country: string;
-  id?: string;
-  kind: AddressKind;
-  label: string;
-  line1: string;
-  line2: string;
-  name: string;
-  phone: string;
-  postalCode: string;
-  region: string;
-};
+const addressFormSchema = z.object({
+  city: z.string().min(1, "City is required"),
+  country: z.string().min(1, "Country is required"),
+  id: z.string().optional(),
+  kind: z.enum(["shipping", "billing"]),
+  label: z.string(),
+  line1: z.string().min(1, "Street address is required"),
+  line2: z.string(),
+  name: z.string().min(1, "Full name is required"),
+  phone: z.string(),
+  postalCode: z.string().min(1, "Postal code is required"),
+  region: z.string(),
+});
 
-const EMPTY_DRAFT: AddressDraft = {
+type AddressFormValues = z.infer<typeof addressFormSchema>;
+
+const EMPTY_DRAFT: AddressFormValues = {
   city: "",
   country: "US",
+  id: undefined,
   kind: "shipping",
   label: "",
   line1: "",
@@ -54,7 +67,7 @@ const EMPTY_DRAFT: AddressDraft = {
 
 const FIELDS: Array<{
   autoComplete: string;
-  key: keyof AddressDraft;
+  key: Exclude<keyof AddressFormValues, "id" | "kind" | "label">;
   label: string;
   required?: boolean;
 }> = [
@@ -110,27 +123,26 @@ export function AddressesPage() {
       signInPath: "/account/addresses",
     }
   );
-  const [draft, setDraft] = useState<AddressDraft | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+  const form = useForm<AddressFormValues>({
+    resolver: zodResolver(addressFormSchema),
+    defaultValues: EMPTY_DRAFT,
+  });
+  const editingId = form.watch("id");
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const openDraft = (values: AddressFormValues) => {
+    form.reset(values);
+    setOpen(true);
+  };
 
-    if (!draft) {
-      return;
-    }
-
-    setSaving(true);
-
+  const onSubmit = async (values: AddressFormValues) => {
     const saved = await mutate(
-      { body: draft, method: "POST" },
-      draft.id ? "Address updated." : "Address saved."
+      { body: values, method: "POST" },
+      values.id ? "Address updated." : "Address saved."
     );
 
-    setSaving(false);
-
     if (saved) {
-      setDraft(null);
+      setOpen(false);
     }
   };
 
@@ -145,7 +157,7 @@ export function AddressesPage() {
   return (
     <AccountShell
       action={
-        <Button onClick={() => setDraft({ ...EMPTY_DRAFT })}>
+        <Button onClick={() => openDraft({ ...EMPTY_DRAFT })}>
           <Plus />
           Add address
         </Button>
@@ -174,7 +186,7 @@ export function AddressesPage() {
               {addresses.length === 0 ? (
                 <CollectorEmptyState
                   action={
-                    <Button onClick={() => setDraft({ ...EMPTY_DRAFT, kind })}>
+                    <Button onClick={() => openDraft({ ...EMPTY_DRAFT, kind })}>
                       <Plus />
                       Add a {kind} address
                     </Button>
@@ -218,7 +230,7 @@ export function AddressesPage() {
                       <div className="mt-auto flex flex-wrap gap-2">
                         <Button
                           onClick={() =>
-                            setDraft({
+                            openDraft({
                               city: address.city,
                               country: address.country,
                               id: address.id,
@@ -277,73 +289,95 @@ export function AddressesPage() {
       </div>
 
       <Dialog
-        open={draft !== null}
-        onOpenChange={(open) => (open ? null : setDraft(null))}
+        open={open}
+        onOpenChange={(nextOpen) => (nextOpen ? null : setOpen(false))}
       >
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {draft?.id ? "Edit address" : "Add an address"}
+              {editingId ? "Edit address" : "Add an address"}
             </DialogTitle>
             <DialogDescription>
               Used at checkout for delivery and for your invoice.
             </DialogDescription>
           </DialogHeader>
 
-          {draft ? (
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="address-kind">Address type</Label>
-                <select
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-                  id="address-kind"
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      kind: event.target.value as AddressKind,
-                    })
-                  }
-                  value={draft.kind}
-                >
-                  <option value="shipping">Shipping</option>
-                  <option value="billing">Billing</option>
-                </select>
-              </div>
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="kind"
+                render={({ field }) => (
+                  <FormItem className="block space-y-2">
+                    <FormLabel htmlFor="address-kind">Address type</FormLabel>
+                    <FormControl>
+                      <select
+                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
+                        id="address-kind"
+                        {...field}
+                      >
+                        <option value="shipping">Shipping</option>
+                        <option value="billing">Billing</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="address-label">Label (optional)</Label>
-                <Input
-                  id="address-label"
-                  onChange={(event) =>
-                    setDraft({ ...draft, label: event.target.value })
-                  }
-                  placeholder="Home studio"
-                  value={draft.label}
+              <FormField
+                control={form.control}
+                name="label"
+                render={({ field }) => (
+                  <FormItem className="block space-y-2">
+                    <FormLabel htmlFor="address-label">
+                      Label (optional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        id="address-label"
+                        placeholder="Home studio"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {FIELDS.map((fieldConfig) => (
+                <FormField
+                  key={fieldConfig.key}
+                  control={form.control}
+                  name={fieldConfig.key}
+                  render={({ field }) => (
+                    <FormItem className="block space-y-2">
+                      <FormLabel htmlFor={`address-${fieldConfig.key}`}>
+                        {fieldConfig.label}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          autoComplete={fieldConfig.autoComplete}
+                          id={`address-${fieldConfig.key}`}
+                          required={fieldConfig.required}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-
-              {FIELDS.map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <Label htmlFor={`address-${field.key}`}>{field.label}</Label>
-                  <Input
-                    autoComplete={field.autoComplete}
-                    id={`address-${field.key}`}
-                    onChange={(event) =>
-                      setDraft({ ...draft, [field.key]: event.target.value })
-                    }
-                    required={field.required}
-                    value={String(draft[field.key] ?? "")}
-                  />
-                </div>
               ))}
 
               <DialogFooter>
-                <Button disabled={saving} type="submit">
-                  {saving ? "Saving address..." : "Save address"}
+                <Button disabled={form.formState.isSubmitting} type="submit">
+                  {form.formState.isSubmitting
+                    ? "Saving address..."
+                    : "Save address"}
                 </Button>
               </DialogFooter>
             </form>
-          ) : null}
+          </Form>
         </DialogContent>
       </Dialog>
     </AccountShell>
