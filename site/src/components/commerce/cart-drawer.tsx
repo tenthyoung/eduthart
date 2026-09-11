@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { collectorRequest } from "@/lib/collectors/client";
 import {
   Sheet,
   SheetContent,
@@ -41,16 +42,10 @@ export function CartDrawer() {
     }
     setLoading(true);
     try {
-      const response = await fetch("/api/cart", {
-        headers: { authorization: `Bearer ${await user.getIdToken()}` },
-      });
-      // An errored server can answer with an HTML page, so never assume JSON.
-      const payload = (await response.json().catch(() => null)) as {
-        error?: string;
-        items?: CartItem[];
-      } | null;
-      if (!response.ok || !payload)
-        throw new Error(payload?.error || "Unable to load cart.");
+      const payload = await collectorRequest<{ items: CartItem[] }>(
+        "/api/cart",
+        await user.getIdToken()
+      );
       setItems(payload.items ?? []);
     } catch (error) {
       toast.error(
@@ -84,21 +79,18 @@ export function CartDrawer() {
 
   const remove = async (itemId: string) => {
     if (!user) return;
-    const response = await fetch("/api/cart", {
-      method: "DELETE",
-      headers: {
-        authorization: `Bearer ${await user.getIdToken()}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ itemId }),
-    });
-    const payload = (await response.json().catch(() => null)) as {
-      error?: string;
-      items?: CartItem[];
-    } | null;
-    if (!response.ok || !payload)
-      return toast.error(payload?.error || "Unable to remove artwork.");
-    setItems(payload.items ?? []);
+    try {
+      const payload = await collectorRequest<{ items: CartItem[] }>(
+        "/api/cart",
+        await user.getIdToken(),
+        { body: { itemId }, method: "DELETE" }
+      );
+      setItems(payload.items ?? []);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to remove artwork."
+      );
+    }
   };
 
   const currency = items[0]?.currency || "USD";
