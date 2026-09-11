@@ -375,7 +375,7 @@ export function ListingManagerPage({ username }: { username: string }) {
   if (loading || status === "loading") {
     return (
       <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
-        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your listings...
@@ -392,7 +392,7 @@ export function ListingManagerPage({ username }: { username: string }) {
   return (
     <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
       <div className="mx-auto max-w-7xl space-y-8">
-        <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+        <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
@@ -550,7 +550,7 @@ export function ListingManagerPage({ username }: { username: string }) {
             return (
               <button
                 key={item.id}
-                className="group rounded-[2rem] border border-white/70 bg-white/92 p-5 text-left shadow-[0_30px_80px_-50px_rgba(47,36,28,0.35)] transition-transform hover:-translate-y-0.5 hover:border-primary/20"
+                className="group rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-5 text-left shadow-[0_30px_80px_-50px_rgba(47,36,28,0.35)] transition-transform hover:-translate-y-0.5 hover:border-primary/20"
                 onClick={() =>
                   router.push(`/artists/${username}/listings/${item.id}`)
                 }

@@ -118,7 +118,7 @@ export default function ServiceAreaMapInner() {
                   <h3 className="font-semibold text-sm mb-1">
                     {location.name}, {location.state}
                   </h3>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     {location.description}
                   </p>
                   <p className="text-xs text-primary font-medium mt-2">

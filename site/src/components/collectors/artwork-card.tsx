@@ -46,7 +46,7 @@ export function ArtworkCard({
   footnote?: ReactNode;
 }) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-shadow hover:shadow-lg">
+    <article className="flex flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-shadow hover:shadow-lg">
       {/* The title link below points to the same place, so this one is hidden
           from assistive technology rather than announced twice. */}
       <Link
@@ -109,7 +109,7 @@ export function CollectorEmptyState({
   title: string;
 }) {
   return (
-    <div className="rounded-[2rem] border border-dashed border-border bg-white/70 px-6 py-16 text-center">
+    <div className="rounded-[2rem] border border-dashed border-border bg-white/70 dark:bg-card/70 px-6 py-16 text-center">
       <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
         {icon}
       </div>

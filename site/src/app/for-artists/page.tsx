@@ -48,7 +48,7 @@ const acceptedBenefits = [
 export default function ForArtistsPage() {
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
-      <section className="relative overflow-hidden border-b border-border/70 bg-white">
+      <section className="relative overflow-hidden border-b border-border/70 bg-white dark:bg-background">
         <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <MotionStaggerFade className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
@@ -76,7 +76,7 @@ export default function ForArtistsPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-md sm:p-8">
+            <div className="rounded-[2rem] border border-white/80 bg-white/90 dark:border-border dark:bg-card/90 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-md sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
                 We value your privacy
               </p>
@@ -168,7 +168,7 @@ export default function ForArtistsPage() {
           </MotionFade>
 
           <MotionFade delay={0.45}>
-            <div className="rounded-[2rem] border border-primary/15 bg-white p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
+            <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
               <Heading variant="h3" className="mb-3 text-foreground">
                 What you should have prepared
               </Heading>

@@ -179,8 +179,8 @@ export function ProfileCompletionPage() {
 
   if (status === "loading" || loading) {
     return (
-      <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-2xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+      <section className="min-h-screen bg-white dark:bg-background px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-2xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your profile...
@@ -197,7 +197,7 @@ export function ProfileCompletionPage() {
   const usernamePreview = username.trim().replace(/^@+/, "").toLowerCase();
 
   return (
-    <section className="min-h-screen bg-white px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-white dark:bg-background px-4 pb-20 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl space-y-8">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
@@ -223,7 +223,7 @@ export function ProfileCompletionPage() {
 
         <Form {...form}>
           <form
-            className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:p-8"
+            className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:p-8"
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <div className="grid gap-4 sm:grid-cols-2">

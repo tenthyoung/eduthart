@@ -126,7 +126,7 @@ export function PaymentMethodsPage() {
           {data.paymentMethods.map((method) => (
             <li
               key={method.id}
-              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white p-5"
+              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white dark:bg-card p-5"
             >
               <div className="flex items-center gap-4">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">

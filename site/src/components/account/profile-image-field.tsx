@@ -16,9 +16,12 @@ export type ProfileImageFieldProps = {
   aspectClassName: string;
   busy: boolean;
   circular?: boolean;
+  className?: string;
   description: string;
   emptyLabel: string;
   helpText: string;
+  /** Skip the built-in heading when a dialog already provides one. */
+  hideHeader?: boolean;
   imageUrl: string | null;
   inputId: string;
   onError: (message: string) => void;
@@ -37,9 +40,11 @@ export function ProfileImageField({
   aspectClassName,
   busy,
   circular,
+  className,
   description,
   emptyLabel,
   helpText,
+  hideHeader,
   imageUrl,
   inputId,
   onError,
@@ -73,17 +78,24 @@ export function ProfileImageField({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border/80 bg-muted/45 p-4">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          {title}
-        </p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
+    <div
+      className={cn(
+        "space-y-4 rounded-2xl border border-border/80 bg-muted/45 p-4",
+        className
+      )}
+    >
+      {hideHeader ? null : (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            {title}
+          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      )}
 
       <div
         className={cn(
-          "overflow-hidden border border-dashed border-primary/20 bg-white/70",
+          "overflow-hidden border border-dashed border-primary/20 bg-white/70 dark:bg-card/70",
           circular ? "mx-auto w-40 rounded-full" : "rounded-2xl"
         )}
       >

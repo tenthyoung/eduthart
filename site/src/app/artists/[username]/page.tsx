@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 
 import { type ListingItemDraft } from "@/lib/artists/listing-flow";
 import { listPublishedArtworks } from "@/lib/artists/listing-store";
-import { buildArtistPageHref } from "@/lib/auth/account-profile";
 import {
   buildProfileDisplayName,
   findAccountProfileByUsername,
 } from "@/lib/auth/profile-store";
+import { ArtistAvatar } from "@/components/artists/artist-avatar";
 import { EditArtistPageButton } from "@/components/artists/edit-artist-page-button";
+import { ShareArtistPageButton } from "@/components/artists/share-artist-page-button";
 import { FollowArtistButton } from "@/components/collectors/follow-artist-button";
 import { countArtistFollowers } from "@/lib/collectors/follows";
 import { cn } from "@/lib/utils";
@@ -46,9 +47,17 @@ export default async function ArtistPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
+            <ShareArtistPageButton
+              artistName={displayName}
+              username={profile.username}
+            />
+            <EditArtistPageButton artistUid={profile.uid} />
+          </div>
+
           {profile.bannerURL ? (
             <div className="relative aspect-[3/1] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -57,29 +66,18 @@ export default async function ArtistPage({
                 className="h-full w-full object-cover"
                 src={profile.bannerURL}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-card/60 via-transparent to-transparent" />
             </div>
           ) : null}
 
           <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between md:p-8">
             <div className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg",
-                  profile.bannerURL && "-mt-16"
-                )}
-              >
-                {profile.photoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                    src={profile.photoURL}
-                  />
-                ) : (
-                  (displayName.trim()[0] ?? "@").toUpperCase()
-                )}
-              </div>
+              <ArtistAvatar
+                artistUid={profile.uid}
+                className={cn(profile.bannerURL && "-mt-16")}
+                displayName={displayName}
+                photoURL={profile.photoURL}
+              />
               <div className="space-y-1">
                 <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
                   Artist Page
@@ -103,28 +101,16 @@ export default async function ArtistPage({
               </div>
             </div>
 
-            <div className="space-y-3">
-              <EditArtistPageButton artistUid={profile.uid} />
-              <FollowArtistButton
-                artistName={displayName}
-                artistUid={profile.uid}
-                username={profile.username}
-              />
-              <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3 text-sm text-muted-foreground">
-                Personal art page URL:{" "}
-                <Link
-                  className="font-medium text-foreground underline decoration-primary/30 underline-offset-4"
-                  href={buildArtistPageHref(profile.username)}
-                >
-                  {buildArtistPageHref(profile.username)}
-                </Link>
-              </div>
-            </div>
+            <FollowArtistButton
+              artistName={displayName}
+              artistUid={profile.uid}
+              username={profile.username}
+            />
           </div>
         </div>
 
         {profile.bio ? (
-          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
               About
             </p>
@@ -134,7 +120,7 @@ export default async function ArtistPage({
           </section>
         ) : null}
 
-        <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
           <div className="max-w-3xl space-y-3">
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
               Gallery
@@ -155,7 +141,7 @@ export default async function ArtistPage({
                     key={item.id}
                     aria-label={`View ${item.artworkDetails.title || "artwork"}`}
                     href={`/artists/${profile.username}/art/${item.id}`}
-                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <div className="aspect-[4/3] overflow-hidden bg-muted/30">
                       {item.media.mainImageUrl ? (

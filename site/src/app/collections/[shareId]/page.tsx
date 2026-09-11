@@ -30,7 +30,7 @@ export default async function SharedCollectionPage({
     .filter((artwork) => artwork !== null);
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
@@ -55,7 +55,7 @@ export default async function SharedCollectionPage({
             {artworks.map((artwork) => (
               <Link
                 key={artwork.key}
-                className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg"
+                className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg"
                 href={artwork.href}
               >
                 <div className="aspect-[4/3] overflow-hidden bg-muted/30">

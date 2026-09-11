@@ -18,7 +18,10 @@ import { type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { WorkspaceShell, type WorkspaceNavItem } from "@/components/workspace-shell";
+import {
+  WorkspaceShell,
+  type WorkspaceNavItem,
+} from "@/components/workspace-shell";
 import { buildArtistPageHref } from "@/lib/auth/account-profile";
 
 type ArtistWorkspaceShellProps = {

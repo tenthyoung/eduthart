@@ -59,7 +59,9 @@ function getDb() {
     );
 
     if (projectId && clientEmail && privateKey) {
-      initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+      initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+      });
     } else {
       initializeApp({ credential: applicationDefault(), projectId });
     }
@@ -621,7 +623,10 @@ async function seed(db) {
   const batch = db.batch();
 
   for (const artist of FAKE_ARTISTS) {
-    batch.set(db.collection("users").doc(artist.uid), buildProfile(artist, now));
+    batch.set(
+      db.collection("users").doc(artist.uid),
+      buildProfile(artist, now)
+    );
     batch.set(
       db
         .collection("users")
@@ -659,7 +664,9 @@ async function remove(db) {
   for (const doc of index.docs) {
     await doc.ref.delete();
   }
-  console.log(`deleted ${index.size} public_artworks entries tagged "${FAKE_TAG}"`);
+  console.log(
+    `deleted ${index.size} public_artworks entries tagged "${FAKE_TAG}"`
+  );
 
   const users = await db.collection("users").where("fake", "==", true).get();
   let removedUsers = 0;

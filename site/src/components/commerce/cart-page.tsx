@@ -185,7 +185,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
     billingAddresses.find((address) => address.id === billingAddressId) ?? null;
 
   return (
-    <main className="min-h-screen bg-white px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         {checkout ? (
           <Link
