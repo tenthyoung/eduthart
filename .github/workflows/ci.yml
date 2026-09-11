@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   checks:
-    name: Lint, format, types, build
+    name: Lint, format, types, integration tests, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,9 @@ jobs:
 
       - name: TypeScript
         run: npx tsc --noEmit
+
+      - name: Integration tests
+        run: npm test
 
       - name: Build
         run: npm run build

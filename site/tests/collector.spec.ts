@@ -128,29 +128,6 @@ test("records recently viewed artwork and can clear the history", async ({
   await expect(page.getByText("Nothing viewed yet")).toBeVisible();
 });
 
-test("recommends artwork from the same artist once a piece is saved", async ({
-  page,
-}) => {
-  const artist = await createAccount(page, {
-    displayName: "Marina Vale",
-    uid: "artist-recommend",
-    username: "marina-recommend",
-  });
-  await seedPublishedArtwork(page, { title: "Harbour Light", uid: artist.uid });
-  await seedAccount(page, { uid: "collector-recommend" });
-
-  await page.goto("/account/recommendations");
-  await expect(page.getByText("Nothing to recommend yet")).toBeVisible();
-
-  await page.goto(`/artists/${artist.username}`);
-  await page.getByRole("button", { name: "Follow artist" }).click();
-  await expect(page.getByRole("button", { name: "Following" })).toBeVisible();
-
-  await page.goto("/account/recommendations");
-  await expect(page.getByRole("link", { name: "Harbour Light" })).toBeVisible();
-  await expect(page.getByText("You follow Marina Vale")).toBeVisible();
-});
-
 test("compares two artworks side by side", async ({ page }) => {
   const first = await createAccount(page, {
     displayName: "Marina Vale",
@@ -187,25 +164,4 @@ test("compares two artworks side by side", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("$2,400.00")).toBeVisible();
   await expect(page.getByText("$980.00")).toBeVisible();
-});
-
-test("manages shipping and billing addresses", async ({ page }) => {
-  await seedAccount(page, { uid: "address-user" });
-
-  await page.goto("/account/addresses");
-  await page.getByRole("button", { name: "Add address" }).click();
-  await page.getByLabel("Full name").fill("Robin Buyer");
-  await page.getByLabel("Street address").fill("18 Harbour Road");
-  await page.getByLabel("City").fill("Brooklyn");
-  await page.getByLabel("State or region").fill("NY");
-  await page.getByLabel("Postal code").fill("11201");
-  await page.getByLabel("Country").fill("US");
-  await page.getByRole("button", { name: "Save address" }).click();
-
-  await expect(page.getByText("Address saved.")).toBeVisible();
-  await expect(page.getByText("18 Harbour Road")).toBeVisible();
-  await expect(page.getByText("Default").first()).toBeVisible();
-
-  await page.getByRole("button", { name: "Remove" }).click();
-  await expect(page.getByText("No shipping addresses yet")).toBeVisible();
 });

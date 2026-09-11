@@ -26,7 +26,9 @@ export default defineConfig({
     {
       name: "chromium",
       dependencies: ["reset"],
-      testIgnore: /global\.setup\.ts/,
+      // Only the browser specs. tests/integration is the in-process suite and
+      // is run by `npm test`, not by Playwright.
+      testMatch: /\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
       },
