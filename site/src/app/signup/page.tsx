@@ -1,35 +1,75 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
 import {
+  MIN_PASSWORD_LENGTH,
   useAuth,
   type FederatedProvider,
 } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useHydrated } from "@/hooks/useHydrated";
 
 const PROFILE_COMPLETION_PATH = "/welcome";
 
+const signupFormSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(
+      MIN_PASSWORD_LENGTH,
+      `Use at least ${MIN_PASSWORD_LENGTH} characters for your password.`
+    ),
+  legalAccepted: z.boolean(),
+});
+
+type SignupFormData = z.infer<typeof signupFormSchema>;
+
 export default function SignupPage() {
   const router = useRouter();
+  const isHydrated = useHydrated();
   const { signInWithFederatedProvider, signUpWithEmail, status } = useAuth();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [legalAccepted, setLegalAccepted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFederatedSubmitting, setIsFederatedSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const form = useForm<SignupFormData>({
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      legalAccepted: false,
+    },
+  });
+
+  const isSubmitting = form.formState.isSubmitting || isFederatedSubmitting;
 
   useEffect(() => {
     if (status === "authenticated" && !isSubmitting) {
@@ -38,7 +78,7 @@ export default function SignupPage() {
   }, [isSubmitting, router, status]);
 
   const requireLegalAcceptance = () => {
-    if (legalAccepted) {
+    if (form.getValues("legalAccepted")) {
       return true;
     }
 
@@ -49,14 +89,16 @@ export default function SignupPage() {
     return false;
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const onSubmit = async ({
+    email,
+    firstName,
+    lastName,
+    password,
+  }: SignupFormData) => {
     if (!requireLegalAcceptance()) {
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
 
     try {
@@ -75,8 +117,6 @@ export default function SignupPage() {
           : "Unable to create your account.";
       setError(message);
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -86,7 +126,7 @@ export default function SignupPage() {
     }
 
     const providerName = provider === "apple.com" ? "Apple" : "Google";
-    setIsSubmitting(true);
+    setIsFederatedSubmitting(true);
     setError(null);
 
     try {
@@ -103,7 +143,7 @@ export default function SignupPage() {
       setError(message);
       toast.error(message);
     } finally {
-      setIsSubmitting(false);
+      setIsFederatedSubmitting(false);
     }
   };
 
@@ -128,103 +168,147 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="first-name">First name</Label>
-              <Input
-                id="first-name"
-                autoComplete="given-name"
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
-                placeholder="First name"
-                required
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="first-name">First name</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="first-name"
+                        autoComplete="given-name"
+                        placeholder="First name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="last-name">Last name</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="last-name"
+                        autoComplete="family-name"
+                        placeholder="Last name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="last-name">Last name</Label>
-              <Input
-                id="last-name"
-                autoComplete="family-name"
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-                placeholder="Last name"
-                required
-              />
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="email">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <PasswordInput
-              id="password"
-              autoComplete="new-password"
-              minLength={8}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      id="password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Use at least 8 characters for your password.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <p className="text-xs text-muted-foreground">
-              Use at least 8 characters for your password.
-            </p>
-          </div>
 
-          <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-            <div className="flex items-center gap-3">
-              <Checkbox
-                checked={legalAccepted}
-                id="legal"
-                onCheckedChange={(checked) =>
-                  setLegalAccepted(checked === true)
-                }
+            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+              <FormField
+                control={form.control}
+                name="legalAccepted"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        id="legal"
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                      />
+                    </FormControl>
+                    <FormLabel
+                      className="block leading-6 font-normal"
+                      htmlFor="legal"
+                    >
+                      I agree to the{" "}
+                      <Link
+                        className="font-medium text-primary hover:underline"
+                        href="/legal/terms-of-service"
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        className="font-medium text-primary hover:underline"
+                        href="/legal/privacy-policy"
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </FormLabel>
+                  </FormItem>
+                )}
               />
-              <Label className="block leading-6 font-normal" htmlFor="legal">
-                I agree to the{" "}
-                <Link
-                  className="font-medium text-primary hover:underline"
-                  href="/legal/terms-of-service"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  className="font-medium text-primary hover:underline"
-                  href="/legal/privacy-policy"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </Label>
             </div>
-          </div>
 
-          {error ? (
-            <Alert variant="destructive">
-              <AlertTitle>Sign-up failed</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
+            {error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Sign-up failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
 
-          <Button className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
+            <Button
+              className="w-full"
+              size="lg"
+              disabled={!isHydrated || isSubmitting}
+            >
+              {isSubmitting ? "Creating account..." : "Create account"}
+            </Button>
+          </form>
+        </Form>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

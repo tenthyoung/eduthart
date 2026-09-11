@@ -1,16 +1,26 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { z } from "zod";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type ResetStatus = "checking" | "ready" | "submitting" | "success" | "invalid";
@@ -18,6 +28,24 @@ type ResetStatus = "checking" | "ready" | "submitting" | "success" | "invalid";
 const LOGIN_ROUTE = "/login";
 const DEFAULT_SUCCESS_ROUTE = "/login?reset=success";
 const MIN_PASSWORD_LENGTH = 8;
+
+const resetPasswordFormSchema = z
+  .object({
+    password: z
+      .string()
+      .min(1, "Password is required")
+      .min(
+        MIN_PASSWORD_LENGTH,
+        "Choose a password with at least 8 characters."
+      ),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match yet.",
+    path: ["confirmPassword"],
+  });
+
+type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>;
 
 function normalizeContinueUrl(rawValue: string | null) {
   if (!rawValue || typeof window === "undefined") {
@@ -78,8 +106,14 @@ function AuthActionContent() {
   const [status, setStatus] = useState<ResetStatus>("checking");
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const form = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordFormSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -119,26 +153,10 @@ function AuthActionContent() {
     };
   }, [actionCode, mode]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const onSubmit = async ({ password }: ResetPasswordFormData) => {
     if (!actionCode) {
       setError("This reset link is missing required information.");
       setStatus("invalid");
-      return;
-    }
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      const nextError = "Choose a password with at least 8 characters.";
-      setError(nextError);
-      toast.error(nextError);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      const nextError = "Passwords do not match yet.";
-      setError(nextError);
-      toast.error(nextError);
       return;
     }
 
@@ -212,48 +230,64 @@ function AuthActionContent() {
         ) : null}
 
         {status === "ready" || status === "submitting" ? (
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New password</Label>
-              <PasswordInput
-                id="new-password"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                value={password}
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="new-password">New password</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        id="new-password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm new password</Label>
-              <PasswordInput
-                id="confirm-password"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                required
-                value={confirmPassword}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="confirm-password">
+                      Confirm new password
+                    </FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        id="confirm-password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1" disabled={isBusy} size="lg">
-                {status === "submitting"
-                  ? "Updating password..."
-                  : "Save new password"}
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => router.push(LOGIN_ROUTE)}
-                size="lg"
-                type="button"
-                variant="outline"
-              >
-                Back to login
-              </Button>
-            </div>
-          </form>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button className="flex-1" disabled={isBusy} size="lg">
+                  {status === "submitting"
+                    ? "Updating password..."
+                    : "Save new password"}
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => router.push(LOGIN_ROUTE)}
+                  size="lg"
+                  type="button"
+                  variant="outline"
+                >
+                  Back to login
+                </Button>
+              </div>
+            </form>
+          </Form>
         ) : null}
 
         {status === "success" ? (

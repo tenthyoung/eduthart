@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
@@ -33,13 +34,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geist.variable} ${outfit.variable} antialiased`}>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="light">
-            <LocomotiveScrollProvider>
-              <SiteShell>{children}</SiteShell>
-            </LocomotiveScrollProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <ThemeProvider defaultTheme="light">
+              <LocomotiveScrollProvider>
+                <SiteShell>{children}</SiteShell>
+              </LocomotiveScrollProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>

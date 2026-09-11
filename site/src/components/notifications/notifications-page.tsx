@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { UsernameDialog } from "@/components/account/username-dialog";
@@ -77,9 +77,8 @@ export function NotificationsPage() {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
-  const [usernameDraft, setUsernameDraft] = useState("");
+  const [savedUsername, setSavedUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const applyPayload = useCallback(
@@ -154,14 +153,11 @@ export function NotificationsPage() {
     }
   };
 
-  const handleSaveUsername = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const handleSaveUsername = async (username: string) => {
     if (!user) {
       return;
     }
 
-    setSaving(true);
     setError(null);
 
     try {
@@ -172,7 +168,7 @@ export function NotificationsPage() {
           "Content-Type": "application/json",
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ username: usernameDraft }),
+        body: JSON.stringify({ username }),
       });
 
       if (!response.ok) {
@@ -183,7 +179,7 @@ export function NotificationsPage() {
 
       const payload = (await response.json()) as { profile: AccountProfile };
       notifyUsernameUpdated(payload.profile.username ?? null);
-      setUsernameDraft(payload.profile.username ?? "");
+      setSavedUsername(payload.profile.username ?? "");
       setIsUsernameDialogOpen(false);
       applyPayload(await fetchNotifications(token));
       toast.success("Your username has been updated.");
@@ -194,8 +190,6 @@ export function NotificationsPage() {
           : "Unable to save your username.";
       setError(message);
       toast.error(message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -398,14 +392,12 @@ export function NotificationsPage() {
         )}
 
         <UsernameDialog
+          defaultUsername={savedUsername}
           description="Pick the tag that will be used for your public gallery page."
           onOpenChange={setIsUsernameDialogOpen}
           onSubmit={handleSaveUsername}
           open={isUsernameDialogOpen}
-          onUsernameChange={setUsernameDraft}
-          saving={saving}
           title="Choose your username"
-          username={usernameDraft}
         />
       </div>
     </section>

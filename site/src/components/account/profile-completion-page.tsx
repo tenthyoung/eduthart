@@ -1,15 +1,25 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   buildArtistPageHref,
@@ -18,6 +28,16 @@ import {
 } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
+
+const profileCompletionSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  username: z.string(),
+  location: z.string(),
+  bio: z.string(),
+});
+
+type ProfileCompletionFormData = z.infer<typeof profileCompletionSchema>;
 
 /**
  * Post sign-up completion step.
@@ -30,14 +50,19 @@ import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
 export function ProfileCompletionPage() {
   const router = useRouter();
   const { status, user } = useAuth();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [location, setLocation] = useState("");
-  const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const form = useForm<ProfileCompletionFormData>({
+    resolver: zodResolver(profileCompletionSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      location: "",
+      bio: "",
+    },
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -69,15 +94,22 @@ export function ProfileCompletionPage() {
           return;
         }
 
-        setFirstName(payload.profile.firstName ?? fallback.firstName);
-        setLastName(payload.profile.lastName ?? fallback.lastName);
-        setUsername(payload.profile.username ?? "");
-        setLocation(payload.profile.location ?? "");
-        setBio(payload.profile.bio ?? "");
+        form.reset({
+          firstName: payload.profile.firstName ?? fallback.firstName,
+          lastName: payload.profile.lastName ?? fallback.lastName,
+          username: payload.profile.username ?? "",
+          location: payload.profile.location ?? "",
+          bio: payload.profile.bio ?? "",
+        });
       } catch {
         if (!cancelled) {
-          setFirstName(fallback.firstName);
-          setLastName(fallback.lastName);
+          form.reset({
+            firstName: fallback.firstName,
+            lastName: fallback.lastName,
+            username: "",
+            location: "",
+            bio: "",
+          });
         }
       } finally {
         if (!cancelled) {
@@ -91,16 +123,17 @@ export function ProfileCompletionPage() {
     return () => {
       cancelled = true;
     };
-  }, [router, status, user]);
+  }, [form, router, status, user]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const username = form.watch("username");
+  const bio = form.watch("bio");
+  const saving = form.formState.isSubmitting;
 
+  const handleSubmit = async (values: ProfileCompletionFormData) => {
     if (!user) {
       return;
     }
 
-    setSaving(true);
     setError(null);
 
     try {
@@ -111,12 +144,12 @@ export function ProfileCompletionPage() {
           authorization: `Bearer ${await user.getIdToken()}`,
         },
         body: JSON.stringify({
-          bio,
-          firstName,
-          lastName,
-          location,
+          bio: values.bio,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          location: values.location,
           // An empty username stays unset rather than failing validation.
-          ...(username.trim() ? { username } : {}),
+          ...(values.username.trim() ? { username: values.username } : {}),
         }),
       });
 
@@ -141,8 +174,6 @@ export function ProfileCompletionPage() {
           : "Unable to save your profile.";
       setError(message);
       toast.error(message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -190,104 +221,148 @@ export function ProfileCompletionPage() {
           </Alert>
         ) : null}
 
-        <form
-          className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:p-8"
-          onSubmit={handleSubmit}
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="welcome-first-name">First name</Label>
-              <Input
-                id="welcome-first-name"
-                autoComplete="given-name"
-                onChange={(event) => setFirstName(event.target.value)}
-                required
-                value={firstName}
+        <Form {...form}>
+          <form
+            className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:p-8"
+            onSubmit={form.handleSubmit(handleSubmit)}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="welcome-first-name">
+                      First name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        id="welcome-first-name"
+                        autoComplete="given-name"
+                        required
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="welcome-last-name">Last name</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="welcome-last-name"
+                        autoComplete="family-name"
+                        required
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="welcome-last-name">Last name</Label>
-              <Input
-                id="welcome-last-name"
-                autoComplete="family-name"
-                onChange={(event) => setLastName(event.target.value)}
-                required
-                value={lastName}
-              />
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="welcome-username">Username</Label>
-            <Input
-              id="welcome-username"
-              autoCapitalize="none"
-              autoCorrect="off"
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="@yourname"
-              value={username}
-            />
-            <p className="text-xs text-muted-foreground">
-              Optional. This creates your public page at{" "}
-              {buildArtistPageHref(usernamePreview || "yourname")}.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="welcome-location">Location</Label>
-            <Input
-              id="welcome-location"
-              autoComplete="address-level2"
-              maxLength={MAX_LOCATION_LENGTH}
-              onChange={(event) => setLocation(event.target.value)}
-              placeholder="Brooklyn, New York"
-              value={location}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="welcome-bio">Biography</Label>
-            <Textarea
-              id="welcome-bio"
-              maxLength={MAX_BIO_LENGTH}
-              onChange={(event) => setBio(event.target.value)}
-              placeholder="Tell collectors what you make, collect, or care about."
-              rows={4}
-              value={bio}
-            />
-            <p className="text-xs text-muted-foreground">
-              {bio.length}/{MAX_BIO_LENGTH} characters
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              className="flex-1"
-              disabled={saving}
-              size="lg"
-              type="submit"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Saving profile...
-                </>
-              ) : (
-                "Save and continue"
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="welcome-username">Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="welcome-username"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      placeholder="@yourname"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Optional. This creates your public page at{" "}
+                    {buildArtistPageHref(usernamePreview || "yourname")}.
+                  </p>
+                  <FormMessage />
+                </FormItem>
               )}
-            </Button>
-            <Button
-              className="flex-1"
-              disabled={saving}
-              onClick={() => router.replace("/")}
-              size="lg"
-              type="button"
-              variant="ghost"
-            >
-              Skip for now
-            </Button>
-          </div>
-        </form>
+            />
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="welcome-location">Location</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="welcome-location"
+                      autoComplete="address-level2"
+                      maxLength={MAX_LOCATION_LENGTH}
+                      placeholder="Brooklyn, New York"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="welcome-bio">Biography</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="welcome-bio"
+                      maxLength={MAX_BIO_LENGTH}
+                      placeholder="Tell collectors what you make, collect, or care about."
+                      rows={4}
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    {bio.length}/{MAX_BIO_LENGTH} characters
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                className="flex-1"
+                disabled={saving}
+                size="lg"
+                type="submit"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    Saving profile...
+                  </>
+                ) : (
+                  "Save and continue"
+                )}
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={saving}
+                onClick={() => router.replace("/")}
+                size="lg"
+                type="button"
+                variant="ghost"
+              >
+                Skip for now
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     </section>
   );

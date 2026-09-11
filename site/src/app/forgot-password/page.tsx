@@ -1,26 +1,52 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useHydrated } from "@/hooks/useHydrated";
+
+const forgotPasswordFormSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+});
+
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordFormSchema>;
 
 export default function ForgotPasswordPage() {
+  const isHydrated = useHydrated();
   const { sendResetLink } = useAuth();
-  const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
+  const form = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordFormSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const email = form.watch("email");
+
+  const onSubmit = async ({ email }: ForgotPasswordFormData) => {
     setError(null);
 
     try {
@@ -34,8 +60,6 @@ export default function ForgotPasswordPage() {
           : "Unable to send the password reset email.";
       setError(message);
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -77,23 +101,38 @@ export default function ForgotPasswordPage() {
           </Alert>
         ) : null}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="email">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Button className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Sending link..." : "Send reset link"}
-          </Button>
-        </form>
+            <Button
+              className="w-full"
+              size="lg"
+              disabled={!isHydrated || form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting
+                ? "Sending link..."
+                : "Send reset link"}
+            </Button>
+          </form>
+        </Form>
       </div>
     </AuthShell>
   );
