@@ -74,7 +74,7 @@ export default async function ArtistPage({
             <div className="flex items-center gap-4">
               <ArtistAvatar
                 artistUid={profile.uid}
-                className={cn(profile.bannerURL && "-mt-16")}
+                className={cn(profile.bannerURL && "-mt-16 self-start")}
                 displayName={displayName}
                 photoURL={profile.photoURL}
               />
