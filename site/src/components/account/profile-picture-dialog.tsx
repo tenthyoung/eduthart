@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { parseApiError } from "@/lib/api/parse-api-error";
 import { type AccountProfile } from "@/lib/auth/account-profile";
 import {
   AVATAR_CROP_SPEC,
@@ -59,11 +60,8 @@ export function ProfilePictureDialog({
     });
 
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as {
-        error?: { message?: string };
-      } | null;
       throw new Error(
-        payload?.error?.message ?? "Unable to update your profile picture."
+        await parseApiError(response, "Unable to update your profile picture.")
       );
     }
 

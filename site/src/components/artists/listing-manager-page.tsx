@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { parseApiError } from "@/lib/api/parse-api-error";
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
@@ -47,14 +48,6 @@ type ListingStudioPayload = {
 
 type SortValue =
   "newest" | "oldest" | "progress_desc" | "price_desc" | "title_asc";
-
-async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: string };
-  } | null;
-
-  return payload?.error?.message ?? fallbackMessage;
-}
 
 function parsePrice(value: string) {
   const numeric = Number(value.replace(/[^0-9.]/g, ""));

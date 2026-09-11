@@ -51,6 +51,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { parseApiError } from "@/lib/api/parse-api-error";
 import {
   buildArtistPageHref,
   buildDisplayName,
@@ -111,14 +112,6 @@ function initialsForProfile(
   const last = profile?.lastName?.trim()?.[0] ?? "";
   const email = fallbackEmail?.trim()?.[0] ?? "";
   return `${first}${last}`.trim().toUpperCase() || email.toUpperCase() || "EA";
-}
-
-async function parseApiError(response: Response, fallbackMessage: string) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: string };
-  } | null;
-
-  return payload?.error?.message ?? fallbackMessage;
 }
 
 export function AccountPage() {
