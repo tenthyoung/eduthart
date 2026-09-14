@@ -5,6 +5,8 @@ export type NotificationKind =
   | "followed_artist_listed"
   | "followed_artist_price_drop"
   | "order_confirmed"
+  | "order_delivered"
+  | "order_shipped"
   | "password_changed"
   | "saved_artwork_sold";
 

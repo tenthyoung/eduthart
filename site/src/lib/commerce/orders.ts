@@ -13,6 +13,47 @@ const ORDERS_COLLECTION = "orders";
 export type OrderStatus =
   "awaiting_payment" | "cancelled" | "paid" | "refunded";
 
+/** Where a parcel is, mirroring the tracking states Shippo reports. */
+export type ShipmentStatus =
+  | "delivered"
+  | "failure"
+  | "label_purchased"
+  | "pending"
+  | "returned"
+  | "transit";
+
+export type OrderShipment = {
+  carrier: string | null;
+  deliveredAt: string | null;
+  estimatedDays: number | null;
+  labelUrl: string | null;
+  /** The Shippo rate the quote was taken from, so the label buys that rate. */
+  rateId: string | null;
+  service: string | null;
+  shippedAt: string | null;
+  /** Carried from the listing so the label is bought with the right extras. */
+  signatureRequired: boolean;
+  status: ShipmentStatus;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  transactionId: string | null;
+};
+
+export const EMPTY_SHIPMENT: OrderShipment = {
+  carrier: null,
+  deliveredAt: null,
+  estimatedDays: null,
+  labelUrl: null,
+  rateId: null,
+  service: null,
+  shippedAt: null,
+  signatureRequired: false,
+  status: "pending",
+  trackingNumber: null,
+  trackingUrl: null,
+  transactionId: null,
+};
+
 export type OrderLineItem = {
   artistUid: string;
   artistUsername: string;
@@ -38,6 +79,7 @@ export type Order = {
   paidAt: string | null;
   sellerName: string;
   sellerUid: string;
+  shipment: OrderShipment;
   shippingAddress: SavedAddress | null;
   shippingAmountMinor: number;
   status: OrderStatus;
@@ -87,6 +129,10 @@ function toOrder(document: StoredDocument): Order {
     paidAt: readString("paidAt"),
     sellerName: readString("sellerName") ?? "",
     sellerUid: readString("sellerUid") ?? "",
+    shipment: {
+      ...EMPTY_SHIPMENT,
+      ...((document.shipment as Partial<OrderShipment> | undefined) ?? {}),
+    },
     shippingAddress: (document.shippingAddress as SavedAddress | null) ?? null,
     shippingAmountMinor: readNumber("shippingAmountMinor"),
     status: (readString("status") as OrderStatus) ?? "awaiting_payment",
@@ -107,6 +153,7 @@ export type CreateOrderInput = {
   items: OrderLineItem[];
   sellerName: string;
   sellerUid: string;
+  shipment?: Partial<OrderShipment>;
   shippingAddress: SavedAddress | null;
   shippingAmountMinor: number;
 };
@@ -126,6 +173,7 @@ export async function createOrder(input: CreateOrderInput) {
     currency: normalizeCurrency(input.currency),
     number: buildOrderNumber(),
     paidAt: null,
+    shipment: { ...EMPTY_SHIPMENT, ...input.shipment },
     status: "awaiting_payment" satisfies OrderStatus,
     stripeCheckoutSessionId: null,
     stripePaymentIntentId: null,
@@ -204,4 +252,75 @@ export async function markOrderCancelled(orderId: string) {
   });
 
   return toOrder(saved);
+}
+
+/**
+ * Record the label Shippo issued for this order.
+ *
+ * Written through the order document rather than a separate collection so a
+ * purchase and its parcel always load together.
+ */
+export async function attachShipmentLabel(
+  orderId: string,
+  label: {
+    carrier: string | null;
+    labelUrl: string | null;
+    service: string | null;
+    trackingNumber: string | null;
+    trackingUrl: string | null;
+    transactionId: string;
+  }
+) {
+  const order = await getOrder(orderId);
+
+  if (!order) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const saved = await saveRootDocument(ORDERS_COLLECTION, orderId, {
+    shipment: {
+      ...order.shipment,
+      ...label,
+      shippedAt: order.shipment.shippedAt ?? now,
+      status: "label_purchased" satisfies ShipmentStatus,
+    },
+    updatedAt: now,
+  });
+
+  return toOrder(saved);
+}
+
+export async function updateShipmentTracking(
+  orderId: string,
+  tracking: { status: ShipmentStatus; occurredAt: string | null }
+) {
+  const order = await getOrder(orderId);
+
+  if (!order) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const saved = await saveRootDocument(ORDERS_COLLECTION, orderId, {
+    shipment: {
+      ...order.shipment,
+      deliveredAt:
+        tracking.status === "delivered"
+          ? (tracking.occurredAt ?? now)
+          : order.shipment.deliveredAt,
+      status: tracking.status,
+    },
+    updatedAt: now,
+  });
+
+  return toOrder(saved);
+}
+
+export async function findOrderByTrackingNumber(trackingNumber: string) {
+  const documents = await listRootDocuments(ORDERS_COLLECTION, [
+    { field: "shipment.trackingNumber", value: trackingNumber },
+  ]);
+
+  return documents[0] ? toOrder(documents[0]) : null;
 }

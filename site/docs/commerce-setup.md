@@ -44,6 +44,52 @@ to save.
   redirect is never treated as proof of payment — the success page asks the
   server to re-fetch the session from Stripe.
 
+## Shippo
+
+Shipping rates, labels, and tracking come from Shippo.
+
+1. Create a Shippo account and copy a **live or test API token** into
+   `SHIPPO_API_TOKEN`. Test tokens (`shippo_test_...`) return the same rate
+   shapes and issue labels that are never charged.
+2. Connect at least one carrier account in the Shippo dashboard. With no carrier
+   connected Shippo returns no rates, and checkout falls back to the artist's
+   own stated rate.
+3. Pick a long random string for `SHIPPO_WEBHOOK_SECRET`.
+4. Add a Shippo webhook for **Track Updated** pointing at
+   `POST /api/commerce/shipping-webhook?token=<that secret>`.
+
+Without `SHIPPO_API_TOKEN` the site still sells: shipping is charged at the
+artist's stated domestic rate, no label is bought, and the order's shipment
+stays pending.
+
+### What is quoted, and when it is not
+
+- Rates are quoted at checkout from the artist's shipping origin to the
+  collector's address, one parcel per artwork, and the cheapest rate in the
+  order's currency is what the collector is charged.
+- A parcel needs width, height, and weight. The listing form only requires width
+  and height, so an artwork with no weight is never quoted — guessing would
+  commit the artist to a price they never agreed to. Depth falls back to a 2 in
+  (5 cm) minimum, because a packed flat piece is never zero-deep.
+- Checkout is never blocked on Shippo. An unconfigured token, an unmeasured
+  piece, a missing origin address, rates in another currency, or an outright
+  failure all fall back to the artist's stated rate, and the reason is logged.
+
+### Labels and tracking
+
+- The label is bought during fulfilment, against the exact rate the collector
+  was charged. It is the last thing fulfilment does and it never throws: the
+  sale is already complete, and a carrier outage must not leave a paid order
+  unfulfilled. A refused label is logged and the shipment stays pending.
+- `signatureRequired` on the listing becomes signature confirmation on the
+  label.
+- The tracking webhook's shared secret only decides whether a request is worth
+  acting on. The payload is never trusted for the status itself: the carrier and
+  tracking number are used to re-fetch the parcel from Shippo, so a forged call
+  cannot mark an order delivered.
+- The buyer is told when the parcel first enters transit and when it is
+  delivered. Both are deduped, so Shippo retries do not send twice.
+
 ## Resend
 
 Notification emails go out through Resend, which the contact form already uses.
@@ -73,6 +119,6 @@ collect the rest.
 ## Still to do
 
 The plan in [marketplace-commerce.md](./marketplace-commerce.md) also calls for
-Stripe Connect destination charges so artists are paid directly, and Shippo for
-live shipping rates. Neither is built: today the platform is the merchant of
-record and shipping uses the artist's own stated domestic rate.
+Stripe Connect destination charges so artists are paid directly. That is not
+built: today the platform is the merchant of record, and there is no artist
+payout or application fee.

@@ -77,11 +77,21 @@ export async function publishArtwork(options: {
   itemId?: string;
   medium?: string;
   price?: string;
+  shippingOrigin?: {
+    city: string;
+    country: string;
+    line1: string;
+    line2: string | null;
+    postalCode: string;
+    region: string;
+  } | null;
+  signatureRequired?: boolean;
   style?: string;
   subject?: string;
   tags?: string[];
   title?: string;
   uid: string;
+  weight?: string;
 }): Promise<PublishedArtwork> {
   return callRouteOk<PublishedArtwork>(seedListingRoute, {
     body: options,

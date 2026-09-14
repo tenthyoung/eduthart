@@ -9,9 +9,11 @@ import {
   KeyRound,
   Loader2,
   Mail,
+  PackageCheck,
   Receipt,
   Tag,
   Trash2,
+  Truck,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,6 +49,8 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
   followed_artist_listed: ImageIcon,
   followed_artist_price_drop: Tag,
   order_confirmed: Receipt,
+  order_delivered: PackageCheck,
+  order_shipped: Truck,
   password_changed: KeyRound,
   saved_artwork_sold: ImageIcon,
 };

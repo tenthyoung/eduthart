@@ -19,7 +19,7 @@ import {
   type OrderLineItem,
 } from "@/lib/commerce/orders";
 import { reserveArtwork } from "@/lib/commerce/reservations";
-import { resolveShippingAmountMinor } from "@/lib/commerce/shipping";
+import { quoteShipping } from "@/lib/commerce/shipping";
 import { buildE2ESessionId, isE2ECheckout } from "@/lib/commerce/e2e-payments";
 import { getStripeClient } from "@/lib/commerce/stripe";
 import { ensureStripeCustomer } from "@/lib/commerce/payment-methods";
@@ -172,11 +172,18 @@ export async function createCheckoutSession(request: CheckoutRequest) {
       )) ?? shippingAddress);
 
   const lineItems = items.map((item) => toLineItem(item, artist, currency));
-  const shippingAmountMinor = items.reduce(
-    (total, item) =>
-      total + resolveShippingAmountMinor(item, studio.shared, currency),
-    0
-  );
+  const sellerName = buildProfileDisplayName(sellerProfile);
+
+  // Live rates when Shippo can quote this parcel to this address, and the
+  // artist's own stated rate whenever it cannot. The rate id is kept so
+  // fulfilment buys a label at exactly the price the collector was charged.
+  const shipping = await quoteShipping({
+    currency,
+    destination: shippingAddress,
+    items,
+    sellerName,
+    shared: studio.shared,
+  });
 
   const order = await createOrder({
     billingAddress,
@@ -185,10 +192,22 @@ export async function createCheckoutSession(request: CheckoutRequest) {
     buyerUid: request.buyerUid,
     currency,
     items: lineItems,
-    sellerName: buildProfileDisplayName(sellerProfile),
+    sellerName,
     sellerUid,
+    shipment: {
+      signatureRequired:
+        studio.shared.shippingAuthentication.signatureRequired === true,
+      ...(shipping.rate
+        ? {
+            carrier: shipping.rate.carrier,
+            estimatedDays: shipping.rate.estimatedDays,
+            rateId: shipping.rate.rateId,
+            service: shipping.rate.service,
+          }
+        : {}),
+    },
     shippingAddress,
-    shippingAmountMinor,
+    shippingAmountMinor: shipping.amountMinor,
   });
 
   // Hold each original before Stripe is involved, so two collectors cannot both
@@ -238,13 +257,13 @@ export async function createCheckoutSession(request: CheckoutRequest) {
         },
         quantity: 1,
       })),
-      ...(shippingAmountMinor > 0
+      ...(shipping.amountMinor > 0
         ? [
             {
               price_data: {
                 currency: currency.toLowerCase(),
                 product_data: { name: "Shipping and handling" },
-                unit_amount: shippingAmountMinor,
+                unit_amount: shipping.amountMinor,
               },
               quantity: 1,
             },

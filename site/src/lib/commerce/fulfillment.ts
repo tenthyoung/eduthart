@@ -3,6 +3,7 @@ import { setListingAvailability } from "@/lib/artists/listing-store";
 import { loadAccountProfile } from "@/lib/auth/profile-store";
 import { listCollectorsWhoSaved } from "@/lib/collectors/favorites";
 import { clearCart } from "@/lib/commerce/cart";
+import { purchaseShippingLabel } from "@/lib/commerce/labels";
 import {
   findOrderByCheckoutSession,
   getOrder,
@@ -131,9 +132,16 @@ export async function fulfillCheckoutSession(session: FulfillableSession) {
   );
 
   await clearCart(order.buyerUid);
-  await notifyEveryone(paidOrder);
 
-  return paidOrder;
+  // Buying the label is deliberately last and never throws: the sale is already
+  // complete, and a carrier outage must not leave a paid order unfulfilled.
+  const shippedOrder = await purchaseShippingLabel(paidOrder, {
+    signatureRequired: paidOrder.shipment.signatureRequired,
+  });
+
+  await notifyEveryone(shippedOrder);
+
+  return shippedOrder;
 }
 
 /** Release the held originals when a checkout is abandoned or expires. */

@@ -92,11 +92,33 @@ async function mutateE2ECollection<T>(
   return run;
 }
 
+/**
+ * Read a possibly dotted field path, the way Firestore's `where` does.
+ *
+ * Without this the in-memory store would silently never match a nested filter
+ * that works fine against Firestore.
+ */
+function readFieldPath(data: Record<string, unknown>, path: string) {
+  if (!path.includes(".")) {
+    return data[path];
+  }
+
+  return path.split(".").reduce<unknown>((value, segment) => {
+    if (value && typeof value === "object") {
+      return (value as Record<string, unknown>)[segment];
+    }
+
+    return undefined;
+  }, data);
+}
+
 function matchesFilters(
   data: Record<string, unknown>,
   filters: DocumentFilter[]
 ) {
-  return filters.every((filter) => data[filter.field] === filter.value);
+  return filters.every(
+    (filter) => readFieldPath(data, filter.field) === filter.value
+  );
 }
 
 function userCollectionRef(uid: string, collection: string) {
