@@ -18,10 +18,7 @@ import type { NotificationKind } from "@/lib/notifications/types";
  * and can layer overrides on top of these without changing the storage shape.
  */
 export type EmailCategory =
-  | "followed_artists"
-  | "orders"
-  | "saved_artwork"
-  | "sales";
+  "followed_artists" | "orders" | "saved_artwork" | "sales";
 
 export type EmailPreferences = Record<EmailCategory, boolean>;
 
