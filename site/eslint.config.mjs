@@ -15,6 +15,9 @@ const eslintConfig = [
     ignores: [
       "node_modules/**",
       ".next/**",
+      // The e2e dev server builds here (NEXT_DIST_DIR), so without this anyone
+      // who has run it lints thousands of generated files that CI never sees.
+      ".next-e2e/**",
       "out/**",
       "build/**",
       "playwright-report/**",
