@@ -6,8 +6,10 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
 
-const db = getFirebaseAdminDb();
-const auth = getFirebaseAdminAuth();
+// Resolved per call rather than at module scope: importing this file must not
+// require credentials, or `next build` fails in any environment without them.
+const db = () => getFirebaseAdminDb();
+const auth = () => getFirebaseAdminAuth();
 const SERIOUS_MODERATION_ACTIONS = new Set(["warn", "remove"]);
 const BOOTSTRAP_SUPER_ADMIN_EMAILS = new Set([
   "izzy@hendecalabs.com",
@@ -70,14 +72,14 @@ export function getAdminSessionCookieMaxAgeMs() {
 }
 
 export async function createAdminSessionCookie(idToken: string) {
-  return auth.createSessionCookie(idToken, {
+  return auth().createSessionCookie(idToken, {
     expiresIn: SESSION_COOKIE_MAX_AGE_MS,
   });
 }
 
 export async function verifyAdminIdToken(idToken: string) {
   try {
-    return await auth.verifyIdToken(idToken, true);
+    return await auth().verifyIdToken(idToken, true);
   } catch (error) {
     throw new AdminRouteError(
       "auth/invalid-token",
@@ -90,7 +92,7 @@ export async function verifyAdminIdToken(idToken: string) {
 
 export async function verifyAdminSessionCookie(sessionCookie: string) {
   try {
-    return await auth.verifySessionCookie(sessionCookie, true);
+    return await auth().verifySessionCookie(sessionCookie, true);
   } catch (error) {
     throw new AdminRouteError(
       "auth/session-expired",
@@ -153,14 +155,14 @@ async function setAdminClaims(
   uid: string,
   role: AdminRole | null
 ): Promise<void> {
-  const user = await auth.getUser(uid);
+  const user = await auth().getUser(uid);
   const existingClaims = user.customClaims ?? {};
   const nextClaims = {
     ...existingClaims,
     admin: role != null,
     superAdmin: role === "super_admin",
   };
-  await auth.setCustomUserClaims(uid, nextClaims);
+  await auth().setCustomUserClaims(uid, nextClaims);
 }
 
 async function upsertAdminRole({
@@ -174,7 +176,7 @@ async function upsertAdminRole({
   email: string | null;
   grantedBy: string;
 }): Promise<void> {
-  await db.collection(ADMIN_ROLE_COLLECTION).doc(uid).set(
+  await db().collection(ADMIN_ROLE_COLLECTION).doc(uid).set(
     {
       uid,
       role,
@@ -197,7 +199,7 @@ async function ensureBootstrapSuperAdmin(
     return;
   }
 
-  const roleRef = db.collection(ADMIN_ROLE_COLLECTION).doc(uid);
+  const roleRef = db().collection(ADMIN_ROLE_COLLECTION).doc(uid);
   const roleSnap = await roleRef.get();
   const data = roleSnap.data();
   const isAlreadyActive =
@@ -230,7 +232,7 @@ async function getEffectiveAdminAccess(decodedToken: DecodedIdToken): Promise<{
   const email = normalizedEmail(decodedToken.email);
   await ensureBootstrapSuperAdmin(uid, email);
 
-  const roleSnap = await db.collection(ADMIN_ROLE_COLLECTION).doc(uid).get();
+  const roleSnap = await db().collection(ADMIN_ROLE_COLLECTION).doc(uid).get();
   const roleData = roleSnap.data();
   const roleFromDoc = roleData?.active === true ? roleData.role : null;
 
@@ -287,7 +289,7 @@ export async function getAdminAccessStatus(decodedToken: DecodedIdToken) {
 }
 
 async function getUserProfile(uid: string): Promise<Record<string, unknown>> {
-  const snap = await db.collection("users").doc(uid).get();
+  const snap = await db().collection("users").doc(uid).get();
   return (snap.data() as Record<string, unknown> | undefined) ?? {};
 }
 
@@ -305,13 +307,13 @@ function priceSummaryForTier(tier: string) {
 async function buildBillingSummary(
   uid: string
 ): Promise<Record<string, unknown>> {
-  const billingSnap = await db
+  const billingSnap = await db()
     .collection("users")
     .doc(uid)
     .collection("settings")
     .doc("billing")
     .get();
-  const creditsSnap = await db
+  const creditsSnap = await db()
     .collection("users")
     .doc(uid)
     .collection("settings")
@@ -372,7 +374,7 @@ function serializePublicDeckSummary(
 
 export async function searchUsersForAdmin(query: string) {
   const normalizedQuery = query.trim().toLowerCase();
-  const usersCollection = db.collection("users");
+  const usersCollection = db().collection("users");
   const docsById = new Map<string, QueryDocumentSnapshot>();
 
   if (!normalizedQuery) {
@@ -450,31 +452,31 @@ export async function searchUsersForAdmin(query: string) {
 }
 
 export async function getAdminUserDetails(targetUid: string) {
-  const userSnap = await db.collection("users").doc(targetUid).get();
+  const userSnap = await db().collection("users").doc(targetUid).get();
   if (!userSnap.exists) {
     throw new AdminRouteError("not-found", "User not found.", 404);
   }
 
   const userData = userSnap.data() as Record<string, unknown>;
-  const aiUsageSnap = await db
+  const aiUsageSnap = await db()
     .collection("users")
     .doc(targetUid)
     .collection("settings")
     .doc("ai_usage")
     .get();
-  const creditsSnap = await db
+  const creditsSnap = await db()
     .collection("users")
     .doc(targetUid)
     .collection("settings")
     .doc("credits")
     .get();
-  const publicDecksSnap = await db
+  const publicDecksSnap = await db()
     .collection("public_decks")
     .where("ownerUid", "==", targetUid)
     .orderBy("updatedAt", "desc")
     .limit(25)
     .get();
-  const roleSnap = await db
+  const roleSnap = await db()
     .collection(ADMIN_ROLE_COLLECTION)
     .doc(targetUid)
     .get();
@@ -507,7 +509,7 @@ export async function getAdminUserDetails(targetUid: string) {
 }
 
 export async function listAdminRoles() {
-  const snapshot = await db
+  const snapshot = await db()
     .collection(ADMIN_ROLE_COLLECTION)
     .where("active", "==", true)
     .orderBy("updatedAt", "desc")
@@ -549,7 +551,7 @@ export async function grantAdminRole(
     throw new AdminRouteError("invalid-argument", "email is required.", 400);
   }
 
-  const targetUser = await auth.getUserByEmail(normalized);
+  const targetUser = await auth().getUserByEmail(normalized);
   await upsertAdminRole({
     uid: targetUser.uid,
     role,
@@ -572,7 +574,7 @@ export async function revokeAdminRole(actorUid: string, targetUid: string) {
     );
   }
 
-  await db.collection(ADMIN_ROLE_COLLECTION).doc(targetUid).set(
+  await db().collection(ADMIN_ROLE_COLLECTION).doc(targetUid).set(
     {
       active: false,
       revokedBy: actorUid,
@@ -606,7 +608,7 @@ export async function updateUserModerationState(
     );
   }
 
-  const userRef = db.collection("users").doc(targetUid);
+  const userRef = db().collection("users").doc(targetUid);
   const updates: Record<string, unknown> = {
     moderatedBy: moderatorUid,
     moderatedAt: Timestamp.now(),
@@ -617,19 +619,19 @@ export async function updateUserModerationState(
   switch (action) {
     case "activate":
       updates.accountStatus = "active";
-      await auth.updateUser(targetUid, { disabled: false });
+      await auth().updateUser(targetUid, { disabled: false });
       break;
     case "suspend":
       updates.accountStatus = "suspended";
-      await auth.updateUser(targetUid, { disabled: false });
+      await auth().updateUser(targetUid, { disabled: false });
       break;
     case "ban":
       updates.accountStatus = "banned";
-      await auth.updateUser(targetUid, { disabled: true });
+      await auth().updateUser(targetUid, { disabled: true });
       break;
     case "unban":
       updates.accountStatus = "active";
-      await auth.updateUser(targetUid, { disabled: false });
+      await auth().updateUser(targetUid, { disabled: false });
       break;
     case "disable_publishing":
       updates.publishingDisabled = true;
@@ -650,7 +652,7 @@ export async function updateUserModerationState(
 }
 
 export async function listModerationQueue() {
-  const reportsSnapshot = await db
+  const reportsSnapshot = await db()
     .collection("deck_reports")
     .where("status", "==", "open")
     .orderBy("createdAt", "desc")
@@ -685,7 +687,7 @@ export async function listModerationQueue() {
 
   return Promise.all(
     Array.from(grouped.values()).map(async (group) => {
-      const publicDeckSnap = await db
+      const publicDeckSnap = await db()
         .collection("public_decks")
         .doc(group.publicDeckId)
         .get();
@@ -708,12 +710,15 @@ export async function listModerationQueue() {
 }
 
 export async function getPublicDeckDetails(publicDeckId: string) {
-  const snapshot = await db.collection("public_decks").doc(publicDeckId).get();
+  const snapshot = await db()
+    .collection("public_decks")
+    .doc(publicDeckId)
+    .get();
   if (!snapshot.exists) {
     return null;
   }
 
-  const reportsSnapshot = await db
+  const reportsSnapshot = await db()
     .collection("deck_reports")
     .where("publicDeckId", "==", publicDeckId)
     .where("status", "==", "open")
@@ -762,7 +767,7 @@ async function createUserNotification({
   publicDeckId: string;
   sourceDeckId: string;
 }) {
-  await db.collection("user_notifications").add({
+  await db().collection("user_notifications").add({
     userUid,
     title,
     body,
@@ -787,7 +792,7 @@ async function queueModerationEmail({
   deckName: string;
   reason: string;
 }) {
-  await db.collection("moderation_email_queue").add({
+  await db().collection("moderation_email_queue").add({
     userUid,
     action,
     deckName,
@@ -818,7 +823,7 @@ export async function moderateDeck(
     );
   }
 
-  const publicDeckRef = db.collection("public_decks").doc(publicDeckId);
+  const publicDeckRef = db().collection("public_decks").doc(publicDeckId);
   const publicDeckSnap = await publicDeckRef.get();
   if (!publicDeckSnap.exists) {
     throw new AdminRouteError("not-found", "Public deck not found.", 404);
@@ -866,14 +871,14 @@ export async function moderateDeck(
   }
 
   await publicDeckRef.set(publicUpdate, { merge: true });
-  await db
+  await db()
     .collection("users")
     .doc(ownerUid)
     .collection("decks")
     .doc(sourceDeckId)
     .set(privateUpdate, { merge: true });
 
-  const openReports = await db
+  const openReports = await db()
     .collection("deck_reports")
     .where("publicDeckId", "==", publicDeckId)
     .where("status", "==", "open")
@@ -892,7 +897,7 @@ export async function moderateDeck(
     )
   );
 
-  await db.collection("deck_moderation_events").add({
+  await db().collection("deck_moderation_events").add({
     publicDeckId,
     ownerUid,
     sourceDeckId,
@@ -930,7 +935,7 @@ export async function moderateDeck(
 }
 
 export async function listRefundRequests() {
-  const snapshot = await db
+  const snapshot = await db()
     .collection("refund_requests")
     .orderBy("createdAt", "desc")
     .limit(100)
@@ -962,7 +967,7 @@ export async function updateRefundRequestStatus(
     );
   }
 
-  await db
+  await db()
     .collection("refund_requests")
     .doc(refundRequestId)
     .set(
