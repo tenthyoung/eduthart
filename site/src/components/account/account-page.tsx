@@ -19,6 +19,7 @@ import { ProfilePictureDialog } from "@/components/account/profile-picture-dialo
 import { AccountDetailsSection } from "@/components/account/sections/account-details-section";
 import { AccountHeader } from "@/components/account/sections/account-header";
 import { DangerZoneSection } from "@/components/account/sections/danger-zone-section";
+import { EmailPreferencesSection } from "@/components/account/sections/email-preferences-section";
 import { ProfileSection } from "@/components/account/sections/profile-section";
 import { SecuritySection } from "@/components/account/sections/security-section";
 import { useAccountProfile } from "@/components/account/use-account-profile";
@@ -414,6 +415,8 @@ export function AccountPage() {
               sendingVerification={sendingVerification}
               signingOut={signingOut}
             />
+
+            <EmailPreferencesSection />
 
             <AccountDetailsSection profile={profile} />
           </div>
