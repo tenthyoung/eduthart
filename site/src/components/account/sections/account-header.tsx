@@ -2,18 +2,12 @@
 
 import { Camera, MapPin } from "lucide-react";
 
-import type { AccountProfile } from "@/lib/auth/account-profile";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import {
+  buildDisplayName,
+  type AccountProfile,
+} from "@/lib/auth/account-profile";
 import { cn } from "@/lib/utils";
-
-function initialsForProfile(
-  profile: AccountProfile | null,
-  fallbackEmail?: string | null
-) {
-  const first = profile?.firstName?.trim()?.[0] ?? "";
-  const last = profile?.lastName?.trim()?.[0] ?? "";
-  const email = fallbackEmail?.trim()?.[0] ?? "";
-  return `${first}${last}`.trim().toUpperCase() || email.toUpperCase() || "EA";
-}
 
 /**
  * Banner, avatar, and the two facts worth seeing before scrolling: which
@@ -26,6 +20,7 @@ export function AccountHeader({
   onEditPicture,
   profile,
   providerLabel,
+  uid,
 }: {
   currentEmail: string | null;
   displayName: string;
@@ -33,6 +28,8 @@ export function AccountHeader({
   onEditPicture: () => void;
   profile: AccountProfile | null;
   providerLabel: string;
+  /** Seeds the avatar colour, so it survives the profile failing to load. */
+  uid: string | null;
 }) {
   return (
     <div className="space-y-4">
@@ -57,22 +54,23 @@ export function AccountHeader({
             <button
               aria-label="Change profile picture"
               className={cn(
-                "group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                "group relative shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                 profile?.bannerURL && "-mt-16 self-start"
               )}
               onClick={onEditPicture}
               type="button"
             >
-              {profile?.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                  src={profile.photoURL}
-                />
-              ) : (
-                initialsForProfile(profile, fallbackEmail)
-              )}
+              <ProfileAvatar
+                className="border-4 border-white shadow-lg"
+                email={fallbackEmail}
+                name={
+                  buildDisplayName(profile?.firstName, profile?.lastName) ||
+                  displayName
+                }
+                photoURL={profile?.photoURL}
+                seed={uid ?? profile?.uid}
+                size="md"
+              />
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                 <Camera className="size-6 text-white" />
               </span>

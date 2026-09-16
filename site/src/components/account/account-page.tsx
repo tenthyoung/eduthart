@@ -366,6 +366,7 @@ export function AccountPage() {
           onEditPicture={() => setIsPictureDialogOpen(true)}
           profile={profile}
           providerLabel={providerLabel}
+          uid={user?.uid ?? null}
         />
 
         {error ? (
