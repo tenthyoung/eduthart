@@ -10,12 +10,8 @@ import { z } from "zod";
 
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
-import {
-  MIN_PASSWORD_LENGTH,
-  useAuth,
-  type FederatedProvider,
-} from "@/components/auth/auth-provider";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
+import { MIN_PASSWORD_LENGTH, useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,7 +50,7 @@ type SignupFormData = z.infer<typeof signupFormSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const isHydrated = useHydrated();
-  const { signInWithFederatedProvider, signUpWithEmail, status } = useAuth();
+  const { signInWithGoogle, signUpWithEmail, status } = useAuth();
   const [isFederatedSubmitting, setIsFederatedSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -120,26 +116,25 @@ export default function SignupPage() {
     }
   };
 
-  const handleFederatedSignUp = async (provider: FederatedProvider) => {
+  const handleGoogleSignUp = async () => {
     if (!requireLegalAcceptance()) {
       return;
     }
 
-    const providerName = provider === "apple.com" ? "Apple" : "Google";
     setIsFederatedSubmitting(true);
     setError(null);
 
     try {
-      await signInWithFederatedProvider(provider, "signup");
-      toast.success(`Your ${providerName} account is connected.`);
-      // Neither provider reliably supplies everything the profile needs, so a
+      await signInWithGoogle("signup");
+      toast.success("Your Google account is connected.");
+      // Google does not reliably supply everything the profile needs, so a
       // federated sign-up always lands on the completion step.
       router.replace(PROFILE_COMPLETION_PATH);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : `Unable to continue with ${providerName}.`;
+          : "Unable to continue with Google.";
       setError(message);
       toast.error(message);
     } finally {
@@ -319,9 +314,9 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <FederatedAuthButtons
+        <GoogleAuthButton
           disabled={isSubmitting}
-          onSelect={(provider) => void handleFederatedSignUp(provider)}
+          onSelect={() => void handleGoogleSignUp()}
           verb="Sign up with"
         />
 

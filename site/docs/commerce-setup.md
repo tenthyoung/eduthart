@@ -100,21 +100,26 @@ Notification emails go out through Resend, which the contact form already uses.
 - `NEXT_PUBLIC_SITE_URL` is used for the absolute links inside emails and
   invoices, so set it per environment.
 
-## Apple sign-in
+## Google sign-in
 
-Sign in with Apple needs enabling before the button works:
+Google is the only federated provider. It signs in through a popup, so every
+domain the site is served from has to be on the Firebase allow list:
 
-1. Firebase Console -> Authentication -> Sign-in method -> Apple.
-2. Supply the Services ID, Apple Team ID, key ID, and private key from your
-   Apple Developer account.
-3. Add the Firebase callback URL to the Services ID's Return URLs.
+1. Firebase Console -> Authentication -> Settings -> Authorized domains.
+2. Add each host that serves the app, including `www.eduthart.com` and the bare
+   apex, plus any preview domain. `localhost` is allowed by default, but
+   `127.0.0.1` is not -- they are different hosts to Firebase.
 
-Until it is enabled, Firebase returns `auth/operation-not-allowed` and the
-button reports that the method is not enabled yet.
+A domain that is missing returns `auth/unauthorized-domain` and the button
+reports that Google sign-in is not authorized for the domain yet. The current
+list can be read without the console:
 
-Apple only returns a name on the very first authorization and never returns a
-username, location, or biography, so a federated sign-up lands on `/welcome` to
-collect the rest.
+```bash
+curl -s "https://identitytoolkit.googleapis.com/v1/projects?key=$NEXT_PUBLIC_FIREBASE_API_KEY"
+```
+
+Google does not return a username, location, or biography, so a federated
+sign-up lands on `/welcome` to collect the rest.
 
 ## Still to do
 

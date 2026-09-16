@@ -42,8 +42,7 @@ type ProfileCompletionFormData = z.infer<typeof profileCompletionSchema>;
 /**
  * Post sign-up completion step.
  *
- * Google supplies given and family names, Apple supplies a display name only on
- * the first authorization, and neither supplies a username, location, or
+ * Google supplies given and family names, but no username, location, or
  * biography. Rather than leave those blank forever, a federated sign-up lands
  * here with whatever the provider gave already filled in.
  */

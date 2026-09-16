@@ -10,11 +10,8 @@ import { z } from "zod";
 
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { FederatedAuthButtons } from "@/components/auth/federated-auth-buttons";
-import {
-  useAuth,
-  type FederatedProvider,
-} from "@/components/auth/auth-provider";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
+import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +39,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isHydrated = useHydrated();
-  const { signInWithEmail, signInWithFederatedProvider, status } = useAuth();
+  const { signInWithEmail, signInWithGoogle, status } = useAuth();
   const [isFederatedSubmitting, setIsFederatedSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const passwordResetSucceeded = searchParams.get("reset") === "success";
@@ -78,20 +75,19 @@ function LoginContent() {
     }
   };
 
-  const handleFederatedSignIn = async (provider: FederatedProvider) => {
-    const providerName = provider === "apple.com" ? "Apple" : "Google";
+  const handleGoogleSignIn = async () => {
     setIsFederatedSubmitting(true);
     setError(null);
 
     try {
-      await signInWithFederatedProvider(provider, "login");
-      toast.success(`Signed in with ${providerName}.`);
+      await signInWithGoogle("login");
+      toast.success("Signed in with Google.");
       router.replace("/");
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : `Unable to sign in with ${providerName}.`;
+          : "Unable to sign in with Google.";
       setError(message);
       toast.error(message);
     } finally {
@@ -203,14 +199,14 @@ function LoginContent() {
           </div>
         </div>
 
-        <FederatedAuthButtons
+        <GoogleAuthButton
           disabled={isSubmitting}
-          onSelect={(provider) => void handleFederatedSignIn(provider)}
+          onSelect={() => void handleGoogleSignIn()}
           verb="Continue with"
         />
 
         <p className="text-sm text-muted-foreground">
-          First-time Google and Apple registration lives on the{" "}
+          First-time Google registration lives on the{" "}
           <Link
             className="font-medium text-primary hover:underline"
             href="/signup"
