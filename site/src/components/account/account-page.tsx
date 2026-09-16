@@ -1,70 +1,37 @@
 "use client";
 
-import {
-  AlertTriangle,
-  BadgeCheck,
-  Camera,
-  Loader2,
-  LogOut,
-  Mail,
-  MapPin,
-  RefreshCw,
-  ShieldAlert,
-  ShieldCheck,
-  Trash2,
-  UserRound,
-} from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-import Link from "next/link";
 
 import { AccountArea } from "@/components/account/account-shell";
-import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
+import {
+  type EmailFormData,
+  useEmailForm,
+} from "@/components/account/change-email-dialog";
+import {
+  type ProfileFormData,
+  useProfileForm,
+} from "@/components/account/edit-profile-dialog";
 import { ImageCropDialog } from "@/components/account/image-crop-dialog";
-import { ProfileImageField } from "@/components/account/profile-image-field";
 import { ProfilePictureDialog } from "@/components/account/profile-picture-dialog";
-import { UsernameDialog } from "@/components/account/username-dialog";
+import { AccountDetailsSection } from "@/components/account/sections/account-details-section";
+import { AccountHeader } from "@/components/account/sections/account-header";
+import { DangerZoneSection } from "@/components/account/sections/danger-zone-section";
+import { ProfileSection } from "@/components/account/sections/profile-section";
+import { SecuritySection } from "@/components/account/sections/security-section";
+import { useAccountProfile } from "@/components/account/use-account-profile";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { parseApiError } from "@/lib/api/parse-api-error";
 import {
-  buildArtistPageHref,
   buildDisplayName,
   type AccountProfile,
 } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
-import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
-import {
-  BANNER_CROP_SPEC,
-  BANNER_DIMENSIONS_LABEL,
-} from "@/lib/profile/images";
+import { BANNER_CROP_SPEC } from "@/lib/profile/images";
 import { uploadProfileImage } from "@/lib/profile/upload";
-import { cn } from "@/lib/utils";
 
 const PROVIDER_LABELS: Record<string, string> = {
   "apple.com": "Apple",
@@ -72,48 +39,13 @@ const PROVIDER_LABELS: Record<string, string> = {
   password: "Email and password",
 };
 
-const profileFormSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  location: z.string(),
-  bio: z.string(),
-});
-
-type ProfileFormData = z.infer<typeof profileFormSchema>;
-
-const emailFormSchema = z.object({
-  nextEmail: z.string(),
-});
-
-type EmailFormData = z.infer<typeof emailFormSchema>;
-
-function formatAccountDate(value: string | null) {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not available";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function initialsForProfile(
-  profile: AccountProfile | null,
-  fallbackEmail?: string | null
-) {
-  const first = profile?.firstName?.trim()?.[0] ?? "";
-  const last = profile?.lastName?.trim()?.[0] ?? "";
-  const email = fallbackEmail?.trim()?.[0] ?? "";
-  return `${first}${last}`.trim().toUpperCase() || email.toUpperCase() || "EA";
-}
-
+/**
+ * Account settings.
+ *
+ * This component owns the dialog and in-flight flags and wires the handlers
+ * together; the profile fetch lives in useAccountProfile and each panel renders
+ * from its own file under ./sections.
+ */
 export function AccountPage() {
   const router = useRouter();
   const {
@@ -126,12 +58,11 @@ export function AccountPage() {
     status,
     user,
   } = useAuth();
-  const [profile, setProfile] = useState<AccountProfile | null>(null);
+
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false);
   const [isPictureDialogOpen, setIsPictureDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [pendingBanner, setPendingBanner] = useState<File | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -141,25 +72,47 @@ export function AccountPage() {
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [suppressAuthRedirect, setSuppressAuthRedirect] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
-  const profileForm = useForm<ProfileFormData>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      location: "",
-      bio: "",
+  const profileForm = useProfileForm();
+  const emailForm = useEmailForm();
+
+  const syncForms = useCallback(
+    (next: AccountProfile) => {
+      profileForm.reset({
+        bio: next.bio ?? "",
+        firstName: next.firstName ?? "",
+        lastName: next.lastName ?? "",
+        location: next.location ?? "",
+      });
+      emailForm.reset({ nextEmail: next.email ?? user?.email ?? "" });
     },
-  });
-  const emailForm = useForm<EmailFormData>({
-    resolver: zodResolver(emailFormSchema),
-    defaultValues: { nextEmail: "" },
-  });
+    [emailForm, profileForm, user?.email]
+  );
 
-  const { firstName, lastName, location, bio } = profileForm.watch();
-  const nextEmail = emailForm.watch("nextEmail");
+  const {
+    error,
+    loading,
+    profile,
+    reportError,
+    runProfileUpdate,
+    setError,
+    setProfile,
+  } = useAccountProfile({ onLoaded: syncForms, status, user });
 
+  // Sign-out and account deletion clear the session on purpose, so they opt out
+  // of the redirect that would otherwise fire mid-flow.
+  useEffect(() => {
+    if (
+      status === "unauthenticated" &&
+      !suppressAuthRedirect &&
+      !signingOut &&
+      !deletingAccount
+    ) {
+      router.replace("/login?next=/account");
+    }
+  }, [deletingAccount, router, signingOut, status, suppressAuthRedirect]);
+
+  const { firstName, lastName } = profileForm.watch();
   const hasPasswordProvider = user?.providerIds.includes("password") ?? false;
   const isEmailVerified = user?.emailVerified ?? false;
   const displayNamePreview =
@@ -168,86 +121,6 @@ export function AccountPage() {
     user?.displayName ||
     "EduthArt Collector";
   const currentEmail = user?.email ?? profile?.email ?? null;
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      if (!suppressAuthRedirect && !signingOut && !deletingAccount) {
-        router.replace("/login?next=/account");
-      }
-      return;
-    }
-
-    if (status !== "authenticated" || !user) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadProfile = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const token = await user.getIdToken();
-        const response = await fetch("/api/auth/profile", {
-          headers: { authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            await parseApiError(
-              response,
-              "Unable to load your account settings."
-            )
-          );
-        }
-
-        const payload = (await response.json()) as { profile: AccountProfile };
-
-        if (cancelled) {
-          return;
-        }
-
-        setProfile(payload.profile);
-        profileForm.reset({
-          firstName: payload.profile.firstName ?? "",
-          lastName: payload.profile.lastName ?? "",
-          location: payload.profile.location ?? "",
-          bio: payload.profile.bio ?? "",
-        });
-        emailForm.reset({
-          nextEmail: payload.profile.email ?? user.email ?? "",
-        });
-      } catch (loadError) {
-        if (!cancelled) {
-          const message =
-            loadError instanceof Error
-              ? loadError.message
-              : "Unable to load your account settings.";
-          setError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void loadProfile();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    deletingAccount,
-    emailForm,
-    profileForm,
-    router,
-    signingOut,
-    status,
-    suppressAuthRedirect,
-    user,
-  ]);
 
   const providerLabel = useMemo(() => {
     const providers = profile?.authProviders.length
@@ -263,91 +136,34 @@ export function AccountPage() {
       .join(", ");
   }, [profile?.authProviders, user?.providerIds]);
 
-  const patchProfile = async (
-    body: Record<string, unknown>,
-    successMessage: string
-  ) => {
-    if (!user) {
-      return null;
-    }
-
-    const token = await user.getIdToken();
-    const response = await fetch("/api/auth/profile", {
-      body: JSON.stringify(body),
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Bearer ${token}`,
-      },
-      method: "PATCH",
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        await parseApiError(response, "Unable to update your profile.")
-      );
-    }
-
-    const payload = (await response.json()) as { profile: AccountProfile };
-    setProfile(payload.profile);
-    toast.success(successMessage);
-    return payload.profile;
-  };
-
   const handleSaveProfile = async (values: ProfileFormData) => {
-    setError(null);
+    const updated = await runProfileUpdate(
+      {
+        bio: values.bio,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        location: values.location,
+      },
+      "Your account profile has been updated.",
+      "Unable to save your profile."
+    );
 
-    try {
-      const updated = await patchProfile(
-        {
-          bio: values.bio,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          location: values.location,
-        },
-        "Your account profile has been updated."
-      );
-
-      if (updated) {
-        profileForm.reset({
-          firstName: updated.firstName ?? "",
-          lastName: updated.lastName ?? "",
-          location: updated.location ?? "",
-          bio: updated.bio ?? "",
-        });
-      }
-
+    if (updated) {
+      syncForms(updated);
       setIsProfileDialogOpen(false);
-    } catch (saveError) {
-      const message =
-        saveError instanceof Error
-          ? saveError.message
-          : "Unable to save your profile.";
-      setError(message);
-      toast.error(message);
     }
   };
 
   const handleSaveUsername = async (username: string) => {
-    setError(null);
+    const updated = await runProfileUpdate(
+      { username },
+      "Your username has been updated.",
+      "Unable to save your username."
+    );
 
-    try {
-      const updated = await patchProfile(
-        { username },
-        "Your username has been updated."
-      );
-
-      if (updated) {
-        notifyUsernameUpdated(updated.username ?? null);
-      }
-
+    if (updated) {
+      notifyUsernameUpdated(updated.username ?? null);
       setIsUsernameDialogOpen(false);
-    } catch (saveError) {
-      const message =
-        saveError instanceof Error
-          ? saveError.message
-          : "Unable to save your username.";
-      setError(message);
-      toast.error(message);
     }
   };
 
@@ -366,18 +182,14 @@ export function AccountPage() {
         uid: user.uid,
       });
 
-      await patchProfile(
+      await runProfileUpdate(
         { bannerURL: url },
-        "Your profile banner has been updated."
+        "Your profile banner has been updated.",
+        "Unable to upload your image."
       );
       setPendingBanner(null);
     } catch (uploadError) {
-      const message =
-        uploadError instanceof Error
-          ? uploadError.message
-          : "Unable to upload your image.";
-      setError(message);
-      toast.error(message);
+      reportError(uploadError, "Unable to upload your image.");
     } finally {
       setUploadingBanner(false);
     }
@@ -385,23 +197,14 @@ export function AccountPage() {
 
   const handleRemoveBanner = async () => {
     setUploadingBanner(true);
-    setError(null);
 
-    try {
-      await patchProfile(
-        { bannerURL: null },
-        "Your profile banner has been removed."
-      );
-    } catch (removeError) {
-      const message =
-        removeError instanceof Error
-          ? removeError.message
-          : "Unable to remove your image.";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setUploadingBanner(false);
-    }
+    await runProfileUpdate(
+      { bannerURL: null },
+      "Your profile banner has been removed.",
+      "Unable to remove your image."
+    );
+
+    setUploadingBanner(false);
   };
 
   const handleImageError = (message: string) => {
@@ -430,12 +233,7 @@ export function AccountPage() {
       await sendResetLink(currentEmail);
       toast.success(`A password reset link has been sent to ${currentEmail}.`);
     } catch (resetError) {
-      const message =
-        resetError instanceof Error
-          ? resetError.message
-          : "Unable to send a password reset link.";
-      setError(message);
-      toast.error(message);
+      reportError(resetError, "Unable to send a password reset link.");
     } finally {
       setResettingPassword(false);
     }
@@ -446,27 +244,22 @@ export function AccountPage() {
 
     try {
       const result = await requestEmailChange(values.nextEmail);
+      setIsEmailDialogOpen(false);
 
       if (result.requiresVerification) {
-        setIsEmailDialogOpen(false);
         toast.success(
           `We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`
         );
-      } else {
-        setProfile((current) =>
-          current ? { ...current, email: result.email } : current
-        );
-        emailForm.reset({ nextEmail: result.email });
-        setIsEmailDialogOpen(false);
-        toast.success("Your email address has been updated.");
+        return;
       }
+
+      setProfile((current) =>
+        current ? { ...current, email: result.email } : current
+      );
+      emailForm.reset({ nextEmail: result.email });
+      toast.success("Your email address has been updated.");
     } catch (emailError) {
-      const message =
-        emailError instanceof Error
-          ? emailError.message
-          : "Unable to change your email address.";
-      setError(message);
-      toast.error(message);
+      reportError(emailError, "Unable to change your email address.");
     }
   };
 
@@ -481,12 +274,7 @@ export function AccountPage() {
       await sendVerificationEmail();
       toast.success(`A verification email has been sent to ${user.email}.`);
     } catch (verificationError) {
-      const message =
-        verificationError instanceof Error
-          ? verificationError.message
-          : "Unable to send a verification email.";
-      setError(message);
-      toast.error(message);
+      reportError(verificationError, "Unable to send a verification email.");
     } finally {
       setSendingVerification(false);
     }
@@ -499,12 +287,7 @@ export function AccountPage() {
       await refreshUser();
       toast.success("Email verification status refreshed.");
     } catch (refreshError) {
-      const message =
-        refreshError instanceof Error
-          ? refreshError.message
-          : "Unable to refresh verification status.";
-      setError(message);
-      toast.error(message);
+      reportError(refreshError, "Unable to refresh verification status.");
     } finally {
       setRefreshingVerification(false);
     }
@@ -548,12 +331,7 @@ export function AccountPage() {
       toast.success("Your account has been deleted.");
       router.replace("/");
     } catch (deleteError) {
-      const message =
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Unable to delete your account.";
-      setError(message);
-      toast.error(message);
+      reportError(deleteError, "Unable to delete your account.");
     } finally {
       setDeletingAccount(false);
     }
@@ -562,7 +340,7 @@ export function AccountPage() {
   if (status === "loading" || loading) {
     return (
       <AccountArea>
-        <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 dark:border-border dark:bg-card/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
+        <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/80 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl dark:border-border dark:bg-card/80">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your account settings...
@@ -579,85 +357,14 @@ export function AccountPage() {
   return (
     <AccountArea>
       <div className="space-y-8">
-        <div className="space-y-4">
-          <div className="inline-flex rounded-full border border-primary/15 bg-white/80 dark:bg-card/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
-            Account Settings
-          </div>
-          <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-            {profile?.bannerURL ? (
-              <div className="relative aspect-[3/1] w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt={`${displayNamePreview} banner`}
-                  className="h-full w-full object-cover"
-                  src={profile.bannerURL}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-card/60 via-transparent to-transparent" />
-              </div>
-            ) : null}
-
-            <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
-              <div className="flex items-center gap-4">
-                <button
-                  aria-label="Change profile picture"
-                  className={cn(
-                    "group relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-lg font-semibold text-primary shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                    profile?.bannerURL && "-mt-16 self-start"
-                  )}
-                  onClick={() => setIsPictureDialogOpen(true)}
-                  type="button"
-                >
-                  {profile?.photoURL ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      alt={displayNamePreview}
-                      className="h-full w-full object-cover"
-                      src={profile.photoURL}
-                    />
-                  ) : (
-                    initialsForProfile(profile, user?.email)
-                  )}
-                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <Camera className="size-6 text-white" />
-                  </span>
-                </button>
-                <div className="space-y-1">
-                  <h1 className="text-4xl text-foreground sm:text-5xl">
-                    {displayNamePreview}
-                  </h1>
-                  {profile?.location ? (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="size-4" />
-                      {profile.location}
-                    </p>
-                  ) : null}
-                  <p className="text-sm text-muted-foreground">
-                    Review your profile, security settings, and account status.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Account email
-                  </p>
-                  <p className="mt-2 text-sm text-foreground">
-                    {currentEmail ?? "Not available"}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/80 bg-muted/45 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                    Sign-in method
-                  </p>
-                  <p className="mt-2 text-sm text-foreground">
-                    {providerLabel}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AccountHeader
+          currentEmail={currentEmail}
+          displayName={displayNamePreview}
+          fallbackEmail={user?.email ?? null}
+          onEditPicture={() => setIsPictureDialogOpen(true)}
+          profile={profile}
+          providerLabel={providerLabel}
+        />
 
         {error ? (
           <Alert variant="destructive">
@@ -666,561 +373,55 @@ export function AccountPage() {
           </Alert>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="space-y-6 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <UserRound className="size-5 text-primary" />
-                <h2 className="text-2xl text-foreground">Profile</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Keep your collector profile current so your account details stay
-                consistent across EduthArt.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  First name
-                </p>
-                <p className="mt-2 text-sm text-foreground">
-                  {firstName || "Not set"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Last name
-                </p>
-                <p className="mt-2 text-sm text-foreground">
-                  {lastName || "Not set"}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Location
-              </p>
-              <p className="mt-2 text-sm text-foreground">
-                {location || "Not set"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Biography
-              </p>
-              <p className="mt-2 whitespace-pre-line text-sm text-foreground">
-                {bio || "Not set"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Username tag
-              </p>
-              {profile?.username ? (
-                <div className="mt-2 space-y-1">
-                  <p className="text-base text-foreground">
-                    @{profile.username}
-                  </p>
-                  <Link
-                    className="text-sm text-primary underline decoration-primary/30 underline-offset-4"
-                    href={buildArtistPageHref(profile.username)}
-                  >
-                    View your personal art page
-                  </Link>
-                  <Button
-                    className="mt-3"
-                    onClick={() => setIsUsernameDialogOpen(true)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Change username
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-2 space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Choose a username to create your personal art page link.
-                  </p>
-                  <Button
-                    onClick={() => setIsUsernameDialogOpen(true)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Choose username
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Profile picture
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your picture appears next to your name across EduthArt. Click
-                your photo above to change it.
-              </p>
-              <Button
-                className="mt-3"
-                onClick={() => setIsPictureDialogOpen(true)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <Camera />
-                Change profile picture
-              </Button>
-            </div>
-
-            <ProfileImageField
-              aspectClassName="aspect-[3/1]"
-              busy={uploadingBanner}
-              description={`Add a wide image for the personal page where people can view your art. Banners are saved at ${BANNER_DIMENSIONS_LABEL} pixels (3:1).`}
-              emptyLabel="No banner uploaded yet."
-              helpText={`Use a JPG, PNG, or WebP image up to 5 MB. For the sharpest result, start from an image at least ${BANNER_DIMENSIONS_LABEL} pixels.`}
-              imageUrl={profile?.bannerURL ?? null}
-              inputId="profile-banner-upload"
-              onError={handleImageError}
-              onRemove={() => void handleRemoveBanner()}
-              onSelect={setPendingBanner}
-              removeLabel="Remove banner"
-              title="Profile banner"
-              uploadLabel="Upload profile banner"
-            />
-
-            <Dialog
-              open={isProfileDialogOpen}
-              onOpenChange={setIsProfileDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button size="lg" type="button" variant="outline">
-                  <UserRound />
-                  Edit profile
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Edit profile</DialogTitle>
-                  <DialogDescription>
-                    Update the details collectors and artists see, without
-                    keeping the full form visible on the account page.
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...profileForm}>
-                  <form
-                    className="space-y-4"
-                    onSubmit={profileForm.handleSubmit(handleSaveProfile)}
-                  >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <FormField
-                        control={profileForm.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel htmlFor="account-first-name">
-                              First name
-                            </FormLabel>
-                            <FormControl>
-                              <Input id="account-first-name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={profileForm.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel htmlFor="account-last-name">
-                              Last name
-                            </FormLabel>
-                            <FormControl>
-                              <Input id="account-last-name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <FormField
-                      control={profileForm.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="account-location">
-                            Location
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              id="account-location"
-                              autoComplete="address-level2"
-                              maxLength={MAX_LOCATION_LENGTH}
-                              placeholder="Brooklyn, New York"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={profileForm.control}
-                      name="bio"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="account-bio">Biography</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              id="account-bio"
-                              maxLength={MAX_BIO_LENGTH}
-                              placeholder="Tell collectors what you make, collect, or care about."
-                              rows={4}
-                              {...field}
-                            />
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground">
-                            {bio.length}/{MAX_BIO_LENGTH} characters
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        Display name preview
-                      </p>
-                      <p className="mt-2 text-base text-foreground">
-                        {displayNamePreview}
-                      </p>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        disabled={profileForm.formState.isSubmitting}
-                        type="submit"
-                      >
-                        {profileForm.formState.isSubmitting ? (
-                          <>
-                            <Loader2 className="animate-spin" />
-                            Saving profile...
-                          </>
-                        ) : (
-                          "Save profile"
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-            <UsernameDialog
-              defaultUsername={profile?.username ?? ""}
-              description="Pick the tag that will be used for your public gallery page and artist link."
-              onOpenChange={setIsUsernameDialogOpen}
-              onSubmit={handleSaveUsername}
-              open={isUsernameDialogOpen}
-              title={
-                profile?.username
-                  ? "Change your username"
-                  : "Choose your username"
-              }
-            />
-          </section>
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+          <ProfileSection
+            displayNamePreview={displayNamePreview}
+            form={profileForm}
+            isProfileDialogOpen={isProfileDialogOpen}
+            isUsernameDialogOpen={isUsernameDialogOpen}
+            onEditPicture={() => setIsPictureDialogOpen(true)}
+            onImageError={handleImageError}
+            onProfileDialogChange={setIsProfileDialogOpen}
+            onRemoveBanner={() => void handleRemoveBanner()}
+            onSaveProfile={handleSaveProfile}
+            onSaveUsername={handleSaveUsername}
+            onSelectBanner={setPendingBanner}
+            onUsernameDialogChange={setIsUsernameDialogOpen}
+            profile={profile}
+            uploadingBanner={uploadingBanner}
+          />
 
           <div className="space-y-6">
-            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="size-5 text-primary" />
-                <h2 className="text-2xl text-foreground">Security</h2>
-              </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Email
-                </p>
-                <p className="mt-2 text-sm text-foreground">
-                  {currentEmail ?? "Not available"}
-                </p>
-              </div>
-              <Dialog
-                open={isEmailDialogOpen}
-                onOpenChange={setIsEmailDialogOpen}
-              >
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                      Change email
-                    </p>
-                  </div>
-                  <DialogTrigger asChild>
-                    <Button className="mt-4" type="button" variant="outline">
-                      <Mail />
-                      Change email address
-                    </Button>
-                  </DialogTrigger>
-                </div>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Change email address</DialogTitle>
-                    <DialogDescription>
-                      Enter your new email address. We&apos;ll send a
-                      confirmation link before the change takes effect.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...emailForm}>
-                    <form
-                      className="space-y-4"
-                      onSubmit={emailForm.handleSubmit(handleEmailChange)}
-                    >
-                      <FormField
-                        control={emailForm.control}
-                        name="nextEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel htmlFor="account-next-email">
-                              New email address
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                id="account-next-email"
-                                type="email"
-                                autoComplete="email"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <DialogFooter>
-                        <Button
-                          disabled={
-                            emailForm.formState.isSubmitting ||
-                            nextEmail.trim().toLowerCase() ===
-                              (currentEmail ?? "").trim().toLowerCase()
-                          }
-                          type="submit"
-                        >
-                          {emailForm.formState.isSubmitting ? (
-                            <>
-                              <Loader2 className="animate-spin" />
-                              Updating email...
-                            </>
-                          ) : (
-                            "Continue"
-                          )}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Connected sign-in providers
-                </p>
-                <p className="mt-2 text-sm text-foreground">{providerLabel}</p>
-              </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Email verification
-                </p>
-                <div className="mt-2 flex items-start gap-3 text-sm text-foreground">
-                  {isEmailVerified ? (
-                    <>
-                      <BadgeCheck className="mt-0.5 size-4 text-primary" />
-                      <div>
-                        <p className="font-medium">Your email is verified.</p>
-                        <p className="text-muted-foreground">
-                          This address has already been confirmed for your
-                          EduthArt account.
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldAlert className="mt-0.5 size-4 text-destructive" />
-                      <div>
-                        <p className="font-medium">
-                          Your email still needs verification.
-                        </p>
-                        <p className="text-muted-foreground">
-                          Verify your inbox link, then refresh the status here.
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              {!isEmailVerified ? (
-                <div className="flex flex-col gap-3">
-                  <Button
-                    disabled={sendingVerification}
-                    onClick={handleSendVerificationEmail}
-                    type="button"
-                    variant="outline"
-                  >
-                    {sendingVerification ? (
-                      <>
-                        <Loader2 className="animate-spin" />
-                        Sending verification email...
-                      </>
-                    ) : (
-                      <>
-                        <Mail />
-                        Send verification email
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    disabled={refreshingVerification}
-                    onClick={handleRefreshVerification}
-                    type="button"
-                    variant="outline"
-                  >
-                    {refreshingVerification ? (
-                      <>
-                        <Loader2 className="animate-spin" />
-                        Refreshing verification status...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw />
-                        Refresh verification status
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : null}
-              {hasPasswordProvider ? (
-                <div className="flex flex-col gap-3">
-                  <ChangePasswordDialog onSubmit={handleChangePassword} />
-                  <Button
-                    disabled={resettingPassword}
-                    onClick={handlePasswordReset}
-                    type="button"
-                    variant="outline"
-                  >
-                    {resettingPassword ? (
-                      <>
-                        <Loader2 className="animate-spin" />
-                        Sending reset link...
-                      </>
-                    ) : (
-                      <>
-                        <Mail />
-                        Send password reset email
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <Alert>
-                  <AlertTitle>Password reset is not available here</AlertTitle>
-                  <AlertDescription>
-                    This account signs in with {providerLabel}, so there is no
-                    EduthArt password to change or reset.
-                  </AlertDescription>
-                </Alert>
-              )}
+            <SecuritySection
+              currentEmail={currentEmail}
+              emailForm={emailForm}
+              hasPasswordProvider={hasPasswordProvider}
+              isEmailDialogOpen={isEmailDialogOpen}
+              isEmailVerified={isEmailVerified}
+              onChangePassword={handleChangePassword}
+              onEmailDialogChange={setIsEmailDialogOpen}
+              onEmailSubmit={handleEmailChange}
+              onPasswordReset={() => void handlePasswordReset()}
+              onRefreshVerification={() => void handleRefreshVerification()}
+              onSendVerificationEmail={() => void handleSendVerificationEmail()}
+              onSignOut={() => void handleSignOut()}
+              providerLabel={providerLabel}
+              refreshingVerification={refreshingVerification}
+              resettingPassword={resettingPassword}
+              sendingVerification={sendingVerification}
+              signingOut={signingOut}
+            />
 
-              <Button
-                disabled={signingOut}
-                onClick={handleSignOut}
-                type="button"
-                variant="outline"
-              >
-                {signingOut ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    Signing out...
-                  </>
-                ) : (
-                  <>
-                    <LogOut />
-                    Sign out
-                  </>
-                )}
-              </Button>
-            </section>
-
-            <section className="space-y-4 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="size-5 text-primary" />
-                <h2 className="text-2xl text-foreground">
-                  Account information
-                </h2>
-              </div>
-              <div className="grid gap-3">
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Created: {formatAccountDate(profile?.createdAt ?? null)}
-                </div>
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Last profile update:{" "}
-                  {formatAccountDate(profile?.updatedAt ?? null)}
-                </div>
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Last sign-in sync:{" "}
-                  {formatAccountDate(profile?.lastLoginAt ?? null)}
-                </div>
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Legal acceptance:{" "}
-                  {formatAccountDate(profile?.legal?.acceptedAt ?? null)}
-                </div>
-                <div className="rounded-2xl border border-border/80 bg-muted/45 p-4 text-sm text-foreground">
-                  Legal version:{" "}
-                  {profile?.legal?.acceptedVersion ?? "Not available"}
-                </div>
-              </div>
-            </section>
+            <AccountDetailsSection profile={profile} />
           </div>
         </div>
 
-        <section className="space-y-5 rounded-[2rem] border border-destructive/20 bg-white/92 dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-          <div className="flex items-center gap-3 text-destructive">
-            <AlertTriangle className="size-5" />
-            <h2 className="text-2xl">Delete account</h2>
-          </div>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Deleting your account permanently removes your EduthArt login and
-            the account profile data currently managed by this site. Type DELETE
-            below before continuing.
-          </p>
-          <div className="max-w-sm space-y-2">
-            <Label htmlFor="delete-account-confirmation">
-              Confirmation text
-            </Label>
-            <Input
-              id="delete-account-confirmation"
-              onChange={(event) => setDeleteConfirmation(event.target.value)}
-              placeholder="Type DELETE"
-              value={deleteConfirmation}
-            />
-          </div>
-          <Button
-            disabled={deleteConfirmation.trim() !== "DELETE" || deletingAccount}
-            onClick={handleDeleteAccount}
-            type="button"
-            variant="destructive"
-          >
-            {deletingAccount ? (
-              <>
-                <Loader2 className="animate-spin" />
-                Deleting account...
-              </>
-            ) : (
-              <>
-                <Trash2 />
-                Delete account permanently
-              </>
-            )}
-          </Button>
-        </section>
+        <DangerZoneSection
+          confirmation={deleteConfirmation}
+          deleting={deletingAccount}
+          onConfirmationChange={setDeleteConfirmation}
+          onDelete={() => void handleDeleteAccount()}
+        />
       </div>
 
       <ProfilePictureDialog

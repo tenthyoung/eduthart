@@ -9,6 +9,7 @@ import {
   DownloadInvoiceButton,
   OrderStatusBadge,
 } from "@/components/collectors/order-summary";
+import { ShipmentPanel } from "@/components/collectors/shipment-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
 import { formatAddressLines } from "@/lib/collectors/address-format";
@@ -183,6 +184,10 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
               )}
             </address>
           </section>
+
+          {order.status === "paid" ? (
+            <ShipmentPanel order={order} role={role} />
+          ) : null}
 
           <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
             <h2 className="text-xl text-foreground">Payment</h2>

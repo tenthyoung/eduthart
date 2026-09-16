@@ -2583,7 +2583,7 @@ export function ListingFlowPage({
 
                       <div className="rounded-[1.5rem] border border-border/70 bg-muted/25 p-5">
                         <SectionHeader
-                          helper="Dimensions are critical for confidence and shipping estimates."
+                          helper="Dimensions build buyer confidence. Adding the packed weight is what lets us quote live carrier rates instead of your flat shipping charge."
                           title="Dimensions"
                         />
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -2655,6 +2655,45 @@ export function ListingFlowPage({
                               <SelectContent>
                                 <SelectItem value="in">Inches</SelectItem>
                                 <SelectItem value="cm">Centimeters</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="packed-weight">Packed weight</Label>
+                            <Input
+                              id="packed-weight"
+                              value={activeItem.dimensions.weight}
+                              onChange={(event) =>
+                                updateActiveItem((current) => ({
+                                  ...current,
+                                  dimensions: {
+                                    ...current.dimensions,
+                                    weight: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Weight unit</Label>
+                            <Select
+                              value={activeItem.dimensions.weightUnit}
+                              onValueChange={(value: "kg" | "lb") =>
+                                updateActiveItem((current) => ({
+                                  ...current,
+                                  dimensions: {
+                                    ...current.dimensions,
+                                    weightUnit: value,
+                                  },
+                                }))
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="lb">Pounds</SelectItem>
+                                <SelectItem value="kg">Kilograms</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

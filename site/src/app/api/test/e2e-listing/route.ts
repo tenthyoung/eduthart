@@ -5,6 +5,7 @@ import { notifyFollowersOfListingChanges } from "@/lib/artists/listing-notificat
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
+  type ShippingOriginAddress,
 } from "@/lib/artists/listing-flow";
 import {
   buildProfileDisplayName,
@@ -19,11 +20,15 @@ type SeedListingBody = {
   itemId?: string;
   medium?: string;
   price?: string;
+  /** Set so a test can exercise the live shipping-rate path. */
+  shippingOrigin?: ShippingOriginAddress | null;
+  signatureRequired?: boolean;
   style?: string;
   subject?: string;
   tags?: string[];
   title?: string;
   uid?: string;
+  weight?: string;
 };
 
 /**
@@ -79,6 +84,11 @@ export async function POST(request: Request) {
   item.artworkDetails.yearCreated = "2026";
   item.dimensions.width = "24";
   item.dimensions.height = "36";
+
+  if (body.weight) {
+    item.dimensions.weight = body.weight;
+  }
+
   item.media.mainImageUrl = "https://example.com/artwork.jpg";
   item.pricingInventory.availability = "original_available";
   item.pricingInventory.currency = body.currency ?? "USD";
@@ -90,6 +100,9 @@ export async function POST(request: Request) {
   const studio = createEmptyListingStudio();
   studio.items = [item];
   studio.shared.shippingAuthentication.domesticShipping = "50";
+  studio.shared.shippingAuthentication.signatureRequired =
+    body.signatureRequired ?? false;
+  studio.shared.shippingOriginAddress = body.shippingOrigin ?? null;
   studio.updatedAt = item.updatedAt;
 
   const artistName = buildProfileDisplayName(profile);

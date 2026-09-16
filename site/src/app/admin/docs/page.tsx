@@ -22,7 +22,7 @@ const steps = [
   ],
   [
     "5. Fulfill",
-    "EduthArt marks the artwork sold, creates the order, clears it from carts, notifies the artist, and begins the Shippo shipping workflow.",
+    "EduthArt marks the artwork sold, creates the order, clears it from carts, notifies the artist, and buys the Shippo label for the rate the buyer was charged.",
   ],
   [
     "6. Settle",
@@ -214,12 +214,13 @@ export default function AdminDocumentationPage() {
               international customs details.
             </li>
             <li>
-              Quote rates before creating Stripe Checkout and preserve the
-              selected service on the order.
+              Set <code>SHIPPO_API_TOKEN</code> and connect a carrier account.
+              Without both, checkout falls back to the artist&rsquo;s stated
+              rate.
             </li>
             <li>
-              Purchase the label only after verified payment and consume
-              tracking webhooks.
+              Set <code>SHIPPO_WEBHOOK_SECRET</code> and add a Track Updated
+              webhook at <code>/api/commerce/shipping-webhook</code>.
             </li>
           </Checklist>
         </div>

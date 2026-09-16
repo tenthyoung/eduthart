@@ -7,10 +7,11 @@ EduthArt uses a one-artist-per-checkout marketplace model built on Stripe-hosted
 1. A public product-page visit records an aggregate artwork view.
 2. A signed-in buyer may save the artwork to a wishlist or add it to a persistent cart.
 3. Checkout reloads all price and availability data on the server and creates a temporary reservation for each original.
-4. Shippo calculates shipping from the artist's origin and packed parcel to the buyer's destination.
+4. Shippo calculates shipping from the artist's origin and packed parcel to the buyer's destination, falling back to the artist's own stated rate when it cannot.
 5. The server creates a Stripe Checkout Session and redirects the buyer to Stripe.
 6. Stripe webhooks confirm payment. A browser redirect is never accepted as proof of payment.
-7. Fulfillment marks the artwork sold, creates an immutable order snapshot, clears carts, notifies the artist, and begins label creation.
+7. Fulfillment marks the artwork sold, creates an immutable order snapshot, clears carts, notifies the artist, and buys the shipping label.
+8. Shippo tracking webhooks move the order through transit and delivery. The webhook is only a nudge: the status is re-fetched from Shippo before anything is written.
 
 ## Core rules
 
@@ -39,6 +40,7 @@ Built:
 - Persistent cart, one artist per checkout, and server-side reload of price, availability, and seller at checkout.
 - A thirty-minute reservation per original, taken before Stripe is involved and released when a checkout expires or is abandoned.
 - Stripe-hosted Checkout, plus saved cards through Checkout in setup mode.
+- Shippo live rates, labels, and tracking. Checkout quotes the artist's origin and the listing's parcel against the buyer's address and charges the cheapest rate in the order's currency; fulfilment buys a label at that exact rate; a tracking webhook moves the order through transit and delivery and tells the buyer.
 - Signature-verified webhook fulfilment, and an independent server-side verification from the success page. Both run the same idempotent path; the browser redirect is never accepted as proof of payment.
 - Immutable order snapshots, purchase history, printable invoices, and buyer, seller, and saved-artwork notifications.
 - Wishlist and cart writes require authentication, and aggregate save counts are updated atomically.
@@ -46,7 +48,8 @@ Built:
 Not built:
 
 - Stripe Connect destination charges. The platform is currently the merchant of record and there is no artist payout or application fee; artists are not onboarded as connected accounts.
-- Shippo. Shipping uses the artist's own stated domestic rate from their listing, not live rates, and no labels or tracking are created.
+- Multi-parcel optimisation, international customs forms, insurance, and return labels. One parcel is quoted per artwork in the order.
+- A retry path for a label Shippo refuses. Fulfilment logs the refusal and leaves the shipment pending; the label has to be bought by hand.
 - Tax calculation, refunds through Stripe, and dispute handling.
 
 ## Primary references

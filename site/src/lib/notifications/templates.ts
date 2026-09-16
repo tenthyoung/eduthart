@@ -73,6 +73,51 @@ export function orderConfirmedNotification({
   };
 }
 
+export function orderShippedNotification({
+  carrier,
+  orderId,
+  orderNumber,
+  trackingNumber,
+  trackingUrl,
+}: {
+  carrier: string | null;
+  orderId: string;
+  orderNumber: string;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+}): NotificationTemplate {
+  const via = carrier ? ` with ${carrier}` : "";
+  const reference = trackingNumber ? ` Tracking number ${trackingNumber}.` : "";
+
+  return {
+    actionHref: trackingUrl ?? `/account/orders/${orderId}`,
+    actionLabel: trackingUrl ? "Track your parcel" : "View your order",
+    body: `Order ${orderNumber} is on its way${via}.${reference}`,
+    emailSubject: `Your EduthArt order ${orderNumber} has shipped`,
+    imageUrl: null,
+    kind: "order_shipped",
+    title: "Your order has shipped",
+  };
+}
+
+export function orderDeliveredNotification({
+  orderId,
+  orderNumber,
+}: {
+  orderId: string;
+  orderNumber: string;
+}): NotificationTemplate {
+  return {
+    actionHref: `/account/orders/${orderId}`,
+    actionLabel: "View your order",
+    body: `Order ${orderNumber} has been delivered. If anything arrived damaged, reply to this message and we will help.`,
+    emailSubject: `Your EduthArt order ${orderNumber} was delivered`,
+    imageUrl: null,
+    kind: "order_delivered",
+    title: "Your order was delivered",
+  };
+}
+
 export function artworkSoldNotification({
   artworkTitle,
   currency,
