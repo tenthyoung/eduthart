@@ -2,7 +2,9 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 
-const db = getFirebaseAdminDb();
+// Resolved per call rather than at module scope: importing this file must not
+// require credentials, or `next build` fails in any environment without them.
+const db = () => getFirebaseAdminDb();
 
 const memdojoHosts = new Set([
   "app.eduthart.com",
@@ -60,14 +62,14 @@ export async function createExternalDeckReports({
 
   await Promise.all(
     publicDeckIds.map(async (publicDeckId) => {
-      const publicDeckRef = db.collection("public_decks").doc(publicDeckId);
+      const publicDeckRef = db().collection("public_decks").doc(publicDeckId);
       const publicDeckSnap = await publicDeckRef.get();
       if (!publicDeckSnap.exists) {
         return;
       }
 
       const publicDeck = publicDeckSnap.data() as Record<string, unknown>;
-      await db.collection("deck_reports").add({
+      await db().collection("deck_reports").add({
         publicDeckId,
         reporterUid: null,
         reporterEmail,
