@@ -34,6 +34,8 @@ import { BANNER_CROP_SPEC } from "@/lib/profile/images";
 import { uploadProfileImage } from "@/lib/profile/upload";
 
 const PROVIDER_LABELS: Record<string, string> = {
+  // Apple is no longer offered as a sign-in method, but an account linked back
+  // when it was should still read as "Apple" rather than a raw provider id.
   "apple.com": "Apple",
   "google.com": "Google",
   password: "Email and password",

@@ -4,7 +4,6 @@ import {
   type ActionCodeSettings,
   EmailAuthProvider,
   GoogleAuthProvider,
-  OAuthProvider,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   onAuthStateChanged,
@@ -37,8 +36,6 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type FederatedAuthMode = "login" | "signup";
 
-export type FederatedProvider = "apple.com" | "google.com";
-
 export type AuthUser = {
   displayName: string | null;
   email: string | null;
@@ -61,8 +58,7 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithFederatedProvider: (
-    provider: FederatedProvider,
+  signInWithGoogle: (
     mode: FederatedAuthMode
   ) => Promise<{ isNewUser: boolean }>;
   signOut: () => Promise<void>;
@@ -219,6 +215,18 @@ function formatAuthError(error: unknown, fallbackMessage: string) {
     return "That sign-in method is not enabled for EduthArt yet.";
   }
 
+  if (code === "auth/unauthorized-domain") {
+    return "Google sign-in is not authorized for this domain yet.";
+  }
+
+  if (code === "auth/popup-blocked") {
+    return "Your browser blocked the sign-in window. Allow pop-ups for this site and try again.";
+  }
+
+  if (code === "auth/account-exists-with-different-credential") {
+    return "An account already exists for that email. Sign in with your password instead.";
+  }
+
   if (code === "auth/network-request-failed") {
     return "We could not reach the sign-in service. Check your connection and try again.";
   }
@@ -228,8 +236,11 @@ function formatAuthError(error: unknown, fallbackMessage: string) {
   }
 
   // An unmapped Firebase code would surface as an opaque
-  // "Firebase: Error (auth/...)" string, so prefer the fallback for those.
+  // "Firebase: Error (auth/...)" string, so prefer the fallback for those --
+  // but log the real code, otherwise every distinct failure looks identical
+  // and there is nothing to debug from.
   if (code !== null) {
+    console.error(`Unhandled Firebase auth error: ${code}`, error);
     return fallbackMessage;
   }
 
@@ -264,7 +275,7 @@ async function persistUserRecord(
     acceptedLegal?: boolean;
     firstName?: string;
     lastName?: string;
-    method?: "apple" | "email_password" | "google";
+    method?: "email_password" | "google";
   }
 ) {
   const idToken = await user.getIdToken(true);
@@ -415,71 +426,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const signInWithFederatedProvider = useCallback(
-    async (providerId: FederatedProvider, mode: FederatedAuthMode) => {
-      const auth = await getFirebaseAuth();
-      const providerLabel = providerId === "apple.com" ? "Apple" : "Google";
-      let provider: GoogleAuthProvider | OAuthProvider;
+  const signInWithGoogle = useCallback(async (mode: FederatedAuthMode) => {
+    const auth = await getFirebaseAuth();
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
 
-      if (providerId === "apple.com") {
-        const appleProvider = new OAuthProvider("apple.com");
-        // Apple only returns a name and email on the very first authorization,
-        // so both scopes have to be requested up front.
-        appleProvider.addScope("email");
-        appleProvider.addScope("name");
-        provider = appleProvider;
-      } else {
-        const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({ prompt: "select_account" });
-        provider = googleProvider;
-      }
+    let credential;
 
-      let credential;
+    try {
+      credential = await signInWithPopup(auth, provider);
+    } catch (error) {
+      throw new Error(
+        formatAuthError(error, "Unable to continue with Google.")
+      );
+    }
 
-      try {
-        credential = await signInWithPopup(auth, provider);
-      } catch (error) {
-        throw new Error(
-          formatAuthError(error, `Unable to continue with ${providerLabel}.`)
-        );
-      }
+    const additionalInfo = getAdditionalUserInfo(credential);
+    const isNewUser = additionalInfo?.isNewUser ?? false;
 
-      const additionalInfo = getAdditionalUserInfo(credential);
-      const isNewUser = additionalInfo?.isNewUser ?? false;
+    if (mode === "login" && isNewUser) {
+      await firebaseSignOut(auth);
+      throw new Error(
+        "Finish first-time Google sign-up on the sign up page so we can capture your legal consent."
+      );
+    }
 
-      if (mode === "login" && isNewUser) {
-        await firebaseSignOut(auth);
-        throw new Error(
-          `Finish first-time ${providerLabel} sign-up on the sign up page so we can capture your legal consent.`
-        );
-      }
+    if (mode === "signup") {
+      // Google returns given_name/family_name in the provider profile, but
+      // fall back to splitting the display name so the completion step starts
+      // prefilled rather than blank.
+      const profile = (additionalInfo?.profile ?? {}) as {
+        family_name?: string;
+        given_name?: string;
+      };
+      const splitName = splitDisplayName(credential.user.displayName);
 
-      if (mode === "signup") {
-        // Google returns given_name/family_name in the provider profile, while
-        // Apple only ever supplies a display name, and only on the very first
-        // authorization. Take whichever is available so the completion step
-        // starts prefilled rather than blank.
-        const profile = (additionalInfo?.profile ?? {}) as {
-          family_name?: string;
-          given_name?: string;
-        };
-        const splitName = splitDisplayName(credential.user.displayName);
+      await persistUserRecord(credential.user, {
+        acceptedLegal: true,
+        firstName: profile.given_name ?? splitName.firstName,
+        lastName: profile.family_name ?? splitName.lastName,
+        method: "google",
+      });
+    }
 
-        await persistUserRecord(credential.user, {
-          acceptedLegal: true,
-          firstName: profile.given_name ?? splitName.firstName,
-          lastName: profile.family_name ?? splitName.lastName,
-          method: providerId === "apple.com" ? "apple" : "google",
-        });
-      }
+    setUser(mapFirebaseUser(credential.user));
+    setStatus("authenticated");
 
-      setUser(mapFirebaseUser(credential.user));
-      setStatus("authenticated");
-
-      return { isNewUser };
-    },
-    []
-  );
+    return { isNewUser };
+  }, []);
 
   const sendResetLink = useCallback(async (email: string) => {
     if (E2E_AUTH_ENABLED) {
@@ -691,7 +685,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendVerificationEmail,
       refreshUser,
       signInWithEmail,
-      signInWithFederatedProvider,
+      signInWithGoogle,
       signOut,
       signUpWithEmail,
       status,
@@ -704,7 +698,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendResetLink,
       sendVerificationEmail,
       signInWithEmail,
-      signInWithFederatedProvider,
+      signInWithGoogle,
       signOut,
       signUpWithEmail,
       status,
