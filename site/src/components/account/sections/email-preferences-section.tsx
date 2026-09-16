@@ -13,27 +13,59 @@ import {
   defaultEmailPreferences,
   EMAIL_CATEGORIES,
   EMAIL_CATEGORY_COPY,
+  EMAIL_KIND_COPY,
+  EMAIL_KINDS_BY_CATEGORY,
+  resolveKindEnabled,
   type EmailCategory,
-  type EmailPreferences,
+  type NotificationSettings,
 } from "@/lib/notifications/email-categories";
+import type { NotificationKind } from "@/lib/notifications/types";
 
 const ENDPOINT = "/api/account/email-preferences";
+
+function emptySettings(): NotificationSettings {
+  return { categories: defaultEmailPreferences(), kinds: {} };
+}
+
+/**
+ * The state of a category's own checkbox, derived from the kinds beneath it.
+ *
+ * Indeterminate rather than a guess when the kinds disagree: a half-off
+ * category that rendered as "off" would claim to have silenced mail that is
+ * still sending.
+ */
+function categoryCheckedState(
+  settings: NotificationSettings,
+  category: EmailCategory
+): boolean | "indeterminate" {
+  const kinds = EMAIL_KINDS_BY_CATEGORY[category];
+  const enabled = kinds.map((kind) => resolveKindEnabled(settings, kind));
+
+  if (enabled.every(Boolean)) {
+    return true;
+  }
+
+  if (enabled.every((value) => !value)) {
+    return false;
+  }
+
+  return "indeterminate";
+}
 
 /**
  * Email preferences for the signed-in account.
  *
- * This section loads and saves its own state rather than taking it from the
- * account page. The page was deliberately broken up in EDUTHA-71, and routing
- * four booleans back through it would start rebuilding the component it was
- * split out of.
+ * Two levels: a category switches everything beneath it, and each kind can
+ * then differ. This section loads and saves its own state rather than taking
+ * it from the account page — the page was deliberately broken up in
+ * EDUTHA-71, and routing this back through it would start rebuilding the
+ * component it was split out of.
  */
 export function EmailPreferencesSection() {
   const { status, user } = useAuth();
-  const [preferences, setPreferences] = useState<EmailPreferences>(
-    defaultEmailPreferences
-  );
+  const [settings, setSettings] = useState<NotificationSettings>(emptySettings);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<EmailCategory | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,11 +94,11 @@ export function EmailPreferencesSection() {
         }
 
         const payload = (await response.json()) as {
-          preferences: EmailPreferences;
+          settings: NotificationSettings;
         };
 
         if (!cancelled) {
-          setPreferences(payload.preferences);
+          setSettings(payload.settings);
           setError(null);
         }
       } catch (loadError) {
@@ -91,22 +123,28 @@ export function EmailPreferencesSection() {
     };
   }, [status, user]);
 
-  const handleToggle = async (category: EmailCategory, next: boolean) => {
+  const save = async (
+    update: {
+      categories?: Partial<Record<EmailCategory, boolean>>;
+      kinds?: Partial<Record<NotificationKind, boolean>>;
+    },
+    optimistic: NotificationSettings
+  ) => {
     if (!user) {
       return;
     }
 
-    const previous = preferences;
+    const previous = settings;
 
     // Move the checkbox immediately. A toggle that waits on the round trip
     // feels broken, and the catch below puts it back if the save fails.
-    setPreferences({ ...previous, [category]: next });
-    setSaving(category);
+    setSettings(optimistic);
+    setSaving(true);
 
     try {
       const token = await user.getIdToken();
       const response = await fetch(ENDPOINT, {
-        body: JSON.stringify({ [category]: next }),
+        body: JSON.stringify(update),
         headers: {
           authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -121,21 +159,46 @@ export function EmailPreferencesSection() {
       }
 
       const payload = (await response.json()) as {
-        preferences: EmailPreferences;
+        settings: NotificationSettings;
       };
 
-      setPreferences(payload.preferences);
+      setSettings(payload.settings);
       setError(null);
     } catch (saveError) {
-      setPreferences(previous);
+      setSettings(previous);
       toast.error(
         saveError instanceof Error
           ? saveError.message
           : "Unable to save that preference."
       );
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
+  };
+
+  const handleCategoryToggle = (category: EmailCategory, next: boolean) => {
+    // The server clears the overrides beneath a category when the category
+    // moves; mirror that here so the optimistic view matches what comes back.
+    const kinds = { ...settings.kinds };
+
+    for (const kind of EMAIL_KINDS_BY_CATEGORY[category]) {
+      delete kinds[kind];
+    }
+
+    void save(
+      { categories: { [category]: next } },
+      {
+        categories: { ...settings.categories, [category]: next },
+        kinds,
+      }
+    );
+  };
+
+  const handleKindToggle = (kind: NotificationKind, next: boolean) => {
+    void save(
+      { kinds: { [kind]: next } },
+      { ...settings, kinds: { ...settings.kinds, [kind]: next } }
+    );
   };
 
   return (
@@ -154,34 +217,76 @@ export function EmailPreferencesSection() {
       <div className="space-y-3">
         {EMAIL_CATEGORIES.map((category) => {
           const copy = EMAIL_CATEGORY_COPY[category];
-          const inputId = `email-preference-${category}`;
+          const kinds = EMAIL_KINDS_BY_CATEGORY[category];
+          const categoryId = `email-preference-${category}`;
+
+          // A category with one kind beneath it is that kind, so the nested
+          // row would be the same control twice.
+          const showKinds = kinds.length > 1;
 
           return (
             <div
-              className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/35 p-4"
+              className="rounded-2xl border border-border/70 bg-muted/35 p-4"
               key={category}
             >
-              <Checkbox
-                aria-describedby={`${inputId}-description`}
-                checked={preferences[category]}
-                className="mt-0.5"
-                disabled={loading || saving !== null}
-                id={inputId}
-                onCheckedChange={(checked) =>
-                  void handleToggle(category, checked === true)
-                }
-              />
-              <div className="space-y-1">
-                <Label className="font-medium" htmlFor={inputId}>
-                  {copy.title}
-                </Label>
-                <p
-                  className="text-sm text-muted-foreground"
-                  id={`${inputId}-description`}
-                >
-                  {copy.description}
-                </p>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  aria-describedby={`${categoryId}-description`}
+                  checked={categoryCheckedState(settings, category)}
+                  className="mt-0.5"
+                  disabled={loading || saving}
+                  id={categoryId}
+                  onCheckedChange={(checked) =>
+                    handleCategoryToggle(category, checked !== false)
+                  }
+                />
+                <div className="space-y-1">
+                  <Label className="font-medium" htmlFor={categoryId}>
+                    {copy.title}
+                  </Label>
+                  <p
+                    className="text-sm text-muted-foreground"
+                    id={`${categoryId}-description`}
+                  >
+                    {copy.description}
+                  </p>
+                </div>
               </div>
+
+              {showKinds ? (
+                <div className="mt-3 space-y-2 border-t border-border/60 pt-3 pl-7">
+                  {kinds.map((kind) => {
+                    const kindCopy = EMAIL_KIND_COPY[kind];
+                    const kindId = `email-preference-kind-${kind}`;
+
+                    return (
+                      <div className="flex items-start gap-3" key={kind}>
+                        <Checkbox
+                          aria-describedby={`${kindId}-description`}
+                          checked={resolveKindEnabled(settings, kind)}
+                          className="mt-0.5"
+                          disabled={loading || saving}
+                          id={kindId}
+                          onCheckedChange={(checked) =>
+                            handleKindToggle(kind, checked === true)
+                          }
+                        />
+                        <div>
+                          <Label className="text-sm" htmlFor={kindId}>
+                            {kindCopy.title}
+                          </Label>
+                          <p
+                            className="text-sm text-muted-foreground"
+                            id={`${kindId}-description`}
+                          >
+                            {kindCopy.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
           );
         })}
