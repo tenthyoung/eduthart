@@ -7,6 +7,7 @@ import { ACCOUNT_SECTIONS } from "@/components/account/account-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,6 @@ import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
 import {
   Bell,
   ChevronRight,
-  CircleUserRound,
   LayoutDashboard,
   LifeBuoy,
   Linkedin,
@@ -252,14 +252,12 @@ export function Navbar() {
   const avatarUrl = photoURL ?? user?.photoURL ?? null;
   const displayLabel = user?.displayName || user?.email || "Account";
   const profileBadge = (
-    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-primary/10 text-primary">
-      {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" className="h-full w-full object-cover" src={avatarUrl} />
-      ) : (
-        <CircleUserRound className="size-5" />
-      )}
-    </span>
+    <ProfileAvatar
+      email={user?.email}
+      name={user?.displayName}
+      photoURL={avatarUrl}
+      seed={user?.uid}
+    />
   );
 
   const handleSignOut = async () => {
@@ -351,23 +349,18 @@ export function Navbar() {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
+                    <button
                       aria-label="Account menu"
-                      className="overflow-hidden rounded-full"
-                      size="icon"
-                      variant="outline"
+                      className="cursor-pointer rounded-full ring-offset-background transition-shadow outline-none hover:ring-2 hover:ring-primary/35 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      type="button"
                     >
-                      {avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          alt=""
-                          className="h-full w-full object-cover"
-                          src={avatarUrl}
-                        />
-                      ) : (
-                        <CircleUserRound />
-                      )}
-                    </Button>
+                      <ProfileAvatar
+                        email={user?.email}
+                        name={user?.displayName}
+                        photoURL={avatarUrl}
+                        seed={user?.uid}
+                      />
+                    </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
                     {username ? (

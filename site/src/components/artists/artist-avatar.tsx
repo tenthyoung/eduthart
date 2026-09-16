@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 
 import { ProfilePictureDialog } from "@/components/account/profile-picture-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { cn } from "@/lib/utils";
 
-const AVATAR_CLASSES =
-  "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-primary/10 text-2xl font-semibold text-primary shadow-lg";
+const AVATAR_CLASSES = "border-4 border-white shadow-lg";
 
 export type ArtistAvatarProps = {
   artistUid: string;
@@ -37,30 +37,25 @@ export function ArtistAvatar({
     setCurrentPhotoURL(photoURL);
   }, [photoURL]);
 
-  const picture = currentPhotoURL ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      alt={displayName}
-      className="h-full w-full object-cover"
-      src={currentPhotoURL}
+  const picture = (
+    <ProfileAvatar
+      className={cn(AVATAR_CLASSES, className)}
+      name={displayName}
+      photoURL={currentPhotoURL}
+      seed={artistUid}
+      size="lg"
     />
-  ) : (
-    (displayName.trim()[0] ?? "@").toUpperCase()
   );
 
   if (status !== "authenticated" || user?.uid !== artistUid) {
-    return <div className={cn(AVATAR_CLASSES, className)}>{picture}</div>;
+    return picture;
   }
 
   return (
     <>
       <button
         aria-label="Change your profile picture"
-        className={cn(
-          AVATAR_CLASSES,
-          "group relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-          className
-        )}
+        className="group relative cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >
