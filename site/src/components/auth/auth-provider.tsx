@@ -6,6 +6,8 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
+  getMultiFactorResolver,
+  multiFactor,
   onAuthStateChanged,
   reauthenticateWithCredential,
   reload,
@@ -17,6 +19,9 @@ import {
   updatePassword,
   updateProfile,
   verifyBeforeUpdateEmail,
+  TotpMultiFactorGenerator,
+  type MultiFactorError,
+  type MultiFactorResolver,
   type User as FirebaseUser,
 } from "firebase/auth";
 import {
@@ -30,6 +35,14 @@ import {
 } from "react";
 
 import { buildDisplayName, splitDisplayName } from "@/lib/auth/account-profile";
+import {
+  describeTwoFactorError,
+  TOTP_DISPLAY_NAME,
+  TOTP_ISSUER,
+  TwoFactorRequiredError,
+  type EnrolledFactor,
+  type TotpEnrollment,
+} from "@/lib/auth/two-factor";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -63,6 +76,19 @@ type AuthContextValue = {
   ) => Promise<{ isNewUser: boolean }>;
   signOut: () => Promise<void>;
   sendResetLink: (email: string) => Promise<void>;
+  /** Enrolled second factors for the signed-in account, newest last. */
+  twoFactor: EnrolledFactor[];
+  startTotpEnrollment: () => Promise<TotpEnrollment>;
+  confirmTotpEnrollment: (
+    enrollment: TotpEnrollment,
+    code: string
+  ) => Promise<void>;
+  disableTotp: (factorUid: string) => Promise<void>;
+  /** Finish a sign-in that stopped on a TwoFactorRequiredError. */
+  resolveTwoFactorSignIn: (
+    resolver: MultiFactorResolver,
+    code: string
+  ) => Promise<void>;
   signUpWithEmail: (args: {
     email: string;
     firstName: string;
@@ -96,6 +122,32 @@ function mapFirebaseUser(user: FirebaseUser): AuthUser {
       .filter(Boolean),
     uid: user.uid,
   };
+}
+
+/**
+ * The second factors enrolled on a Firebase account.
+ *
+ * Firebase exposes these on the user record, so there is nothing to fetch and
+ * nothing of our own to keep in sync — which is the point: the enrollment
+ * state has exactly one home.
+ */
+/**
+ * Whether a caught error is the one Firebase raises for a second factor.
+ *
+ * The error code is the discriminator Firebase documents for this, and it is
+ * the only code that comes with a resolver attached — so narrowing on it is
+ * exactly as safe as the SDK's own contract.
+ */
+function isMultiFactorError(error: unknown): error is MultiFactorError {
+  return getAuthErrorCode(error) === "auth/multi-factor-auth-required";
+}
+
+function readEnrolledFactors(user: FirebaseUser): EnrolledFactor[] {
+  return multiFactor(user).enrolledFactors.map((factor) => ({
+    displayName: factor.displayName ?? null,
+    enrolledAt: factor.enrollmentTime ?? null,
+    uid: factor.uid,
+  }));
 }
 
 function readE2EUser(): AuthUser | null {
@@ -313,6 +365,7 @@ async function persistUserRecord(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [twoFactor, setTwoFactor] = useState<EnrolledFactor[]>([]);
 
   useEffect(() => {
     if (E2E_AUTH_ENABLED) {
@@ -346,6 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setUser(nextUser ? mapFirebaseUser(nextUser) : null);
+        setTwoFactor(nextUser ? readEnrolledFactors(nextUser) : []);
         setStatus(nextUser ? "authenticated" : "unauthenticated");
       });
     });
@@ -368,10 +422,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password
         );
       } catch (error) {
+        // The password was right; the account just wants its second factor.
+        // Hand the caller the resolver so it can ask for a code, rather than
+        // reporting this as a failed sign-in.
+        if (isMultiFactorError(error)) {
+          throw new TwoFactorRequiredError(getMultiFactorResolver(auth, error));
+        }
+
         throw new Error(formatSignInError(error));
       }
 
       setUser(mapFirebaseUser(credential.user));
+      setTwoFactor(readEnrolledFactors(credential.user));
       setStatus("authenticated");
     },
     []
@@ -421,6 +483,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await sendEmailVerification(credential.user);
       setUser(mapFirebaseUser(credential.user));
+      setTwoFactor(readEnrolledFactors(credential.user));
       setStatus("authenticated");
     },
     []
@@ -436,6 +499,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       credential = await signInWithPopup(auth, provider);
     } catch (error) {
+      // A Google account can carry a second factor of ours too, so this path
+      // needs the same treatment as email sign-in.
+      if (isMultiFactorError(error)) {
+        throw new TwoFactorRequiredError(getMultiFactorResolver(auth, error));
+      }
+
       throw new Error(
         formatAuthError(error, "Unable to continue with Google.")
       );
@@ -470,6 +539,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setUser(mapFirebaseUser(credential.user));
+    setTwoFactor(readEnrolledFactors(credential.user));
     setStatus("authenticated");
 
     return { isNewUser };
@@ -636,6 +706,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await currentUser.getIdToken(true)
       );
       setUser(mapFirebaseUser(currentUser));
+      setTwoFactor(readEnrolledFactors(currentUser));
     },
     []
   );
@@ -659,6 +730,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await reload(auth.currentUser);
     await persistUserRecord(auth.currentUser);
     setUser(mapFirebaseUser(auth.currentUser));
+    setTwoFactor(readEnrolledFactors(auth.currentUser));
     setStatus("authenticated");
   }, []);
 
@@ -677,6 +749,140 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("unauthenticated");
   }, []);
 
+  /**
+   * Begin TOTP enrollment.
+   *
+   * The returned secret has to survive until the person types their first
+   * code, so it is handed back to the caller to hold rather than kept here —
+   * it is a live object, not something that can be serialised into state.
+   */
+  const startTotpEnrollment = useCallback(async (): Promise<TotpEnrollment> => {
+    const auth = await getFirebaseAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error("Sign in before setting up two-factor authentication.");
+    }
+
+    try {
+      const session = await multiFactor(currentUser).getSession();
+      const secret = await TotpMultiFactorGenerator.generateSecret(session);
+
+      return {
+        secret,
+        secretKey: secret.secretKey,
+        uri: secret.generateQrCodeUrl(
+          currentUser.email ?? currentUser.uid,
+          TOTP_ISSUER
+        ),
+      };
+    } catch (error) {
+      throw new Error(
+        describeTwoFactorError(
+          getAuthErrorCode(error),
+          "Unable to start two-factor setup."
+        )
+      );
+    }
+  }, []);
+
+  const confirmTotpEnrollment = useCallback(
+    async (enrollment: TotpEnrollment, code: string) => {
+      const auth = await getFirebaseAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error("Sign in before setting up two-factor authentication.");
+      }
+
+      try {
+        await multiFactor(currentUser).enroll(
+          TotpMultiFactorGenerator.assertionForEnrollment(
+            enrollment.secret,
+            code.trim()
+          ),
+          TOTP_DISPLAY_NAME
+        );
+      } catch (error) {
+        throw new Error(
+          describeTwoFactorError(
+            getAuthErrorCode(error),
+            "Unable to turn on two-factor authentication."
+          )
+        );
+      }
+
+      await reload(currentUser);
+      setUser(mapFirebaseUser(currentUser));
+      setTwoFactor(readEnrolledFactors(currentUser));
+    },
+    []
+  );
+
+  const disableTotp = useCallback(async (factorUid: string) => {
+    const auth = await getFirebaseAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error("Sign in before changing two-factor authentication.");
+    }
+
+    try {
+      await multiFactor(currentUser).unenroll(factorUid);
+    } catch (error) {
+      throw new Error(
+        describeTwoFactorError(
+          getAuthErrorCode(error),
+          "Unable to turn off two-factor authentication."
+        )
+      );
+    }
+
+    await reload(currentUser);
+    setUser(mapFirebaseUser(currentUser));
+    setTwoFactor(readEnrolledFactors(currentUser));
+  }, []);
+
+  /**
+   * Finish a sign-in that stopped for a second factor.
+   *
+   * The resolver carries the half-finished sign-in, so it must be the same
+   * object the original failure produced.
+   */
+  const resolveTwoFactorSignIn = useCallback(
+    async (resolver: MultiFactorResolver, code: string) => {
+      const hint = resolver.hints.find(
+        (candidate) => candidate.factorId === TotpMultiFactorGenerator.FACTOR_ID
+      );
+
+      if (!hint) {
+        throw new Error(
+          "This account uses a second factor this site cannot complete."
+        );
+      }
+
+      let credential;
+
+      try {
+        credential = await resolver.resolveSignIn(
+          TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code.trim())
+        );
+      } catch (error) {
+        throw new Error(
+          describeTwoFactorError(
+            getAuthErrorCode(error),
+            "That code was not accepted."
+          )
+        );
+      }
+
+      setUser(mapFirebaseUser(credential.user));
+      setTwoFactor(readEnrolledFactors(credential.user));
+      setStatus("authenticated");
+    },
+    []
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       changePassword,
@@ -690,6 +896,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUpWithEmail,
       status,
       user,
+      twoFactor,
+      startTotpEnrollment,
+      confirmTotpEnrollment,
+      disableTotp,
+      resolveTwoFactorSignIn,
     }),
     [
       changePassword,
@@ -703,6 +914,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUpWithEmail,
       status,
       user,
+      twoFactor,
+      startTotpEnrollment,
+      confirmTotpEnrollment,
+      disableTotp,
+      resolveTwoFactorSignIn,
     ]
   );
 
