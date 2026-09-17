@@ -22,6 +22,7 @@ import { DangerZoneSection } from "@/components/account/sections/danger-zone-sec
 import { EmailPreferencesSection } from "@/components/account/sections/email-preferences-section";
 import { ProfileSection } from "@/components/account/sections/profile-section";
 import { SecuritySection } from "@/components/account/sections/security-section";
+import { TwoFactorSection } from "@/components/account/sections/two-factor-section";
 import { useAccountProfile } from "@/components/account/use-account-profile";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -415,6 +416,8 @@ export function AccountPage() {
               sendingVerification={sendingVerification}
               signingOut={signingOut}
             />
+
+            <TwoFactorSection />
 
             <EmailPreferencesSection />
 
