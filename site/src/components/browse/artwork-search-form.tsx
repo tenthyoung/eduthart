@@ -79,14 +79,14 @@ export function ArtworkSearchForm({
   return (
     <form
       className={cn(
-        "mx-auto w-full max-w-5xl rounded-[2rem] border border-border/70 bg-card p-3 shadow-[0_24px_70px_-40px_rgba(56,40,25,0.22)]",
+        "mx-auto w-full max-w-5xl rounded-2xl border border-input bg-background p-2 shadow-[0_18px_40px_-32px_rgba(31,31,31,0.3)]",
         className
       )}
       onSubmit={handleSubmit}
       role="search"
     >
       <div className="grid gap-2 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
-        <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
+        <label className="min-w-0 rounded-xl px-4 py-3 text-left lg:border-r lg:border-border">
           <p className="text-sm font-semibold text-foreground">What</p>
           <Input
             aria-label="Search artwork"
@@ -102,7 +102,7 @@ export function ArtworkSearchForm({
           />
         </label>
 
-        <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left lg:border-r lg:border-border/70">
+        <label className="min-w-0 rounded-xl px-4 py-3 text-left lg:border-r lg:border-border">
           <p className="text-sm font-semibold text-foreground">Category</p>
           <Select
             onValueChange={(value) => setCategory(fromSelectValue(value))}
@@ -130,7 +130,7 @@ export function ArtworkSearchForm({
           </Select>
         </label>
 
-        <label className="min-w-0 rounded-[1.5rem] px-5 py-4 text-left">
+        <label className="min-w-0 rounded-xl px-4 py-3 text-left">
           <p className="text-sm font-semibold text-foreground">Budget</p>
           <Select
             onValueChange={(value) => setBudget(fromSelectValue(value))}
@@ -159,7 +159,7 @@ export function ArtworkSearchForm({
         </label>
 
         <Button
-          className="h-full min-h-16 rounded-[1.5rem] px-6 text-base shadow-none"
+          className="h-full min-h-14 rounded-xl px-6 text-base shadow-none"
           size="xl"
           type="submit"
         >

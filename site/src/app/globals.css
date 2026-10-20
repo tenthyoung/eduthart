@@ -68,12 +68,14 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-geist), "Avenir Next", "Segoe UI", ui-sans-serif, system-ui,
-    sans-serif;
-  /* "Serif" is the heading slot; it currently points at Outfit, a sans. */
-  --font-serif:
-    var(--font-outfit), "Avenir Next", "Segoe UI", ui-sans-serif, system-ui,
-    sans-serif;
+    var(--font-inter), "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  /* Gloock is the display serif shared with Hendeca Labs: the wordmark and the
+     odd accent word, never body copy or whole headings. */
+  --font-serif: var(--font-gloock), ui-serif, Georgia, serif;
+  --font-display: var(--font-gloock), ui-serif, Georgia, serif;
+  --color-brass: var(--brass);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --font-mono:
     var(--font-jetbrains-mono), "SF Mono", "JetBrains Mono", "Cascadia Code",
     ui-monospace, SFMono-Regular, monospace;
@@ -114,79 +116,86 @@
 }
 
 :root {
-  --font-geist: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --font-outfit:
-    "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-inter: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-gloock: ui-serif, Georgia, serif;
   --font-jetbrains-mono:
     "SF Mono", "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular,
     monospace;
-  --radius: 0.625rem;
-  --background: #faf8f3;
+  --radius: 0.875rem;
+  /* White ground, ink actions. Brass is for accent text; the lighter gold is
+     only ever a fill behind ink text, where it passes contrast. */
+  --background: #ffffff;
   --foreground: #1f1f1f;
-  --card: #fffdf9;
+  --card: #ffffff;
   --card-foreground: #1f1f1f;
-  --popover: #fffdf9;
+  --popover: #ffffff;
   --popover-foreground: #1f1f1f;
-  --primary: #d4af7c;
-  --primary-foreground: #1f1f1f;
+  --primary: #1f1f1f;
+  --primary-foreground: #ffffff;
   --primary-light: #e3c9a2;
-  --secondary: #f3eee5;
+  --brass: #85622f;
+  --highlight: #d4af7c;
+  --highlight-foreground: #1f1f1f;
+  --secondary: #f4f3f0;
   --secondary-foreground: #1f1f1f;
-  --muted: #f1ece3;
-  --muted-foreground: #77716a;
-  --accent: #f0e9dd;
+  --muted: #f4f3f0;
+  --muted-foreground: #6b655e;
+  --accent: #f4f3f0;
   --accent-foreground: #1f1f1f;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e8e2d9;
-  --input: #e8e2d9;
-  --ring: #d4af7c;
+  --border: #e8e6e1;
+  --input: #dcd9d2;
+  --ring: #85622f;
   --chart-1: #d4af7c;
   --chart-2: #1f1f1f;
   --chart-3: #77716a;
   --chart-4: #aaa39a;
   --chart-5: #e8e2d9;
-  --sidebar: #f5f1e8;
+  --sidebar: #ffffff;
   --sidebar-foreground: #1f1f1f;
-  --sidebar-primary: #d4af7c;
-  --sidebar-primary-foreground: #1f1f1f;
-  --sidebar-accent: #ece5d8;
+  --sidebar-primary: #1f1f1f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f3f0;
   --sidebar-accent-foreground: #1f1f1f;
-  --sidebar-border: #e8e2d9;
-  --sidebar-ring: #d4af7c;
+  --sidebar-border: #e8e6e1;
+  --sidebar-ring: #85622f;
 }
 
 .dark {
-  --background: #1f1f1f;
-  --foreground: #faf8f3;
-  --card: #292827;
-  --card-foreground: #faf8f3;
-  --popover: #292827;
-  --popover-foreground: #faf8f3;
-  --primary: #d4af7c;
-  --primary-foreground: #1f1f1f;
+  --background: #161615;
+  --foreground: #f6f5f2;
+  --card: #1f1f1e;
+  --card-foreground: #f6f5f2;
+  --popover: #1f1f1e;
+  --popover-foreground: #f6f5f2;
+  --primary: #f6f5f2;
+  --primary-foreground: #161615;
   --primary-light: #e3c9a2;
-  --secondary: #292827;
-  --secondary-foreground: #faf8f3;
-  --muted: #292827;
-  --muted-foreground: #aaa39a;
-  --accent: #33312e;
-  --accent-foreground: #faf8f3;
+  --brass: #d4af7c;
+  --highlight: #d4af7c;
+  --highlight-foreground: #161615;
+  --secondary: #262624;
+  --secondary-foreground: #f6f5f2;
+  --muted: #262624;
+  --muted-foreground: #aaa59d;
+  --accent: #2c2c2a;
+  --accent-foreground: #f6f5f2;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #3c3935;
-  --input: #45423d;
+  --border: #33322f;
+  --input: #42413d;
   --ring: #d4af7c;
   --chart-1: #d4af7c;
   --chart-2: #faf8f3;
   --chart-3: #aaa39a;
   --chart-4: #77716a;
   --chart-5: #3c3935;
-  --sidebar: #292827;
-  --sidebar-foreground: #faf8f3;
-  --sidebar-primary: #d4af7c;
-  --sidebar-primary-foreground: #1f1f1f;
-  --sidebar-accent: #33312e;
-  --sidebar-accent-foreground: #faf8f3;
-  --sidebar-border: #3c3935;
+  --sidebar: #1f1f1e;
+  --sidebar-foreground: #f6f5f2;
+  --sidebar-primary: #f6f5f2;
+  --sidebar-primary-foreground: #161615;
+  --sidebar-accent: #2c2c2a;
+  --sidebar-accent-foreground: #f6f5f2;
+  --sidebar-border: #33322f;
   --sidebar-ring: #d4af7c;
 }
 
@@ -217,16 +226,16 @@
   h2,
   h3,
   h4 {
-    @apply font-serif;
-    font-weight: 600;
+    @apply font-sans;
+    font-weight: 700;
     line-height: 1.08;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.025em;
     text-wrap: balance;
   }
 
   h5,
   h6 {
-    @apply font-serif;
+    @apply font-sans;
     font-weight: 600;
     line-height: 1.18;
     letter-spacing: -0.02em;
@@ -234,6 +243,12 @@
 
   p {
     line-height: 1.65;
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--highlight) 45%, transparent);
+    color: var(--foreground);
   }
 
   code,
@@ -261,5 +276,67 @@
   [role="button"]:disabled,
   a[aria-disabled="true"] {
     @apply cursor-not-allowed;
+  }
+}
+
+/* The fade-in-on-scroll MotionFade and MotionStaggerFade wrap content in,
+   copied from hendeca-design-systems. They set the offset and timing; an
+   IntersectionObserver flips data-in-view. */
+.motion-fade {
+  opacity: 0;
+  translate: var(--fade-offset);
+  transition:
+    opacity var(--fade-duration) cubic-bezier(0.22, 1, 0.36, 1)
+      var(--fade-delay),
+    translate var(--fade-duration) cubic-bezier(0.22, 1, 0.36, 1)
+      var(--fade-delay);
+}
+
+.motion-fade[data-in-view] {
+  opacity: 1;
+  translate: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Reveal these outright rather than sliding them in, and never leave them
+     at opacity 0 waiting for a reveal that isn't coming. */
+  .motion-fade,
+  .motion-fade[data-in-view] {
+    opacity: 1;
+    translate: none;
+    transition: none;
+  }
+}
+
+/* The hero's entrance. Pure CSS so it starts the moment the page paints,
+   rather than waiting for JavaScript the way the scroll fades must: the first
+   thing on the page should never sit blank. Each child rises a beat after the
+   one before it. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+.rise-in > * {
+  animation: rise-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rise-in > :nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.rise-in > :nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.rise-in > :nth-child(n + 4) {
+  animation-delay: 270ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in > * {
+    animation: none;
   }
 }

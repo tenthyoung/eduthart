@@ -4,26 +4,28 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
 import type { Metadata } from "next";
-import { Geist, Outfit } from "next/font/google";
+import { Gloock, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const geist = Geist({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-inter",
   display: "swap",
 });
 
-const outfit = Outfit({
+// The display serif shared with Hendeca Labs, for the wordmark and accent words.
+const gloock = Gloock({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-gloock",
+  weight: "400",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "EduthArt - Buy Original Art Online",
   description:
-    "Browse curated original art online with room-based discovery, thoughtful collections, and collector-friendly guidance.",
+    "Original art bought straight from the artists who make it. Every piece is one of a kind, signed, and shipped from the artist's studio.",
 };
 
 export default function RootLayout({
@@ -33,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.variable} ${outfit.variable} antialiased`}>
+      <body className={`${inter.variable} ${gloock.variable} antialiased`}>
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider defaultTheme="light">

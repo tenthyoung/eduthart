@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { IndexedArtwork } from "@/lib/artists/artwork-index";
 import { formatMinorUnits } from "@/lib/commerce/money";
@@ -10,8 +10,13 @@ import { cn } from "@/lib/utils";
 export function formatArtworkPrice(
   artwork: Pick<IndexedArtwork, "currency" | "priceMinor">
 ) {
+  // Artwork is priced in whole amounts, so "$820" reads better than "$820.00";
+  // a price that really has cents keeps them.
   return artwork.priceMinor > 0
-    ? formatMinorUnits(artwork.priceMinor, artwork.currency)
+    ? formatMinorUnits(artwork.priceMinor, artwork.currency).replace(
+        /\.00$/,
+        ""
+      )
     : "Price on request";
 }
 
@@ -36,6 +41,46 @@ export function ArtworkAvailability({
   );
 }
 
+/**
+ * An artwork photo that fades up once it has loaded, over the muted tile
+ * behind it, instead of painting in line by line.
+ *
+ * A cached image can finish before React attaches `onLoad`, so the effect
+ * checks `complete` too; otherwise it would sit invisible forever.
+ */
+function ArtworkImage({
+  alt,
+  dimmed,
+  src,
+}: {
+  alt: string;
+  dimmed: boolean;
+  src: string;
+}) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (ref.current?.complete) {
+      setLoaded(true);
+    }
+  }, []);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt={alt}
+      className={cn(
+        "h-full w-full object-cover transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.03] motion-reduce:transition-none",
+        loaded ? (dimmed ? "opacity-70" : "opacity-100") : "opacity-0"
+      )}
+      onLoad={() => setLoaded(true)}
+      ref={ref}
+      src={src}
+    />
+  );
+}
+
 export function ArtworkCard({
   actions,
   artwork,
@@ -45,56 +90,64 @@ export function ArtworkCard({
   artwork: IndexedArtwork;
   footnote?: ReactNode;
 }) {
+  const isAvailable = artwork.availability === "original_available";
+  const details = [artwork.artistName, artwork.category]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <article className="flex flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-shadow hover:shadow-lg">
+    <article className="flex min-w-0 flex-col gap-3">
       {/* The title link below points to the same place, so this one is hidden
           from assistive technology rather than announced twice. */}
       <Link
         aria-hidden="true"
-        className="block aspect-[4/3] overflow-hidden bg-muted/30"
+        className="group/card relative block aspect-[4/5] overflow-hidden rounded-xl bg-muted"
         href={artwork.href}
         tabIndex={-1}
       >
         {artwork.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ArtworkImage
             alt={artwork.title}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.02]"
+            dimmed={!isAvailable}
             src={artwork.imageUrl}
           />
         ) : null}
+        {/* Every card is an original for sale unless it says otherwise, so
+            only the exceptions get a label. */}
+        {isAvailable ? null : (
+          <span className="absolute left-2 top-2 rounded-full bg-background/95 px-2.5 py-1 text-xs font-semibold capitalize text-foreground">
+            {artwork.availability.replaceAll("_", " ")}
+          </span>
+        )}
       </Link>
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Link
-              className="text-lg font-medium text-foreground hover:underline"
-              href={artwork.href}
-            >
-              {artwork.title}
-            </Link>
-            <p className="mt-1 truncate text-sm text-muted-foreground">
-              by {artwork.artistName}
-            </p>
-          </div>
-          <p className="shrink-0 font-semibold text-foreground">
-            {formatArtworkPrice(artwork)}
-          </p>
-        </div>
-        <ArtworkAvailability availability={artwork.availability} />
-        {footnote}
-        {actions ? (
-          <div className="mt-auto flex flex-wrap gap-2 pt-2">{actions}</div>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="text-base font-bold text-foreground">
+          {formatArtworkPrice(artwork)}
+        </p>
+        <Link
+          className="truncate text-[15px] text-foreground hover:underline"
+          href={artwork.href}
+        >
+          {artwork.title}
+        </Link>
+        {details ? (
+          <p className="truncate text-sm text-muted-foreground">{details}</p>
         ) : null}
       </div>
+      {footnote}
+      {actions ? (
+        <div className="mt-auto flex flex-wrap gap-2">{actions}</div>
+      ) : null}
     </article>
   );
 }
 
+/** Two columns on a phone, four on a wide screen. */
+export const ARTWORK_GRID_CLASS =
+  "grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 lg:grid-cols-4";
+
 export function ArtworkCardGrid({ children }: { children: ReactNode }) {
-  return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
-  );
+  return <div className={ARTWORK_GRID_CLASS}>{children}</div>;
 }
 
 export function CollectorEmptyState({
@@ -109,8 +162,8 @@ export function CollectorEmptyState({
   title: string;
 }) {
   return (
-    <div className="rounded-[2rem] border border-dashed border-border bg-white/70 dark:bg-card/70 px-6 py-16 text-center">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+    <div className="rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-16 text-center">
+      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-background text-brass">
         {icon}
       </div>
       <p className="mt-4 text-lg text-foreground">{title}</p>

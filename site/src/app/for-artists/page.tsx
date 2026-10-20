@@ -207,7 +207,7 @@ export default function ForArtistsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
               You&apos;re Invited
             </p>
-            <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.035em]">
+            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.035em]">
               Stay up to date with new art releases, artist stories, and
               opportunities.
             </h2>

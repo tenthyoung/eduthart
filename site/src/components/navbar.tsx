@@ -5,7 +5,6 @@ import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ACCOUNT_SECTIONS } from "@/components/account/account-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import {
@@ -36,7 +35,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
-import { getNavContext, isArtistCapableUsername } from "@/lib/navigation";
+import { buildBrowseHref } from "@/lib/artists/artwork-search";
+import { isArtistCapableUsername } from "@/lib/navigation";
 import {
   fetchNotifications,
   NOTIFICATIONS_CHANGED_EVENT,
@@ -50,12 +50,19 @@ type NavItem = {
   name: string;
 };
 
+/** The categories named in the header, as labels people say and the values search uses. */
+const HEADER_CATEGORIES = [
+  { label: "Paintings", value: "Painting" },
+  { label: "Photography", value: "Photography" },
+  { label: "Sculpture", value: "Sculpture" },
+  { label: "Ceramics", value: "Ceramic" },
+  { label: "Drawing", value: "Drawing" },
+];
+
 export function Navbar() {
   const pathname = usePathname();
-  const navContext = getNavContext(pathname);
   const { signOut, status, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
@@ -64,40 +71,25 @@ export function Navbar() {
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
   const isArtistCapable = isArtistCapableUsername(username);
-  const isHomepage = navContext === "marketing-home";
-  // Anchors into homepage sections, so they only make sense on the homepage.
-  const homepageNavItems: NavItem[] = [
-    { name: "Categories", href: "/#collections" },
+  // Shopping comes first: the categories people browse by, then everything.
+  const shopNavItems: NavItem[] = [
+    ...HEADER_CATEGORIES.map((category) => ({
+      name: category.label,
+      href: buildBrowseHref({ category: category.value }),
+    })),
+    { name: "Browse all", href: "/browse" },
   ];
-  const guestNavItems: NavItem[] = [
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
-  ];
-  // Browsing is a real page now, so it stays reachable from every route.
-  const browseNavItem: NavItem = { name: "Browse Art", href: "/browse" };
-  const authenticatedNavItems: NavItem[] =
-    isArtistCapable && username
+  const studioNavItems: NavItem[] =
+    status === "authenticated" && isArtistCapable && username
       ? [
           {
-            name: "Artist Dashboard",
+            name: "Studio",
             href: `/artists/${username}/listings/new`,
             icon: LayoutDashboard,
           },
         ]
       : [];
-  const navItems: NavItem[] =
-    status === "authenticated"
-      ? [
-          browseNavItem,
-          ...(isHomepage ? homepageNavItems : []),
-          ...authenticatedNavItems,
-        ]
-      : [
-          browseNavItem,
-          ...(isHomepage ? homepageNavItems : []),
-          ...guestNavItems,
-        ];
-  const desktopNavItems = navItems;
+  const desktopNavItems: NavItem[] = [...shopNavItems, ...studioNavItems];
 
   const socialIcons = [
     {
@@ -234,19 +226,6 @@ export function Navbar() {
     };
   }, [status, user]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 12);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
   // The profile payload wins over the Firebase user so a freshly uploaded
   // avatar shows up without a re-login; the auth photo covers the first render.
   const avatarUrl = photoURL ?? user?.photoURL ?? null;
@@ -277,38 +256,30 @@ export function Navbar() {
       // scrollbar, which would let this fixed bar stretch into the reclaimed
       // gutter and shove its right-hand controls sideways. Inset it by the
       // width Radix removed so the bar stays put while a menu is open.
-      className={cn(
-        "fixed top-0 left-0 right-[var(--removed-body-scroll-bar-size,0px)] z-50 transition-all duration-300",
-        isScrolled
-          ? "border-b border-border/50 bg-background/90 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)] backdrop-blur-xl"
-          : "bg-transparent"
-      )}
+      className="fixed top-0 left-0 right-[var(--removed-body-scroll-bar-size,0px)] z-50 border-b border-border bg-background/95 backdrop-blur-xl"
     >
-      <div
-        className={cn(
-          "px-4 sm:px-6 lg:px-16",
-          isScrolled ? "pt-4 pb-3" : "pt-8 pb-4"
-        )}
-      >
-        <div className="flex items-center justify-between h-20 gap-6">
-          {/* Left - Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-            <BrandMark />
-            <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
-              EduthArt
-            </span>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-8">
+          {/* Left - Wordmark */}
+          <Link
+            href="/"
+            className="flex-shrink-0 font-display text-[1.75rem] leading-none text-foreground"
+          >
+            EduthArt
           </Link>
 
           {/* Center - Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden flex-1 items-center gap-6 lg:flex">
             {desktopNavItems.map((item) => {
               const Icon = item.icon;
+              const isCurrent = pathname === item.href;
 
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-foreground/80 hover:text-foreground transition-colors duration-200 font-medium"
+                  aria-current={isCurrent ? "page" : undefined}
+                  className="text-[15px] font-medium text-foreground/80 transition-colors duration-200 hover:text-foreground"
                 >
                   <span className="inline-flex items-center gap-2">
                     {Icon ? <Icon className="size-4" /> : null}
@@ -434,12 +405,9 @@ export function Navbar() {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="hidden items-center gap-2 lg:flex">
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/login">Log in</Link>
-                </Button>
-                <Button asChild size="lg" variant="gradient">
-                  <Link href="/signup">Sign up</Link>
+              <div className="hidden items-center lg:flex">
+                <Button asChild variant="ghost">
+                  <Link href="/login">Sign in</Link>
                 </Button>
               </div>
             )}
@@ -461,7 +429,7 @@ export function Navbar() {
         {isMobileMenuOpen && (
           <motion.div
             ref={mobileMenuRef}
-            className="mt-2 rounded-lg border border-border/70 bg-card/95 pb-6 shadow-[0_24px_80px_-40px_rgba(47,36,28,0.45)] backdrop-blur-sm lg:hidden"
+            className="mb-4 rounded-2xl border border-border bg-card pb-6 shadow-[0_24px_60px_-36px_rgba(31,31,31,0.35)] lg:hidden"
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
@@ -499,13 +467,13 @@ export function Navbar() {
 
             <div className="mt-6 space-y-4 border-t border-border/60 px-4 pt-6">
               <div className="grid gap-3">
-                <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm text-foreground">
+                <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
                   <span>Appearance</span>
                   <ThemeToggle />
                 </div>
                 {status === "authenticated" ? (
                   <>
-                    <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm text-foreground">
+                    <div className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
                       Signed in as{" "}
                       {user?.displayName || user?.email || "collector"}
                     </div>
@@ -534,13 +502,13 @@ export function Navbar() {
                       </Link>
                     </Button>
                     {username ? (
-                      <Button asChild className="w-full" variant="gradient">
+                      <Button asChild className="w-full" variant="default">
                         <Link
                           href={`/artists/${username}/listings/new`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           <LayoutDashboard />
-                          Artist Dashboard
+                          Studio
                         </Link>
                       </Button>
                     ) : null}
@@ -565,15 +533,15 @@ export function Navbar() {
                         href="/login"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        Log in
+                        Sign in
                       </Link>
                     </Button>
-                    <Button asChild className="w-full" variant="gradient">
+                    <Button asChild className="w-full" variant="default">
                       <Link
                         href="/signup"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        Sign up
+                        Create account
                       </Link>
                     </Button>
                   </>
