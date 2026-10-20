@@ -1,22 +1,12 @@
 "use client";
 
-import { motion, useInView } from "motion/react";
-import { ReactNode, useRef } from "react";
+import { ReactNode } from "react";
+import type { CSSProperties } from "react";
+import { useInView } from "./use-in-view";
 
 type Direction = "row" | "column";
 
-interface MotionStaggerFadeProps {
-  children: ReactNode | ReactNode[];
-  delay?: number; // delay between each item
-  duration?: number;
-  initialDelay?: number;
-  direction?: Direction;
-  once?: boolean;
-  className?: string;
-  align?: "start" | "center" | "end" | "stretch";
-  gap?: string;
-}
-
+/** The same fade as MotionFade, dealt out one child at a time. */
 export const MotionStaggerFade = ({
   children,
   delay = 0.3,
@@ -25,36 +15,37 @@ export const MotionStaggerFade = ({
   direction = "column",
   once = true,
   className = "",
-}: MotionStaggerFadeProps) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once });
-
-  // Convert children to array if it's not already
+}: {
+  children: ReactNode | ReactNode[];
+  /** Seconds between one child's fade and the next. */
+  delay?: number;
+  duration?: number;
+  /** Seconds before the first child starts. */
+  initialDelay?: number;
+  direction?: Direction;
+  once?: boolean;
+  className?: string;
+}) => {
+  const [ref, inView] = useInView<HTMLDivElement>(once);
   const childrenArray = Array.isArray(children) ? children : [children];
 
   return (
     <div ref={ref} className={className}>
       {childrenArray.map((child, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={
-            direction === "row" ? { opacity: 0, x: 12 } : { opacity: 0, y: 12 }
+          className="motion-fade"
+          data-in-view={inView ? "" : undefined}
+          style={
+            {
+              "--fade-duration": `${duration}s`,
+              "--fade-delay": `${initialDelay + i * delay}s`,
+              "--fade-offset": direction === "row" ? "12px 0" : "0 12px",
+            } as CSSProperties
           }
-          animate={
-            isInView
-              ? { opacity: 1, x: 0, y: 0 }
-              : direction === "row"
-                ? { opacity: 0, x: 12 }
-                : { opacity: 0, y: 12 }
-          }
-          transition={{
-            delay: initialDelay + i * delay,
-            duration,
-            ease: "easeOut",
-          }}
         >
           {child}
-        </motion.div>
+        </div>
       ))}
     </div>
   );

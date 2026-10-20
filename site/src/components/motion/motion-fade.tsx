@@ -1,22 +1,19 @@
 "use client";
 
-import { motion, useInView } from "motion/react";
-import { ReactNode, useRef } from "react";
+import { ReactNode } from "react";
+import type { CSSProperties } from "react";
+import { useInView } from "./use-in-view";
 
 type Direction = "row" | "column";
 
-interface MotionStaggerFadeProps {
-  children: ReactNode;
-  delay?: number; // delay between each item
-  duration?: number;
-  initialDelay?: number;
-  direction?: Direction;
-  once?: boolean;
-  className?: string;
-  align?: "start" | "center" | "end" | "stretch";
-  gap?: string;
-}
-
+/**
+ * Fades its children in, and slides them a short way, once they scroll into
+ * view. The timing and offset are custom properties `.motion-fade` in
+ * tokens.css reads; an IntersectionObserver flips `data-in-view`.
+ *
+ * This replaced a 120KB animation library whose only job on these pages was an
+ * opacity and a 12px slide.
+ */
 export const MotionFade = ({
   children,
   delay = 0.3,
@@ -24,31 +21,34 @@ export const MotionFade = ({
   direction = "column",
   once = true,
   className = "",
-}: MotionStaggerFadeProps) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once });
+}: {
+  children: ReactNode;
+  /** Seconds before the fade starts once the block is in view. */
+  delay?: number;
+  duration?: number;
+  /** Which way the children slide in from. */
+  direction?: Direction;
+  /** Fade once and stay, rather than re-fading on every pass. */
+  once?: boolean;
+  className?: string;
+}) => {
+  const [ref, inView] = useInView<HTMLDivElement>(once);
 
   return (
     <div ref={ref} className={className}>
-      <motion.div
-        initial={
-          direction === "row" ? { opacity: 0, x: 12 } : { opacity: 0, y: 12 }
+      <div
+        className="motion-fade"
+        data-in-view={inView ? "" : undefined}
+        style={
+          {
+            "--fade-duration": `${duration}s`,
+            "--fade-delay": `${delay}s`,
+            "--fade-offset": direction === "row" ? "12px 0" : "0 12px",
+          } as CSSProperties
         }
-        animate={
-          isInView
-            ? { opacity: 1, x: 0, y: 0 }
-            : direction === "row"
-              ? { opacity: 0, x: 12 }
-              : { opacity: 0, y: 12 }
-        }
-        transition={{
-          delay: delay,
-          duration,
-          ease: "easeOut",
-        }}
       >
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 };

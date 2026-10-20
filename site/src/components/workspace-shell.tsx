@@ -83,7 +83,7 @@ export function WorkspaceShell({
                 isSidebarCollapsed && "lg:hidden"
               )}
             >
-              <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
+              <span className="font-display text-2xl font-normal text-foreground">
                 EduthArt
               </span>
             </Link>
@@ -156,7 +156,7 @@ export function WorkspaceShell({
                     isSidebarCollapsed ? "hidden lg:flex" : "hidden"
                   )}
                 >
-                  <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
+                  <span className="font-display text-2xl font-normal text-foreground">
                     EduthArt
                   </span>
                 </Link>
@@ -165,7 +165,7 @@ export function WorkspaceShell({
                     href="/"
                     className="mb-1 flex shrink-0 items-center gap-3 lg:hidden"
                   >
-                    <span className="font-serif text-2xl font-bold tracking-[-0.03em] text-foreground">
+                    <span className="font-display text-2xl font-normal text-foreground">
                       EduthArt
                     </span>
                   </Link>

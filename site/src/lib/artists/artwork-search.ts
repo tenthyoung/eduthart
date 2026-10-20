@@ -165,7 +165,7 @@ function matchesQuery(artwork: IndexedArtwork, query: string) {
   return terms.every((term) => haystack.includes(term));
 }
 
-function matchesBudget(artwork: IndexedArtwork, budget: string) {
+export function matchesBudget(artwork: IndexedArtwork, budget: string) {
   const option = findBudgetOption(budget);
 
   if (!option) {

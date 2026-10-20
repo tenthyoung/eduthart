@@ -1,6 +1,5 @@
 "use client";
 
-import { BrandMark } from "@/components/brand-mark";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,11 +17,32 @@ interface NewsletterFormData {
   subscribe: boolean;
 }
 
-const navigationLinks = [
-  { name: "About", href: "/about" },
-  { name: "Browse Art", href: "/#browse" },
-  { name: "Collections", href: "/#collections" },
-  { name: "Contact", href: "/contact" },
+const linkColumns = [
+  {
+    title: "Buying",
+    links: [
+      { name: "Browse all art", href: "/browse" },
+      {
+        name: "Shipping and returns",
+        href: "/legal/refund-cancellation-policy",
+      },
+      { name: "Contact us", href: "/contact" },
+    ],
+  },
+  {
+    title: "Artists",
+    links: [
+      { name: "Sell on EduthArt", href: "/for-artists" },
+      { name: "Apply to sell", href: "/apply-to-be-an-artist" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { name: "About", href: "/about" },
+      { name: "Journal", href: "/blog" },
+    ],
+  },
 ];
 
 const legalLinks = [
@@ -143,217 +163,184 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t bg-background">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="py-12 lg:py-16">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="space-y-8">
-              <div className="flex items-center gap-2">
-                <BrandMark className="h-10" />
-                <span className="font-serif text-3xl font-bold tracking-[-0.03em] text-foreground">
-                  EduthArt
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-8">
-                {navigationLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    className="font-medium text-foreground transition-colors duration-200 hover:text-primary"
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-              </div>
-
-              <div className="flex gap-6">
-                {socialIcons.map((socialIcon) => {
-                  if (socialIcon.isLucide) {
-                    const IconComponent = socialIcon.icon;
-                    return (
-                      <Link
-                        key={socialIcon.label}
-                        href={socialIcon.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-foreground transition-colors duration-200 hover:text-primary"
-                        aria-label={socialIcon.label}
-                      >
-                        <IconComponent size={24} />
-                      </Link>
-                    );
-                  }
+    <footer className="border-t border-border bg-background">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-12 py-14 lg:grid-cols-[1.1fr_repeat(3,minmax(0,0.6fr))_1.4fr] lg:gap-10 lg:py-16">
+          <div className="space-y-5">
+            <Link
+              href="/"
+              className="font-display text-[1.75rem] leading-none text-foreground"
+            >
+              EduthArt
+            </Link>
+            <p className="max-w-xs text-sm leading-6 text-muted-foreground">
+              Original art, bought straight from the people who make it.
+            </p>
+            <div className="flex gap-5">
+              {socialIcons.map((socialIcon) => {
+                if (socialIcon.isLucide) {
+                  const IconComponent = socialIcon.icon;
                   return (
-                    <SocialIcon
+                    <Link
                       key={socialIcon.label}
-                      iconPath={socialIcon.iconPath!}
                       href={socialIcon.href}
-                      label={socialIcon.label}
-                      size={24}
-                      variant="footer"
-                    />
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                      aria-label={socialIcon.label}
+                    >
+                      <IconComponent size={20} />
+                    </Link>
                   );
-                })}
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-muted-foreground">
-                  <p className="mb-2">
-                    For collecting inquiries, artist questions, and brand
-                    partnerships.
-                  </p>
-                  <Link
-                    href="mailto:support@eduthart.com"
-                    className="mb-3 block text-foreground transition-colors duration-200 hover:text-primary"
-                  >
-                    support@eduthart.com
-                  </Link>
-                </div>
-                <div className="text-muted-foreground">
-                  <p className="mb-2">
-                    Follow new collections, fresh arrivals, and gallery updates
-                  </p>
-                  <p className="mb-3">
-                    Online-first art marketplace with a curated point of view
-                  </p>
-                  <p>
-                    Designed for collectors, first-time buyers, and interior-led
-                    sourcing
-                  </p>
-                </div>
-              </div>
+                }
+                return (
+                  <SocialIcon
+                    key={socialIcon.label}
+                    iconPath={socialIcon.iconPath!}
+                    href={socialIcon.href}
+                    label={socialIcon.label}
+                    size={20}
+                    variant="footer"
+                  />
+                );
+              })}
             </div>
+          </div>
 
-            <div className="space-y-6">
-              <h3 className="font-serif text-2xl font-bold tracking-[-0.03em]">
-                Join the Collector List
-              </h3>
-              <p className="text-muted-foreground">
-                Receive new collection drops, artist highlights, and practical
-                collecting guidance.
+          {linkColumns.map((column) => (
+            <nav aria-label={column.title} key={column.title}>
+              <p className="text-sm font-semibold text-foreground">
+                {column.title}
               </p>
-
-              {isSubscribed ? (
-                <div className="rounded-lg border border-primary/20 bg-primary/10 p-6 text-center">
-                  <p className="font-semibold text-primary">
-                    Thank you for subscribing.
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    You&apos;ll receive collection updates and collector notes.
-                  </p>
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="mb-2 block text-sm font-medium"
+              <ul className="mt-4 space-y-3 text-sm">
+                {column.links.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-muted-foreground transition-colors duration-200 hover:text-foreground"
                     >
-                      Email*
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      {...register("email", {
-                        required: "Email is required",
-                        pattern: {
-                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                          message: "Please enter a valid email address",
-                        },
-                      })}
-                      className={`w-full rounded-md border bg-background px-4 py-3 transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary ${
-                        errors.email ? "border-red-500" : "border-input"
-                      }`}
-                      placeholder="Enter your email address"
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-xs text-red-600">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
 
-                  <div className="space-y-2">
-                    <div className="flex items-start space-x-3">
-                      <Controller
-                        name="subscribe"
-                        control={control}
-                        render={({ field }) => (
-                          <Checkbox
-                            id="subscribe"
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="mt-1"
-                          />
-                        )}
-                      />
-                      <label
-                        htmlFor="subscribe"
-                        className="cursor-pointer text-sm text-muted-foreground"
-                      >
-                        Yes, send me collection updates and collector emails.
-                      </label>
-                    </div>
-                  </div>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">
+              New work from the studios, once a week
+            </h3>
 
-                  {!subscribe && alertType && isSubmitted && (
-                    <Alert
-                      variant={
-                        alertType === "success" ? "success" : "destructive"
-                      }
-                    >
-                      <div className="flex items-start gap-3">
-                        {alertType === "success" ? (
-                          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                        ) : (
-                          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                        )}
-                        <AlertDescription>{alertMessage}</AlertDescription>
-                      </div>
-                    </Alert>
-                  )}
-
+            {isSubscribed ? (
+              <div className="rounded-xl border border-border bg-muted p-5">
+                <p className="font-semibold text-foreground">
+                  Thank you for subscribing.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  You&apos;ll receive new work and collector notes.
+                </p>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
+                className="space-y-3"
+              >
+                <label htmlFor="email" className="sr-only">
+                  Email
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="email"
+                    id="email"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: "Please enter a valid email address",
+                      },
+                    })}
+                    className={`h-11 min-w-0 flex-1 rounded-xl border bg-background px-4 text-sm transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring ${
+                      errors.email ? "border-red-500" : "border-input"
+                    }`}
+                    placeholder="you@example.com"
+                  />
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full px-8 sm:w-auto"
+                    className="h-11 px-5"
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Joining...
                       </>
                     ) : (
-                      "Join the List"
+                      "Subscribe"
                     )}
                   </Button>
-                </form>
-              )}
-            </div>
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-red-600">{errors.email.message}</p>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <Controller
+                    name="subscribe"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        id="subscribe"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-0.5"
+                      />
+                    )}
+                  />
+                  <label
+                    htmlFor="subscribe"
+                    className="cursor-pointer text-sm text-muted-foreground"
+                  >
+                    Yes, send me new work and collector emails.
+                  </label>
+                </div>
+
+                {!subscribe && alertType && isSubmitted && (
+                  <Alert
+                    variant={
+                      alertType === "success" ? "success" : "destructive"
+                    }
+                  >
+                    <div className="flex items-start gap-3">
+                      {alertType === "success" ? (
+                        <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                      )}
+                      <AlertDescription>{alertMessage}</AlertDescription>
+                    </div>
+                  </Alert>
+                )}
+              </form>
+            )}
           </div>
         </div>
 
-        <div className="border-t py-6">
-          <div className="flex flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-6">
+        <div className="border-t border-border py-6">
+          <div className="flex flex-col gap-4 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
               {legalLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="transition-colors duration-200 hover:text-primary"
+                  className="transition-colors duration-200 hover:text-foreground"
                 >
                   {link.name}
                 </Link>
               ))}
             </div>
 
-            <div className="text-center sm:text-right">
-              © 2026 Hendeca Labs LLC • Founded by Izzy Young
-            </div>
+            <div>© 2026 Hendeca Labs LLC • Founded by Izzy Young</div>
           </div>
         </div>
       </div>
