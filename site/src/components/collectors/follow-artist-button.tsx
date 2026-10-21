@@ -13,10 +13,12 @@ import type { FollowedArtist } from "@/lib/collectors/follows";
 export function FollowArtistButton({
   artistName,
   artistUid,
+  size,
   username,
 }: {
   artistName: string;
   artistUid: string;
+  size?: "default" | "sm";
   username: string;
 }) {
   const router = useRouter();
@@ -99,6 +101,7 @@ export function FollowArtistButton({
     <Button
       disabled={busy}
       onClick={() => void toggle()}
+      size={size}
       type="button"
       variant={following ? "outline" : "default"}
     >

@@ -9,11 +9,14 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { CART_OPEN_EVENT } from "@/components/commerce/cart-drawer";
 import { collectorRequest } from "@/lib/collectors/client";
+import { cn } from "@/lib/utils";
 
 export function AddToCartButton({
+  className,
   itemId,
   username,
 }: {
+  className?: string;
   itemId: string;
   username: string;
 }) {
@@ -49,7 +52,7 @@ export function AddToCartButton({
 
   return (
     <Button
-      className="mt-6 w-full"
+      className={cn("mt-6 w-full", className)}
       disabled={adding}
       onClick={() => void add()}
       size="lg"
