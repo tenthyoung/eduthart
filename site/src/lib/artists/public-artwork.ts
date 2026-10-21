@@ -1,4 +1,7 @@
-import type { ListingItemDraft } from "@/lib/artists/listing-flow";
+import type {
+  ListingItemDraft,
+  ListingShippingAuthentication,
+} from "@/lib/artists/listing-flow";
 import {
   isPubliclyListed,
   loadListingStudio,
@@ -11,10 +14,14 @@ import {
 import { normalizeCurrency } from "@/lib/commerce/money";
 
 export type PublicArtworkRecord = {
+  artistLocation: string | null;
   artistName: string;
+  artistPhotoURL: string | null;
   artistUid: string;
   artistUsername: string;
   item: ListingItemDraft;
+  /** The studio's shipping and authenticity settings, shared by every listing. */
+  shipping: ListingShippingAuthentication | null;
 };
 
 export function buildArtworkHref(username: string, itemId: string) {
@@ -40,10 +47,13 @@ export async function getPublicArtwork(
   }
 
   return {
+    artistLocation: profile.location ?? null,
     artistName: buildProfileDisplayName(profile),
+    artistPhotoURL: profile.photoURL ?? null,
     artistUid: profile.uid,
     artistUsername: profile.username ?? username.trim().toLowerCase(),
     item,
+    shipping: studio?.shared.shippingAuthentication ?? null,
   };
 }
 
@@ -67,10 +77,13 @@ export async function getPublicArtworkByUid(
   }
 
   return {
+    artistLocation: profile.location ?? null,
     artistName: buildProfileDisplayName(profile),
+    artistPhotoURL: profile.photoURL ?? null,
     artistUid,
     artistUsername: profile.username,
     item,
+    shipping: studio?.shared.shippingAuthentication ?? null,
   };
 }
 
