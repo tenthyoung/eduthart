@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type DragEvent,
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
@@ -57,6 +58,8 @@ export function WallPreview({
   const [position, setPosition] = useState<{ x: number; y: number } | null>(
     null
   );
+  const [dropping, setDropping] = useState(false);
+  const [notAPhoto, setNotAPhoto] = useState(false);
   const cameraInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -83,16 +86,54 @@ export function WallPreview({
     : 0;
   const tooWide = wallIsValid && artworkWidth > wall;
 
-  function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
+  function openPhoto(file: File | undefined) {
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      setNotAPhoto(true);
+      setStep((current) => (current === "closed" ? "photo" : current));
+      return;
+    }
+
+    setNotAPhoto(false);
     setPhotoUrl(URL.createObjectURL(file));
     setPosition(null);
     setStep("width");
   }
+
+  function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    openPhoto(file);
+  }
+
+  // A photo can be dropped on the panel at any step, or on the closed card,
+  // which opens straight to the width question.
+  const dropTarget = {
+    onDragEnter: (event: DragEvent<HTMLElement>) => {
+      if (!event.dataTransfer.types.includes("Files")) return;
+      event.preventDefault();
+      setDropping(true);
+    },
+    onDragLeave: (event: DragEvent<HTMLElement>) => {
+      // Moving between the panel's own children fires leave events too; only
+      // a pointer that has really left the panel ends the drop state.
+      if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
+        return;
+      }
+      setDropping(false);
+    },
+    onDragOver: (event: DragEvent<HTMLElement>) => {
+      if (!event.dataTransfer.types.includes("Files")) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    },
+    onDrop: (event: DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      setDropping(false);
+      openPhoto(event.dataTransfer.files[0]);
+    },
+  };
 
   /** Keep the whole artwork inside the photo. */
   function clamp(x: number, y: number) {
@@ -174,9 +215,15 @@ export function WallPreview({
   if (step === "closed") {
     return (
       <button
-        className="group flex w-full items-center gap-4 rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:border-foreground sm:p-5"
+        className={cn(
+          "group flex w-full items-center gap-4 rounded-2xl border bg-background p-4 text-left transition-colors hover:border-foreground sm:p-5",
+          dropping
+            ? "border-foreground ring-4 ring-highlight/40"
+            : "border-border"
+        )}
         onClick={() => setStep(photoUrl ? "view" : "photo")}
         type="button"
+        {...dropTarget}
       >
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Camera className="size-5" />
@@ -186,7 +233,9 @@ export function WallPreview({
             See it on your wall
           </span>
           <span className="text-sm text-muted-foreground">
-            Take a photo of your wall and see {title} on it at its real size.
+            {dropping
+              ? "Drop your photo to see it on your wall."
+              : `Take, upload or drop a photo of your wall and see ${title} on it at its real size.`}
           </span>
         </span>
         <ChevronRight className="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -199,9 +248,24 @@ export function WallPreview({
   return (
     <section
       aria-label="See it on your wall"
-      className="flex flex-col gap-5 rounded-2xl border border-border bg-background p-4 animate-in fade-in-0 duration-300 motion-reduce:animate-none sm:p-6"
+      className={cn(
+        "relative flex flex-col gap-5 rounded-2xl border bg-background p-4 animate-in fade-in-0 duration-300 motion-reduce:animate-none sm:p-6",
+        dropping
+          ? "border-foreground ring-4 ring-highlight/40"
+          : "border-border"
+      )}
+      {...dropTarget}
     >
       {hiddenInputs}
+
+      {dropping && step !== "photo" ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl bg-background/90 text-center">
+          <ImageUp className="size-8 text-foreground" />
+          <p className="font-semibold text-foreground">
+            Drop to use this photo instead
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl text-foreground">See it on your wall</h2>
@@ -241,15 +305,32 @@ export function WallPreview({
 
       {step === "photo" ? (
         <div className="flex flex-col gap-4">
-          <div className="flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed border-input bg-muted/60 p-6 text-center">
-            <Camera className="size-8 text-muted-foreground" />
+          <div
+            className={cn(
+              "flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-xl border-[1.5px] border-dashed p-6 text-center transition-colors",
+              dropping
+                ? "border-foreground bg-highlight/15"
+                : "border-input bg-muted/60"
+            )}
+          >
+            {dropping ? (
+              <ImageUp className="size-8 text-foreground" />
+            ) : (
+              <Camera className="size-8 text-muted-foreground" />
+            )}
             <p className="text-base font-semibold text-foreground">
-              Add a photo of your wall
+              {dropping ? "Drop your photo here" : "Add a photo of your wall"}
             </p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              Stand straight on to the wall, in good light, with the whole space
-              you want to fill in the frame.
+              Drop a photo here, or take or upload one below. Stand straight on
+              to the wall, in good light, with the whole space you want to fill
+              in the frame.
             </p>
+            {notAPhoto ? (
+              <p className="text-sm font-medium text-destructive" role="alert">
+                That file isn&apos;t a photo. Try a JPG, PNG or HEIC image.
+              </p>
+            ) : null}
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <Button
