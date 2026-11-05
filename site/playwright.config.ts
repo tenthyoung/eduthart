@@ -31,6 +31,10 @@ export default defineConfig({
       testMatch: /\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
+        // channel "chrome" drives the installed, self-updating Google Chrome rather
+        // than Playwright's bundled Chromium, which only moves when Playwright
+        // ships a release and so trails Chrome stable's security fixes.
+        channel: "chrome",
       },
     },
   ],
