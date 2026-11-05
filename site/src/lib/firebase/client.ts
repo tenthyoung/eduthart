@@ -5,8 +5,6 @@ import {
   setPersistence,
   type Auth,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -35,14 +33,6 @@ export function getFirebaseAuth() {
       .then(() => auth);
   }
   return authPersistencePromise;
-}
-
-export function getFirebaseFirestore() {
-  return getFirestore(app);
-}
-
-export function getFirebaseFunctions() {
-  return getFunctions(app);
 }
 
 export function getFirebaseStorage() {

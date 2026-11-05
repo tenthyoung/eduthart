@@ -1,23 +1,21 @@
 // app/api/zoho-bulk/route.ts
-import { existsSync, readFileSync, writeFileSync } from "fs";
 import { NextResponse } from "next/server";
-import path from "path";
 
-const CACHE_PATH = path.join("/tmp", "zoho_access_token.json");
+type CachedToken = { access_token: string; expires_at: number };
+
+// Held in module memory. A Worker isolate is reused across requests until the
+// platform recycles it, so this saves most refreshes without needing a
+// writable filesystem (Workers have none). A cold isolate just refreshes.
+let cachedToken: CachedToken | null = null;
 
 /**
  * Get a valid access token.
- * Cached in /tmp for ~59 min (Vercel serverless functions are stateless).
+ * Cached in memory for ~59 min per isolate.
  */
 async function getAccessToken(): Promise<string> {
   // 1. Try cache
-  if (existsSync(CACHE_PATH)) {
-    try {
-      const cached = JSON.parse(readFileSync(CACHE_PATH, "utf8"));
-      if (cached.access_token && cached.expires_at > Date.now() / 1000 + 300) {
-        return cached.access_token;
-      }
-    } catch (_) {}
+  if (cachedToken && cachedToken.expires_at > Date.now() / 1000 + 300) {
+    return cachedToken.access_token;
   }
 
   // 2. Refresh
@@ -43,8 +41,10 @@ async function getAccessToken(): Promise<string> {
   }
 
   // Cache for ~59 min
-  data.expires_at = Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600);
-  writeFileSync(CACHE_PATH, JSON.stringify(data));
+  cachedToken = {
+    access_token: data.access_token,
+    expires_at: Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600),
+  };
 
   return data.access_token;
 }

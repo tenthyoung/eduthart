@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 
 import { isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
+import type { Query } from "@/lib/firebase/firestore-rest";
 
 /**
  * Shared persistence for the collector features.
@@ -140,7 +141,7 @@ export async function listUserDocuments(
       .map(([id, data]) => toStoredDocument(id, data));
   }
 
-  let query: FirebaseFirestore.Query = userCollectionRef(uid, collection);
+  let query: Query = userCollectionRef(uid, collection);
 
   for (const filter of filters) {
     query = query.where(filter.field, "==", filter.value);
@@ -225,8 +226,7 @@ export async function listRootDocuments(
       .map(([id, data]) => toStoredDocument(id, data));
   }
 
-  let query: FirebaseFirestore.Query =
-    getFirebaseAdminDb().collection(collection);
+  let query: Query = getFirebaseAdminDb().collection(collection);
 
   for (const filter of filters) {
     query = query.where(filter.field, "==", filter.value);

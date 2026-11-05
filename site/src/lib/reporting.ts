@@ -1,4 +1,4 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "@/lib/firebase/firestore-rest";
 
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 

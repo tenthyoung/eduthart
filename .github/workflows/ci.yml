@@ -44,6 +44,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The Worker bundle has constraints `next build` does not enforce.
+      - name: Build for Cloudflare
+        run: npx opennextjs-cloudflare build
+
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest

@@ -1,8 +1,8 @@
+import type { DecodedIdToken } from "@/lib/firebase/auth-rest";
 import {
   Timestamp,
-  type QueryDocumentSnapshot,
-} from "firebase-admin/firestore";
-import type { DecodedIdToken } from "firebase-admin/auth";
+  type DocumentSnapshot as QueryDocumentSnapshot,
+} from "@/lib/firebase/firestore-rest";
 
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
 

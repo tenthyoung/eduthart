@@ -23,6 +23,8 @@ const CREDENTIAL_VARS = [
   "FIREBASE_ADMIN_CLIENT_EMAIL",
   "FIREBASE_ADMIN_PRIVATE_KEY",
   "GOOGLE_APPLICATION_CREDENTIALS",
+  "FIRESTORE_EMULATOR_HOST",
+  "FIREBASE_AUTH_EMULATOR_HOST",
   "GOOGLE_CLOUD_PROJECT",
   "GCLOUD_PROJECT",
   "K_SERVICE",
@@ -86,23 +88,23 @@ describe("firebase admin credentials", () => {
     })();
 
     expect(message).toContain(".env.example");
-    expect(message).toContain("GOOGLE_APPLICATION_CREDENTIALS");
     // The failures this replaces, none of which named the actual cause.
     expect(message).not.toContain("metadata.google.internal");
     expect(message).not.toContain("Unable to detect a Project Id");
   });
 
-  test("treats a Google runtime as configured, so ADC still works there", () => {
-    // Cloud Run and friends supply credentials through the metadata server,
-    // which is the case the fallback exists for. Throwing here would break a
-    // deployment that was working.
+  test("does not treat a Google runtime as configured", () => {
+    // Application default credentials need Node-only machinery that
+    // Cloudflare Workers lack, so a bare GCP environment is not enough: say
+    // so now instead of failing on the first request.
     withEnv({ GOOGLE_CLOUD_PROJECT: "eduthart-5dd68", K_SERVICE: "site" });
 
-    expect(isFirebaseAdminConfigured()).toBe(true);
+    expect(isFirebaseAdminConfigured()).toBe(false);
   });
 
-  test("treats an explicit credentials file as configured", () => {
-    withEnv({ GOOGLE_APPLICATION_CREDENTIALS: "/tmp/service-account.json" });
+  test("treats the Firebase emulator as configured, with no key", () => {
+    withEnv({ GOOGLE_CLOUD_PROJECT: "demo-eduthart" });
+    vi.stubEnv("FIRESTORE_EMULATOR_HOST", "127.0.0.1:8080");
 
     expect(isFirebaseAdminConfigured()).toBe(true);
   });

@@ -1,0 +1,3 @@
+# Copy to .dev.vars for `npm run preview` (the local Workers runtime).
+# Production values are set with `wrangler secret put` / the dashboard.
+NEXTJS_ENV=development
