@@ -11,6 +11,8 @@ export type SessionUser = {
 
 export type AuthenticatedSession = {
   authType: "e2e" | "firebase";
+  /** The admin who is signed in as this account, or null for the owner. */
+  impersonatedBy: string | null;
   token: string;
   uid: string;
   user: SessionUser;
@@ -52,6 +54,7 @@ export async function getAuthenticatedSession(
 
     return {
       authType: "e2e",
+      impersonatedBy: null,
       token,
       uid,
       user: {
@@ -72,6 +75,10 @@ export async function getAuthenticatedSession(
 
   return {
     authType: "firebase",
+    impersonatedBy:
+      typeof decoded.impersonatedBy === "string"
+        ? decoded.impersonatedBy
+        : null,
     token,
     uid: decoded.uid,
     user: {

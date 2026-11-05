@@ -180,3 +180,20 @@ export async function updateRefundRequestStatus(
     body: JSON.stringify({ status, adminNotes }),
   });
 }
+
+export async function requestImpersonationToken(
+  uid: string
+): Promise<{ token: string; target: { uid: string; email: string | null } }> {
+  return adminRequest(`/api/admin/users/${uid}/impersonate`, {
+    method: "POST",
+  });
+}
+
+export async function requestReturnToken(
+  targetUid: string
+): Promise<{ token: string }> {
+  return adminRequest("/api/admin/impersonation/stop", {
+    method: "POST",
+    body: JSON.stringify({ targetUid }),
+  });
+}

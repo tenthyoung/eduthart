@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { AdminCard, AdminPage } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ghostIntoAccount } from "@/lib/admin/ghost";
 import {
   getAdminUserDetails,
   updateUserModerationState,
@@ -33,6 +34,7 @@ export default function AdminUserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [reason, setReason] = useState("");
   const [submittingAction, setSubmittingAction] = useState<string | null>(null);
+  const [ghosting, setGhosting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,6 +79,18 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const handleGhost = async () => {
+    setGhosting(true);
+    try {
+      await ghostIntoAccount(uid);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't ghost this account."
+      );
+      setGhosting(false);
+    }
+  };
+
   return (
     <AdminPage
       title={
@@ -86,13 +100,22 @@ export default function AdminUserDetailPage() {
       }
       description="Moderate account state, inspect billing and AI usage, and review any public decks this user owns."
       actions={
-        <Button
-          variant="outline"
-          onClick={() => void load()}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => void handleGhost()}
+            disabled={ghosting || !detail}
+          >
+            {ghosting ? "Signing in..." : "Ghost into account"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void load()}
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
       }
     >
       {!detail ? (

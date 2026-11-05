@@ -239,6 +239,29 @@ Routes:
 - `POST /api/admin/refunds/[refundRequestId]`
   Updates refund request state.
 
+- `POST /api/admin/users/[uid]/impersonate`
+  Ghost mode. Returns a Firebase custom token for the target account, tagged
+  with an `impersonatedBy` claim. Audit logged to `admin_audit_log`.
+
+- `POST /api/admin/impersonation/stop`
+  Returns a custom token for the admin themselves, proven by the admin session
+  cookie (which is left untouched while ghosting).
+
+## Ghost mode
+
+Admins can sign in as another user from `/admin/users/[uid]`.
+
+- Any admin may ghost an ordinary account. Only a super admin may ghost another
+  admin, and nobody may ghost a super admin.
+- A banner with an Exit button shows on every page while ghosting. It reads the
+  `impersonatedBy` claim from the ID token, so it survives reloads.
+- Server routes see the claim as `session.impersonatedBy`. Deleting the
+  account, checkout, saved payment methods and security-event emails are
+  refused or skipped while it is set (`refuseWhileImpersonating`).
+- Both starting and ending are written to the `admin_audit_log` collection.
+- Password and email changes happen in the Firebase client SDK and need the
+  owner's current password, so an admin can't complete them.
+
 ## Client-Side Files
 
 ### Client API wrapper
