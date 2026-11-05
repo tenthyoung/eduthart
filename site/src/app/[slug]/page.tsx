@@ -5,6 +5,7 @@ import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { PortableText, type SanityDocument } from "next-sanity";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
 
@@ -26,7 +27,14 @@ export default async function PostPage({
     await params,
     options
   );
-  const postImageUrl = post?.image
+
+  // Any unknown top-level path lands here, so a missing post must be a 404,
+  // not a crash on `post.title` below.
+  if (!post) {
+    notFound();
+  }
+
+  const postImageUrl = post.image
     ? urlFor(post.image)?.width(550).height(310).url()
     : null;
 
