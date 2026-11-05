@@ -23,10 +23,24 @@ const gloock = Gloock({
   display: "swap",
 });
 
+const title = "EduthArt - Buy Original Art Online";
+const description =
+  "Original art bought straight from the artists who make it. Every piece is one of a kind, signed, and shipped from the artist's studio.";
+
 export const metadata: Metadata = {
-  title: "EduthArt - Buy Original Art Online",
-  description:
-    "Original art bought straight from the artists who make it. Every piece is one of a kind, signed, and shipped from the artist's studio.",
+  // Makes the share card's URL absolute; scrapers can't follow a relative one.
+  metadataBase: new URL(
+    (process.env.NEXT_PUBLIC_SITE_URL || "https://eduthart.com").replace(
+      /\/+$/,
+      ""
+    )
+  ),
+  title,
+  description,
+  // The image itself comes from opengraph-image.tsx. Pages that set their own
+  // `openGraph` replace this object, so they must set `images` too.
+  openGraph: { title, description, siteName: "EduthArt", type: "website" },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export default function RootLayout({
