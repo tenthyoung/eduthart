@@ -1,4 +1,11 @@
-import { importX509, jwtVerify, decodeProtectedHeader } from "jose";
+import {
+  importPKCS8,
+  importX509,
+  jwtVerify,
+  decodeProtectedHeader,
+  SignJWT,
+  UnsecuredJWT,
+} from "jose";
 
 /**
  * The slice of `firebase-admin/auth` this codebase uses, over Google's REST
@@ -49,7 +56,13 @@ export type AuthConfig = {
   /** Identity Toolkit base, overridden for the emulator. */
   identityHost?: string;
   fetchImpl?: typeof fetch;
+  /** Needed to mint custom tokens; they are signed locally with this key. */
+  serviceAccount?: { clientEmail: string; privateKey: string };
 };
+
+const CUSTOM_TOKEN_AUDIENCE =
+  "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
+const CUSTOM_TOKEN_TTL_SECONDS = 3600;
 
 const ID_TOKEN_CERTS =
   "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
@@ -274,6 +287,53 @@ export class Auth {
 
   async deleteUser(uid: string) {
     await this.call("/accounts:delete", { localId: uid });
+  }
+
+  /**
+   * A token the client trades for a session via signInWithCustomToken. Signed
+   * locally with the service account key, as the Admin SDK does; against the
+   * Auth emulator it is unsigned, which is what the emulator expects.
+   */
+  async createCustomToken(
+    uid: string,
+    developerClaims: Record<string, unknown> = {}
+  ) {
+    if (!uid || uid.length > 128) {
+      throw new AuthError(
+        "auth/argument-error",
+        "uid must be a non-empty string of at most 128 characters."
+      );
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const claims = { uid, claims: developerClaims };
+    const account = this.config.serviceAccount;
+
+    if (!account) {
+      if (this.config.identityHost?.startsWith("http://")) {
+        return new UnsecuredJWT(claims)
+          .setIssuer("firebase-auth-emulator@example.com")
+          .setSubject("firebase-auth-emulator@example.com")
+          .setAudience(CUSTOM_TOKEN_AUDIENCE)
+          .setIssuedAt(now)
+          .setExpirationTime(now + CUSTOM_TOKEN_TTL_SECONDS)
+          .encode();
+      }
+      throw new AuthError(
+        "auth/invalid-credential",
+        "Creating a custom token needs a service account."
+      );
+    }
+
+    const key = await importPKCS8(account.privateKey, "RS256");
+    return new SignJWT(claims)
+      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+      .setIssuer(account.clientEmail)
+      .setSubject(account.clientEmail)
+      .setAudience(CUSTOM_TOKEN_AUDIENCE)
+      .setIssuedAt(now)
+      .setExpirationTime(now + CUSTOM_TOKEN_TTL_SECONDS)
+      .sign(key);
   }
 
   async createSessionCookie(idToken: string, options: { expiresIn: number }) {

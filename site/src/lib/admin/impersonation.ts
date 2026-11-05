@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase-admin/firestore";
-import type { DecodedIdToken } from "firebase-admin/auth";
+import { Timestamp } from "@/lib/firebase/firestore-rest";
+import type { DecodedIdToken } from "@/lib/firebase/auth-rest";
 
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
 
