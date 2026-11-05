@@ -54,6 +54,8 @@ export type AuthUser = {
   email: string | null;
   emailVerified: boolean;
   getIdToken: (forceRefresh?: boolean) => Promise<string>;
+  /** Uid of the admin ghosting this account; null when the owner is signed in. */
+  impersonatedBy: string | null;
   photoURL: string | null;
   providerIds: string[];
   uid: string;
@@ -110,12 +112,16 @@ export const MIN_PASSWORD_LENGTH = 8;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function mapFirebaseUser(user: FirebaseUser): AuthUser {
+function mapFirebaseUser(
+  user: FirebaseUser,
+  impersonatedBy: string | null = null
+): AuthUser {
   return {
     displayName: user.displayName,
     email: user.email,
     emailVerified: user.emailVerified,
     getIdToken: (forceRefresh?: boolean) => user.getIdToken(forceRefresh),
+    impersonatedBy,
     photoURL: user.photoURL,
     providerIds: user.providerData
       .map((provider) => provider.providerId)
@@ -183,6 +189,7 @@ function readE2EUser(): AuthUser | null {
         parsed.providerIds?.includes("google.com") ??
         false,
       getIdToken: async () => `e2e:${parsed.uid}`,
+      impersonatedBy: null,
       photoURL: parsed.photoURL ?? null,
       providerIds: parsed.providerIds?.length
         ? parsed.providerIds
@@ -398,7 +405,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setUser(nextUser ? mapFirebaseUser(nextUser) : null);
+        // The ghosting flag rides in the ID token, so it survives a reload and
+        // cannot be switched on or off from the page.
+        const claim = nextUser
+          ? (await nextUser.getIdTokenResult().catch(() => null))?.claims
+              .impersonatedBy
+          : null;
+
+        if (cancelled) {
+          return;
+        }
+
+        setUser(
+          nextUser
+            ? mapFirebaseUser(
+                nextUser,
+                typeof claim === "string" ? claim : null
+              )
+            : null
+        );
         setTwoFactor(nextUser ? readEnrolledFactors(nextUser) : []);
         setStatus(nextUser ? "authenticated" : "unauthenticated");
       });

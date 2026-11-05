@@ -4,10 +4,21 @@ import { loadAccountProfile } from "@/lib/auth/profile-store";
 import { createCheckoutSession } from "@/lib/commerce/checkout";
 import { isE2ECheckout } from "@/lib/commerce/e2e-payments";
 import { isStripeConfigured } from "@/lib/commerce/stripe";
-import { apiError, getRequestOrigin, withSession } from "@/lib/api/handler";
+import {
+  apiError,
+  getRequestOrigin,
+  refuseWhileImpersonating,
+  withSession,
+} from "@/lib/api/handler";
 
 export function POST(request: Request) {
   return withSession(request, async (session) => {
+    const blocked = refuseWhileImpersonating(session, "check out");
+
+    if (blocked) {
+      return blocked;
+    }
+
     if (!isStripeConfigured() && !isE2ECheckout()) {
       return apiError(
         "Payment checkout is not configured on this environment yet.",

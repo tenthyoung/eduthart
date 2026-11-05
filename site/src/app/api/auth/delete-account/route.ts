@@ -4,6 +4,7 @@ import {
   deleteE2EAccountProfile,
   isE2EAuthEnabled,
 } from "@/lib/auth/e2e-store";
+import { refuseWhileImpersonating } from "@/lib/api/handler";
 import { getAuthenticatedSession } from "@/lib/auth/server-session";
 import { deleteAllCollections } from "@/lib/collectors/collections";
 import { listFavorites, removeFavorite } from "@/lib/collectors/favorites";
@@ -47,6 +48,11 @@ async function deleteCollectorData(uid: string) {
 export async function POST(request: Request) {
   try {
     const session = await getAuthenticatedSession(request);
+    const blocked = refuseWhileImpersonating(session, "delete this account");
+
+    if (blocked) {
+      return blocked;
+    }
 
     await deleteCollectorData(session.uid);
 

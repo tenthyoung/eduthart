@@ -1,3 +1,4 @@
+import { GhostBanner } from "@/components/admin/ghost-banner";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,6 +42,7 @@ export default function RootLayout({
             <ThemeProvider defaultTheme="light">
               <LocomotiveScrollProvider>
                 <SiteShell>{children}</SiteShell>
+                <GhostBanner />
               </LocomotiveScrollProvider>
             </ThemeProvider>
           </AuthProvider>

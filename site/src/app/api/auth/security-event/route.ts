@@ -55,6 +55,13 @@ export async function POST(request: Request) {
 
     if (request.headers.get("authorization")) {
       const session = await getAuthenticatedSession(request);
+
+      // An admin ghosting this account must not email the owner as if they had
+      // just changed their own password.
+      if (session.impersonatedBy) {
+        return quiet();
+      }
+
       const recipient = { email: session.user.email, uid: session.uid };
 
       await dispatchNotification(

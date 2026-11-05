@@ -59,3 +59,25 @@ export function getRequestOrigin(request: Request) {
 
   return new URL(request.url).origin;
 }
+
+/**
+ * Refuse an action an admin must not take while signed in as someone else.
+ *
+ * Ghosting exists to see what the account holder sees. Deleting their account,
+ * spending their saved card or sending them security emails goes well past
+ * that, so those routes call this first and return its response when set.
+ */
+export function refuseWhileImpersonating(
+  session: AuthenticatedSession,
+  action: string
+) {
+  if (!session.impersonatedBy) {
+    return null;
+  }
+
+  return apiError(
+    `You can't ${action} while signed in as another user. Exit ghost mode first.`,
+    403,
+    "impersonation-blocked"
+  );
+}

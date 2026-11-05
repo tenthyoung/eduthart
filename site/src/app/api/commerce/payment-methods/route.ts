@@ -7,7 +7,12 @@ import {
   setDefaultPaymentMethod,
 } from "@/lib/commerce/payment-methods";
 import { isStripeConfigured } from "@/lib/commerce/stripe";
-import { apiError, getRequestOrigin, withSession } from "@/lib/api/handler";
+import {
+  apiError,
+  getRequestOrigin,
+  refuseWhileImpersonating,
+  withSession,
+} from "@/lib/api/handler";
 
 function requireStripe() {
   return isStripeConfigured()
@@ -35,6 +40,15 @@ export function GET(request: Request) {
 
 export function POST(request: Request) {
   return withSession(request, async (session) => {
+    const blocked = refuseWhileImpersonating(
+      session,
+      "change saved payment methods"
+    );
+
+    if (blocked) {
+      return blocked;
+    }
+
     const unavailable = requireStripe();
 
     if (unavailable) {
@@ -56,6 +70,15 @@ export function POST(request: Request) {
 
 export function PATCH(request: Request) {
   return withSession(request, async (session) => {
+    const blocked = refuseWhileImpersonating(
+      session,
+      "change saved payment methods"
+    );
+
+    if (blocked) {
+      return blocked;
+    }
+
     const unavailable = requireStripe();
 
     if (unavailable) {
@@ -80,6 +103,15 @@ export function PATCH(request: Request) {
 
 export function DELETE(request: Request) {
   return withSession(request, async (session) => {
+    const blocked = refuseWhileImpersonating(
+      session,
+      "change saved payment methods"
+    );
+
+    if (blocked) {
+      return blocked;
+    }
+
     const unavailable = requireStripe();
 
     if (unavailable) {
