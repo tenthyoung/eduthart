@@ -1,5 +1,6 @@
 import { MotionFade } from "@/components/motion/motion-fade";
 import { MotionStaggerFade } from "@/components/motion/motion-stagger-fade";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { Heading } from "@/components/text/heading";
 import { Button } from "@/components/ui/button";
 import { client } from "@/sanity/client";
@@ -240,13 +241,8 @@ export default async function InsightsPage() {
             Subscribe to receive new exhibition writing, artist notes, and
             gallery announcements directly in your inbox.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <Button>Subscribe</Button>
+          <div className="mx-auto max-w-md">
+            <NewsletterSignup />
           </div>
         </div>
       </div>
