@@ -49,11 +49,28 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on Cloudflare
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The site runs on Cloudflare Workers through the
+[OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare). It needs the
+Workers **Paid** plan: the bundle is about 5 MB gzipped, over the free plan's
+3 MB limit.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run preview   # build for Workers and run it locally in workerd
+npm run deploy    # build and deploy with wrangler
+```
+
+Config lives in `wrangler.jsonc` and `open-next.config.ts`. Secrets are set
+with `npx wrangler secret put NAME` (every variable in `.env.example`); for
+local `npm run preview`, put them in `.dev.vars` (git-ignored).
+`NEXT_PUBLIC_*` values are inlined at build time, so they must be present in the
+environment that runs the build.
+
+Workers have no filesystem, no gRPC and no `eval`, which is why server code
+talks to Firestore and Firebase Auth through the REST clients in
+`src/lib/firebase/` instead of `firebase-admin`. The scripts in `scripts/` still
+use `firebase-admin`; they run on a laptop, not on Workers.
 
 ## Admin console setup
 

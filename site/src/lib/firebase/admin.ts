@@ -1,12 +1,6 @@
-import {
-  getApp,
-  getApps,
-  initializeApp,
-  cert,
-  applicationDefault,
-} from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { Auth } from "./auth-rest";
+import { Firestore } from "./firestore-rest";
+import { getAccessToken } from "./google-auth";
 
 const SERVICE_ACCOUNT_VARS = [
   "FIREBASE_ADMIN_PROJECT_ID",
@@ -22,7 +16,7 @@ const SERVICE_ACCOUNT_VARS = [
  * explain. It also makes the behaviour testable.
  *
  * GOOGLE_CLOUD_PROJECT and GCLOUD_PROJECT are the names Google's own tooling
- * sets, so honour them rather than making a GCP environment repeat itself.
+ * sets; they supply the project id (notably for the emulators).
  */
 function readServiceAccount() {
   return {
@@ -35,26 +29,6 @@ function readServiceAccount() {
   };
 }
 
-/**
- * Whether application default credentials stand any chance of resolving.
- *
- * ADC works on Google infrastructure, where the platform sets one of these, or
- * locally when someone points GOOGLE_APPLICATION_CREDENTIALS at a key file.
- * Anywhere else it reaches for the GCE metadata server, which does not exist —
- * so without one of these signals, falling back to ADC only buys a confusing
- * failure later instead of an accurate one now.
- */
-function canUseApplicationDefault() {
-  return Boolean(
-    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-    process.env.GOOGLE_CLOUD_PROJECT ||
-    process.env.GCLOUD_PROJECT ||
-    process.env.K_SERVICE ||
-    process.env.FUNCTION_TARGET ||
-    process.env.GAE_ENV
-  );
-}
-
 function describeMissingCredentials() {
   const missing = SERVICE_ACCOUNT_VARS.filter((name) => !process.env[name]);
   const subject =
@@ -62,53 +36,75 @@ function describeMissingCredentials() {
 
   return (
     `Firebase Admin is not configured: ${subject} missing. ` +
-    `Set the service account values from .env.example in this environment, ` +
-    `or point GOOGLE_APPLICATION_CREDENTIALS at a service account key file.`
+    `Set the service account values from .env.example in this environment ` +
+    `(application default credentials are not supported on Cloudflare Workers).`
   );
 }
 
+type Credentials = {
+  clientEmail: string;
+  privateKey: string;
+  projectId: string;
+};
+
 /**
- * The initialised Firebase Admin app.
- *
- * Resolve this lazily. Calling it at module scope makes an unconfigured
+ * Resolve credentials lazily. Doing it at module scope makes an unconfigured
  * environment fail at import time, which takes `next build` down with it — and
  * the build has no business needing production credentials.
+ *
+ * Only an explicit service account is supported: application default
+ * credentials need Node-only machinery that Cloudflare Workers do not have.
+ * The Firebase emulators are the exception and need no credentials at all.
  */
-function getFirebaseAdminApp() {
-  if (getApps().length > 0) {
-    return getApp();
-  }
-
+function resolveCredentials(): Credentials | null {
   const { clientEmail, privateKey, projectId } = readServiceAccount();
 
   if (projectId && clientEmail && privateKey) {
-    return initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    });
+    return { clientEmail, privateKey, projectId };
   }
 
-  // Fail here, naming what is missing. Left to itself the Google auth library
-  // fails much later and blames a symptom instead — "Unable to detect a
-  // Project Id", "Could not load the default credentials", or a DNS error for
-  // metadata.google.internal, depending on how much happens to be set. None of
-  // those say "nobody configured the service account", which is the one thing
-  // the reader needs to know.
-  if (!canUseApplicationDefault()) {
-    throw new Error(describeMissingCredentials());
+  if (emulatorConfigured() && projectId) {
+    return null;
   }
 
-  return initializeApp({
-    credential: applicationDefault(),
-    projectId,
-  });
+  // Fail here, naming what is missing, rather than letting a later request
+  // blame a symptom.
+  throw new Error(describeMissingCredentials());
+}
+
+function emulatorConfigured() {
+  return Boolean(
+    process.env.FIRESTORE_EMULATOR_HOST ||
+    process.env.FIREBASE_AUTH_EMULATOR_HOST
+  );
+}
+
+function tokenSource(credentials: Credentials | null) {
+  return async () => (credentials ? getAccessToken(credentials) : null);
 }
 
 export function getFirebaseAdminAuth() {
-  return getAuth(getFirebaseAdminApp());
+  const credentials = resolveCredentials();
+  const authEmulator = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+
+  return new Auth({
+    projectId: credentials?.projectId ?? readServiceAccount().projectId!,
+    getToken: async () => (authEmulator ? "owner" : tokenSource(credentials)()),
+    identityHost: authEmulator
+      ? `http://${authEmulator}/identitytoolkit.googleapis.com`
+      : undefined,
+  });
 }
 
 export function getFirebaseAdminDb() {
-  return getFirestore(getFirebaseAdminApp());
+  const credentials = resolveCredentials();
+  const emulator = process.env.FIRESTORE_EMULATOR_HOST;
+
+  return new Firestore({
+    projectId: credentials?.projectId ?? readServiceAccount().projectId!,
+    getToken: async () => (emulator ? "owner" : tokenSource(credentials)()),
+    emulatorHost: emulator ? `http://${emulator}` : undefined,
+  });
 }
 
 /** Whether admin credentials are configured, without initialising anything. */
@@ -116,6 +112,6 @@ export function isFirebaseAdminConfigured() {
   const { clientEmail, privateKey, projectId } = readServiceAccount();
 
   return Boolean(
-    (projectId && clientEmail && privateKey) || canUseApplicationDefault()
+    projectId && ((clientEmail && privateKey) || emulatorConfigured())
   );
 }

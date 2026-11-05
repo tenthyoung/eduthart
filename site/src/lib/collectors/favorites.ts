@@ -19,7 +19,7 @@ import {
 } from "@/lib/store/document-store";
 import { isE2EAuthEnabled } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue } from "@/lib/firebase/firestore-rest";
 
 const FAVORITES_COLLECTION = "favorites";
 const FAVORITE_STATS_COLLECTION = "artwork_stats";
