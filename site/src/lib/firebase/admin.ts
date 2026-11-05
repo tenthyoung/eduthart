@@ -93,6 +93,12 @@ export function getFirebaseAdminAuth() {
     identityHost: authEmulator
       ? `http://${authEmulator}/identitytoolkit.googleapis.com`
       : undefined,
+    serviceAccount: credentials
+      ? {
+          clientEmail: credentials.clientEmail,
+          privateKey: credentials.privateKey,
+        }
+      : undefined,
   });
 }
 
