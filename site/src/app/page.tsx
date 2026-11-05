@@ -11,8 +11,9 @@ export default function IndexPage() {
   return (
     <div className="w-full">
       <HomeHero />
-      {/* The hero needs no data, so it paints at once; the artwork sections
-          stream in behind a skeleton of the same shape. */}
+      {/* The hero's words paint at once and its picture streams in; the
+          artwork sections follow behind a skeleton of the same shape. Both
+          share one read of the index (see home-data.ts). */}
       <Suspense fallback={<DiscoverySkeleton />}>
         <DiscoverySections />
       </Suspense>

@@ -47,11 +47,23 @@ test("the homepage shows available art and its categories", async ({
 
   await page.goto("/");
 
-  // The artwork itself, not a placeholder describing it.
+  // The artwork itself, not a placeholder describing it. The newest pieces
+  // appear twice (New works and the budget shelf), so look in the first.
+  const newWorks = page.getByRole("region", { name: "New works" });
   await expect(
-    page.getByRole("link", { name: "Tidewater Morning" })
+    newWorks.getByRole("link", { name: "Tidewater Morning" })
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Basalt Column" })).toBeVisible();
+  await expect(
+    newWorks.getByRole("link", { name: "Basalt Column" })
+  ).toBeVisible();
+
+  // The artists behind them can be followed from the homepage.
+  await expect(
+    page
+      .getByRole("region", { name: "Trending artists" })
+      .getByRole("button", { name: /^Follow / })
+      .first()
+  ).toBeVisible();
 
   const categories = page.getByRole("navigation", {
     name: "Browse by category",
@@ -69,7 +81,24 @@ test("the homepage shows available art and its categories", async ({
   ).toBeHidden();
 });
 
-test("the hero's search box and budget filter build the browse query", async ({
+test("the header's search box runs a search from any page", async ({
+  page,
+}) => {
+  await seedArtwork(page, {
+    suffix: "header-search",
+    title: "Lantern Field",
+  });
+
+  await page.goto("/");
+  const search = page.getByLabel("Search artists and artworks");
+  await search.fill("lantern field");
+  await search.press("Enter");
+
+  await expect(page).toHaveURL(/\/browse\?q=lantern\+field/);
+  await expect(page.getByRole("link", { name: "Lantern Field" })).toBeVisible();
+});
+
+test("the browse page's search box and budget filter build the query", async ({
   page,
 }) => {
   await seedArtwork(page, {
@@ -83,7 +112,7 @@ test("the hero's search box and budget filter build the browse query", async ({
     title: "Quarry Steps",
   });
 
-  await page.goto("/");
+  await page.goto("/browse");
   await page.getByLabel("Search artwork").fill("marsh lantern");
   await page.getByLabel("Budget").click();
   await page.getByRole("option", { name: "Under $500" }).click();
@@ -102,7 +131,7 @@ test("a search that matches nothing explains itself and offers a way back", asyn
     title: "Copper Hollow",
   });
 
-  await page.goto("/");
+  await page.goto("/browse");
   await page.getByLabel("Search artwork").fill("nothing matches this");
   await page.getByRole("button", { name: "Search" }).click();
 

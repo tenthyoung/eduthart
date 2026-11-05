@@ -4,21 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { IndexedArtwork } from "@/lib/artists/artwork-index";
-import { formatMinorUnits } from "@/lib/commerce/money";
+import { formatArtworkPrice } from "@/lib/artists/artwork-price";
 import { cn } from "@/lib/utils";
 
-export function formatArtworkPrice(
-  artwork: Pick<IndexedArtwork, "currency" | "priceMinor">
-) {
-  // Artwork is priced in whole amounts, so "$820" reads better than "$820.00";
-  // a price that really has cents keeps them.
-  return artwork.priceMinor > 0
-    ? formatMinorUnits(artwork.priceMinor, artwork.currency).replace(
-        /\.00$/,
-        ""
-      )
-    : "Price on request";
-}
+export { formatArtworkPrice };
 
 export function ArtworkAvailability({
   availability,
@@ -91,9 +80,7 @@ export function ArtworkCard({
   footnote?: ReactNode;
 }) {
   const isAvailable = artwork.availability === "original_available";
-  const details = [artwork.artistName, artwork.category]
-    .filter(Boolean)
-    .join(" · ");
+  const medium = artwork.medium || artwork.category;
 
   return (
     <article className="flex min-w-0 flex-col gap-3">
@@ -101,7 +88,7 @@ export function ArtworkCard({
           from assistive technology rather than announced twice. */}
       <Link
         aria-hidden="true"
-        className="group/card relative block aspect-[4/5] overflow-hidden rounded-xl bg-muted"
+        className="group/card relative block aspect-[4/5] overflow-hidden bg-muted"
         href={artwork.href}
         tabIndex={-1}
       >
@@ -120,19 +107,25 @@ export function ArtworkCard({
           </span>
         )}
       </Link>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <p className="text-base font-bold text-foreground">
-          {formatArtworkPrice(artwork)}
-        </p>
+      {/* Read like a wall label: who made it, what it is called, what it is, what it costs. */}
+      <div className="flex min-w-0 flex-col text-sm leading-[1.45]">
+        {artwork.artistName ? (
+          <p className="truncate font-semibold text-foreground">
+            {artwork.artistName}
+          </p>
+        ) : null}
         <Link
-          className="truncate text-[15px] text-foreground hover:underline"
+          className="truncate text-muted-foreground italic underline-offset-4 hover:text-foreground hover:underline"
           href={artwork.href}
         >
           {artwork.title}
         </Link>
-        {details ? (
-          <p className="truncate text-sm text-muted-foreground">{details}</p>
+        {medium ? (
+          <p className="truncate text-muted-foreground">{medium}</p>
         ) : null}
+        <p className="font-semibold text-foreground">
+          {formatArtworkPrice(artwork)}
+        </p>
       </div>
       {footnote}
       {actions ? (

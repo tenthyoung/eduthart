@@ -8,6 +8,15 @@ export type NavContext =
   | "marketing"
   | "marketing-home";
 
+/** The categories people shop by, as labels people say and the values search uses. */
+export const SHOP_CATEGORIES = [
+  { label: "Paintings", value: "Painting" },
+  { label: "Photography", value: "Photography" },
+  { label: "Sculpture", value: "Sculpture" },
+  { label: "Ceramics", value: "Ceramic" },
+  { label: "Drawing", value: "Drawing" },
+];
+
 const ARTIST_PUBLIC_ROUTE = /^\/artists\/([^/]+)\/?$/;
 const ARTIST_WORKSPACE_ROUTE = /^\/artists\/([^/]+)\/listings(?:\/|$)/;
 

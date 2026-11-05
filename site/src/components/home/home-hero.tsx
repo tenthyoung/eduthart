@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { ArtworkSearchForm } from "@/components/browse/artwork-search-form";
+import { CategoryStrip } from "@/components/home/category-strip";
+import {
+  FeaturedArtwork,
+  FeaturedArtworkSkeleton,
+} from "@/components/home/featured-artwork";
+import { Button } from "@/components/ui/button";
 import {
   buildBrowseHref,
-  EMPTY_FILTERS,
   type ArtworkSearchFilters,
 } from "@/lib/artists/artwork-search";
 
@@ -25,37 +30,57 @@ const quickSearchLinks: {
 
 export function HomeHero() {
   return (
-    <section className="pt-28 pb-10 sm:pt-32 lg:pt-36 lg:pb-14">
-      {/* `rise-in` staggers the lines in with CSS alone, so the hero is never
-          held back waiting for the page's JavaScript. */}
-      <div className="rise-in mx-auto flex w-full max-w-7xl flex-col gap-7 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl">
-          <h1 className="text-[2.5rem] leading-[1.02] tracking-[-0.03em] text-foreground sm:text-6xl lg:text-7xl">
-            Find a piece you&rsquo;ll love{" "}
-            <span className="font-display font-normal tracking-[-0.01em] text-brass">
-              living with.
-            </span>
+    // The header is fixed at h-16, so the page starts below it.
+    <div className="pt-16">
+      <CategoryStrip />
+      <section className="mx-auto grid w-full max-w-7xl items-end gap-10 px-4 pt-10 pb-10 sm:px-6 lg:grid-cols-[5fr_7fr] lg:gap-12 lg:px-8 lg:pt-12 lg:pb-14">
+        {/* `rise-in` staggers the lines in with CSS alone, so the words are
+            never held back waiting for the page's JavaScript. */}
+        <div className="rise-in flex flex-col gap-5">
+          <span className="text-[13px] font-semibold tracking-[0.04em] text-foreground uppercase">
+            Original art, signed by the artist
+          </span>
+          <h1 className="text-[2.75rem] leading-[0.98] font-semibold tracking-[-0.045em] text-foreground sm:text-6xl lg:text-[4rem]">
+            Find a piece you&rsquo;ll love living with.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+          <p className="max-w-md text-lg leading-7 text-muted-foreground">
             Every piece is an original, signed by the artist who made it and
             shipped from their studio.
           </p>
+          <div className="mt-1 flex flex-wrap gap-3">
+            <Button asChild className="rounded-full" size="lg">
+              <Link href="/browse">Explore originals</Link>
+            </Button>
+            <Button
+              asChild
+              className="rounded-full"
+              size="lg"
+              variant="outline"
+            >
+              <Link href="/for-artists">Sell your work</Link>
+            </Button>
+          </div>
+          <nav
+            aria-label="Popular searches"
+            className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"
+          >
+            <span>Popular:</span>
+            {quickSearchLinks.map((link) => (
+              <Link
+                className="text-foreground underline-offset-4 hover:underline"
+                href={buildBrowseHref(link.filters)}
+                key={link.label}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
-        <ArtworkSearchForm className="mx-0" filters={EMPTY_FILTERS} />
-
-        <nav aria-label="Popular searches" className="flex flex-wrap gap-2">
-          {quickSearchLinks.map((link) => (
-            <Link
-              key={link.label}
-              className="inline-flex h-11 items-center rounded-full border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:border-foreground"
-              href={buildBrowseHref(link.filters)}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </section>
+        <Suspense fallback={<FeaturedArtworkSkeleton />}>
+          <FeaturedArtwork />
+        </Suspense>
+      </section>
+    </div>
   );
 }

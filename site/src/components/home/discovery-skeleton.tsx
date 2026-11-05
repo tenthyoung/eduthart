@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ArtworkCardSkeleton() {
   return (
     <div className="flex flex-col gap-3">
-      <Skeleton className="aspect-[4/5] w-full rounded-xl" />
+      <Skeleton className="aspect-[4/5] w-full rounded-none" />
       <div className="flex flex-col gap-2 pt-0.5">
         <Skeleton className="h-4 w-16" />
         <Skeleton className="h-4 w-3/4" />
@@ -27,13 +27,24 @@ export function DiscoverySkeleton() {
       aria-label="Loading artwork"
       className="pb-20 lg:pb-28"
     >
-      <section className="py-10 lg:py-14">
+      <section className="py-8 lg:py-10">
+        <div className="mx-auto max-w-7xl border-t border-border px-4 pt-4 sm:px-6 lg:px-8">
+          <Skeleton className="h-8 w-40" />
+          <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 lg:grid-cols-5">
+            {Array.from({ length: 5 }, (_, index) => (
+              <ArtworkCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-8 w-48" />
           <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-5 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => (
               <div className="flex flex-col gap-3" key={index}>
-                <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+                <Skeleton className="aspect-[4/3] w-full rounded-none" />
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3.5 w-16" />
               </div>

@@ -13,11 +13,16 @@ import type { FollowedArtist } from "@/lib/collectors/follows";
 export function FollowArtistButton({
   artistName,
   artistUid,
+  className,
+  compact = false,
   size,
   username,
 }: {
   artistName: string;
   artistUid: string;
+  className?: string;
+  /** A quiet outline pill reading just "Follow", for rows of several artists. */
+  compact?: boolean;
   size?: "default" | "sm";
   username: string;
 }) {
@@ -97,8 +102,28 @@ export function FollowArtistButton({
     return null;
   }
 
+  if (compact) {
+    return (
+      <Button
+        aria-label={
+          following ? `Unfollow ${artistName}` : `Follow ${artistName}`
+        }
+        aria-pressed={following}
+        className={className}
+        disabled={busy}
+        onClick={() => void toggle()}
+        size={size}
+        type="button"
+        variant={following ? "default" : "outline"}
+      >
+        {following ? "Following" : "Follow"}
+      </Button>
+    );
+  }
+
   return (
     <Button
+      className={className}
       disabled={busy}
       onClick={() => void toggle()}
       size={size}

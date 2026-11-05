@@ -4,6 +4,7 @@ import type { AccountProfile } from "@/lib/auth/account-profile";
 import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ACCOUNT_SECTIONS } from "@/components/account/account-shell";
+import { BrandLogo } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
@@ -26,6 +27,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  Search,
   Settings,
   X,
   type LucideIcon,
@@ -36,7 +38,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
 import { buildBrowseHref } from "@/lib/artists/artwork-search";
-import { isArtistCapableUsername } from "@/lib/navigation";
+import { isArtistCapableUsername, SHOP_CATEGORIES } from "@/lib/navigation";
 import {
   fetchNotifications,
   NOTIFICATIONS_CHANGED_EVENT,
@@ -50,13 +52,11 @@ type NavItem = {
   name: string;
 };
 
-/** The categories named in the header, as labels people say and the values search uses. */
-const HEADER_CATEGORIES = [
-  { label: "Paintings", value: "Painting" },
-  { label: "Photography", value: "Photography" },
-  { label: "Sculpture", value: "Sculpture" },
-  { label: "Ceramics", value: "Ceramic" },
-  { label: "Drawing", value: "Drawing" },
+/** The header's own links; the categories sit on the home page's strip and in the mobile menu. */
+const PRIMARY_NAV_ITEMS: NavItem[] = [
+  { name: "Browse", href: "/browse" },
+  { name: "Editorial", href: "/blog" },
+  { name: "Sell", href: "/for-artists" },
 ];
 
 export function Navbar() {
@@ -71,14 +71,11 @@ export function Navbar() {
   const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
 
   const isArtistCapable = isArtistCapableUsername(username);
-  // Shopping comes first: the categories people browse by, then everything.
-  const shopNavItems: NavItem[] = [
-    ...HEADER_CATEGORIES.map((category) => ({
-      name: category.label,
-      href: buildBrowseHref({ category: category.value }),
-    })),
-    { name: "Browse all", href: "/browse" },
-  ];
+  // On a phone there is no category strip, so the menu leads with the categories.
+  const categoryNavItems: NavItem[] = SHOP_CATEGORIES.map((category) => ({
+    name: category.label,
+    href: buildBrowseHref({ category: category.value }),
+  }));
   const studioNavItems: NavItem[] =
     status === "authenticated" && isArtistCapable && username
       ? [
@@ -89,7 +86,12 @@ export function Navbar() {
           },
         ]
       : [];
-  const desktopNavItems: NavItem[] = [...shopNavItems, ...studioNavItems];
+  const desktopNavItems: NavItem[] = [...PRIMARY_NAV_ITEMS, ...studioNavItems];
+  const mobileNavItems: NavItem[] = [
+    ...categoryNavItems,
+    ...PRIMARY_NAV_ITEMS,
+    ...studioNavItems,
+  ];
 
   const socialIcons = [
     {
@@ -259,17 +261,29 @@ export function Navbar() {
       className="fixed top-0 left-0 right-[var(--removed-body-scroll-bar-size,0px)] z-50 border-b border-border bg-background/95 backdrop-blur-xl"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-8">
-          {/* Left - Wordmark */}
-          <Link
-            href="/"
-            className="flex-shrink-0 font-display text-[1.75rem] leading-none text-foreground"
+        <div className="flex h-16 items-center justify-between gap-6">
+          <BrandLogo />
+
+          {/* Search goes to the browse page, which reads the same `q` the filters write. */}
+          <form
+            action="/browse"
+            className="hidden max-w-md flex-1 lg:flex"
+            role="search"
           >
-            EduthArt
-          </Link>
+            <label className="flex h-10 w-full items-center gap-2.5 rounded-md border border-input bg-background px-3.5 text-sm text-muted-foreground transition-colors focus-within:border-foreground">
+              <Search aria-hidden="true" className="size-4 text-foreground" />
+              <span className="sr-only">Search artists and artworks</span>
+              <input
+                className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+                name="q"
+                placeholder="Search by artist, title, style or subject"
+                type="search"
+              />
+            </label>
+          </form>
 
           {/* Center - Desktop Navigation */}
-          <div className="hidden flex-1 items-center gap-6 lg:flex">
+          <div className="ml-auto hidden items-center gap-6 lg:flex">
             {desktopNavItems.map((item) => {
               const Icon = item.icon;
               const isCurrent = pathname === item.href;
@@ -405,9 +419,12 @@ export function Navbar() {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="hidden items-center lg:flex">
-                <Button asChild variant="ghost">
-                  <Link href="/login">Sign in</Link>
+              <div className="hidden items-center gap-2 lg:flex">
+                <Button asChild className="rounded-full" variant="outline">
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button asChild className="rounded-full">
+                  <Link href="/signup">Sign up</Link>
                 </Button>
               </div>
             )}
@@ -435,7 +452,7 @@ export function Navbar() {
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="space-y-2">
-              {desktopNavItems.map((item, index) => {
+              {mobileNavItems.map((item, index) => {
                 const Icon = item.icon;
 
                 return (
