@@ -4,6 +4,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
+import { SITE_URL } from "@/lib/site-url";
 import type { Metadata } from "next";
 import { Gloock, Inter } from "next/font/google";
 import { Toaster } from "sonner";
@@ -29,12 +30,7 @@ const description =
 
 export const metadata: Metadata = {
   // Makes the share card's URL absolute; scrapers can't follow a relative one.
-  metadataBase: new URL(
-    (process.env.NEXT_PUBLIC_SITE_URL || "https://eduthart.com").replace(
-      /\/+$/,
-      ""
-    )
-  ),
+  metadataBase: new URL(SITE_URL),
   title,
   description,
   // The image itself comes from opengraph-image.tsx. Pages that set their own
