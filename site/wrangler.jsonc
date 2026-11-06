@@ -18,6 +18,14 @@
       "service": "eduthart",
     },
   ],
+  // Outbound email (Cloudflare Email Service). The sender, support@eduthart.com,
+  // must be on a domain onboarded under Compute > Email Service > Email Sending.
+  // No destination restriction, so it can mail any customer. See src/lib/email/send.ts.
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
   "observability": {
     "enabled": true,
   },

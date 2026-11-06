@@ -1,12 +1,9 @@
 import { SUPPORT_EMAIL } from "@/constants/contact.constants";
+import { sendEmail } from "@/lib/email/send";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Resend at runtime to avoid build-time errors
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     const body = await request.json();
     const { name, email, message } = body;
 
@@ -27,11 +24,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send email using Resend API
-    const data = await resend.emails.send({
-      from:
-        process.env.RESEND_FROM_EMAIL || `EduthArt Support <${SUPPORT_EMAIL}>`,
-      to: [process.env.CONTACT_EMAIL || SUPPORT_EMAIL],
+    const data = await sendEmail({
+      fromName: "EduthArt Support",
+      to: process.env.CONTACT_EMAIL || SUPPORT_EMAIL,
+      replyTo: email,
       subject: `New EduthArt support message from ${name}`,
       html: `
         <!DOCTYPE html>
@@ -130,7 +126,7 @@ Sent on: ${new Date().toLocaleDateString("en-US", {
       {
         success: true,
         message: "Message sent successfully!",
-        messageId: data.data?.id,
+        messageId: data.messageId,
       },
       { status: 200 }
     );

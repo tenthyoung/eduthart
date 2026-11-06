@@ -112,7 +112,8 @@ and optional `continueUrl` query parameters.
 ## Commerce and notifications
 
 Buying an artwork uses Stripe-hosted Checkout, and account and marketplace
-activity is delivered through an in-app notification centre plus Resend email.
+activity is delivered through an in-app notification centre plus email sent
+with Cloudflare Email Service.
 Both need environment configuration before they work outside the test suite —
 see [docs/commerce-setup.md](./docs/commerce-setup.md) for the keys, the webhook
 endpoint, and how a purchase is recorded.

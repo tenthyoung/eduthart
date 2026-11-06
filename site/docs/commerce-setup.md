@@ -90,13 +90,24 @@ stays pending.
 - The buyer is told when the parcel first enters transit and when it is
   delivered. Both are deduped, so Shippo retries do not send twice.
 
-## Resend
+## Email (Cloudflare Email Service)
 
-Notification emails go out through Resend, which the contact form already uses.
+All outbound email — notifications, the contact form, DMCA notices and content
+reports — goes through `src/lib/email/send.ts`, which uses the `EMAIL`
+`send_email` binding in `wrangler.jsonc`. There is no API key to set.
 
-- `RESEND_API_KEY` enables sending. Without it, notifications are still written
-  to the in-app centre and only the email is skipped.
-- `RESEND_FROM_EMAIL` sets the sender.
+- The sender is always `support@eduthart.com` (display name "EduthArt", or
+  "EduthArt Support" for inbox-bound forms). `eduthart.com` must be onboarded
+  under Compute > Email Service > Email Sending in the Cloudflare dashboard, or
+  every send fails with `E_SENDER_NOT_VERIFIED`.
+- Sending to customers needs the Workers Paid plan: 3,000 emails a month are
+  included, then $0.35 per 1,000. Email Sending is in beta.
+- The binding exists only on the deployed Worker and under `npm run preview`.
+  Under `next dev` there is none, so notifications are still written to the
+  in-app centre and only the email is skipped, while the contact, DMCA and
+  content-report forms return an error.
+- `CONTACT_EMAIL` sets the inbox those forms go to (default
+  `support@eduthart.com`). Their emails set Reply-To to the person who wrote in.
 - `NEXT_PUBLIC_SITE_URL` is used for the absolute links inside emails and
   invoices, so set it per environment.
 
