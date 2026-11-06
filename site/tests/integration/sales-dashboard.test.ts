@@ -189,11 +189,13 @@ describe("the sales dashboard route", () => {
     await addToCart(collector.uid, artwork);
     const order = await checkout(collector.uid);
 
-    const { dashboard } = await callRouteOk<{ dashboard: SalesDashboard }>(
-      salesRoute,
-      { as: artist.uid, path: "/api/artists/sales" }
-    );
+    const { dashboard, username } = await callRouteOk<{
+      dashboard: SalesDashboard;
+      username: string | null;
+    }>(salesRoute, { as: artist.uid, path: "/api/artists/sales" });
 
+    // The page uses this to move an artist off another artist's address.
+    expect(username).toBe("marina-sales-dashboard");
     expect(dashboard.sales).toHaveLength(1);
     expect(dashboard.sales[0]).toMatchObject({
       artworkMinor: order.subtotalMinor,

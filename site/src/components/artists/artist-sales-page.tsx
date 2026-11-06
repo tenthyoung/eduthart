@@ -9,7 +9,8 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { CollectorEmptyState } from "@/components/collectors/artwork-card";
 import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
@@ -211,15 +212,38 @@ function SaleCard({ sale }: { sale: SaleRow }) {
 
 export function ArtistSalesPage({ username }: { username: string }) {
   const [stage, setStage] = useState<SaleStage | "all">("all");
-  const { data, error, loading } = useCollectorResource<SalesDashboard>({
-    initialData: EMPTY_DASHBOARD,
+  const router = useRouter();
+  const {
+    data: payload,
+    error,
+    loading,
+  } = useCollectorResource<{
+    dashboard: SalesDashboard;
+    username: string | null;
+  }>({
+    initialData: { dashboard: EMPTY_DASHBOARD, username: null },
     path: "/api/artists/sales",
-    select: (payload) =>
-      (payload.dashboard as SalesDashboard | undefined) ?? EMPTY_DASHBOARD,
+    select: (body) => ({
+      dashboard:
+        (body.dashboard as SalesDashboard | undefined) ?? EMPTY_DASHBOARD,
+      username: typeof body.username === "string" ? body.username : null,
+    }),
     signInPath: `/artists/${username}/sales`,
   });
+  const data = payload.dashboard;
+  const ownUsername = payload.username;
+  const onSomeoneElsesPage = Boolean(ownUsername && ownUsername !== username);
 
-  if (loading) {
+  // The figures are always the signed-in artist's own. Opening another
+  // artist's address would show them under that artist's name and sidebar,
+  // so move to the artist's own address instead.
+  useEffect(() => {
+    if (onSomeoneElsesPage) {
+      router.replace(`/artists/${ownUsername}/sales`);
+    }
+  }, [onSomeoneElsesPage, ownUsername, router]);
+
+  if (loading || onSomeoneElsesPage) {
     return <CollectorLoadingPanel label="Loading your sales..." />;
   }
 
