@@ -15,6 +15,7 @@ import {
   EMAIL_CATEGORY_COPY,
   EMAIL_KIND_COPY,
   EMAIL_KINDS_BY_CATEGORY,
+  MARKETING_EMAIL_COPY,
   resolveKindEnabled,
   type EmailCategory,
   type NotificationSettings,
@@ -24,7 +25,7 @@ import type { NotificationKind } from "@/lib/notifications/types";
 const ENDPOINT = "/api/account/email-preferences";
 
 function emptySettings(): NotificationSettings {
-  return { categories: defaultEmailPreferences(), kinds: {} };
+  return { categories: defaultEmailPreferences(), kinds: {}, marketing: false };
 }
 
 /**
@@ -127,6 +128,7 @@ export function EmailPreferencesSection() {
     update: {
       categories?: Partial<Record<EmailCategory, boolean>>;
       kinds?: Partial<Record<NotificationKind, boolean>>;
+      marketing?: boolean;
     },
     optimistic: NotificationSettings
   ) => {
@@ -188,10 +190,15 @@ export function EmailPreferencesSection() {
     void save(
       { categories: { [category]: next } },
       {
+        ...settings,
         categories: { ...settings.categories, [category]: next },
         kinds,
       }
     );
+  };
+
+  const handleMarketingToggle = (next: boolean) => {
+    void save({ marketing: next }, { ...settings, marketing: next });
   };
 
   const handleKindToggle = (kind: NotificationKind, next: boolean) => {
@@ -290,6 +297,38 @@ export function EmailPreferencesSection() {
             </div>
           );
         })}
+      </div>
+
+      <div className="space-y-3 border-t border-border/70 pt-4">
+        <h3 className="text-sm font-medium text-foreground">Marketing</h3>
+        <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              aria-describedby="email-preference-marketing-description"
+              checked={settings.marketing}
+              className="mt-0.5"
+              disabled={loading || saving}
+              id="email-preference-marketing"
+              onCheckedChange={(checked) =>
+                handleMarketingToggle(checked === true)
+              }
+            />
+            <div className="space-y-1">
+              <Label
+                className="font-medium"
+                htmlFor="email-preference-marketing"
+              >
+                {MARKETING_EMAIL_COPY.title}
+              </Label>
+              <p
+                className="text-sm text-muted-foreground"
+                id="email-preference-marketing-description"
+              >
+                {MARKETING_EMAIL_COPY.description}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <p className="border-t border-border/70 pt-4 text-sm text-muted-foreground">

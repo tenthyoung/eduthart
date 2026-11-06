@@ -5,6 +5,8 @@ import {
   PATCH as savePreferencesRoute,
 } from "@/app/api/account/email-preferences/route";
 import type { NotificationSettings } from "@/lib/notifications/email-categories";
+import { POST as newsletterSignupRoute } from "@/app/api/zoho-campaigns/route";
+import { COLLECTOR_LIST_KEY } from "@/constants/newsletter.constants";
 import { isEmailAllowed } from "@/lib/notifications/preferences";
 
 import { createAccount } from "./support/accounts";
@@ -53,6 +55,7 @@ describe("notification settings", () => {
     expect(await loadSettings(account.uid)).toEqual({
       categories: ALL_ON,
       kinds: {},
+      marketing: false,
     });
   });
 
@@ -129,6 +132,7 @@ describe("notification settings", () => {
     expect(await loadSettings(account.uid)).toEqual({
       categories: ALL_ON,
       kinds: {},
+      marketing: false,
     });
   });
 
@@ -208,5 +212,118 @@ describe("the email gate", () => {
     expect(await isEmailAllowed(account.uid, "order_confirmed")).toBe(true);
     expect(await isEmailAllowed(account.uid, "artwork_sold")).toBe(true);
     expect(await isEmailAllowed(account.uid, "saved_artwork_sold")).toBe(true);
+  });
+});
+
+/**
+ * The newsletter is the one opt-in setting, and the only one that lives in
+ * someone else's system. What matters: it starts off, the account and the
+ * footer signup agree, and a Zoho failure never leaves the account claiming a
+ * state the list does not have.
+ */
+describe("marketing emails", () => {
+  test("start switched off", async () => {
+    const account = await createAccount({ uid: "marketing-default" });
+
+    expect((await loadSettings(account.uid)).marketing).toBe(false);
+  });
+
+  test("switch on and off from the account, and survive a reload", async () => {
+    const account = await createAccount({ uid: "marketing-toggle" });
+
+    expect(
+      (await saveSettings(account.uid, { marketing: true })).marketing
+    ).toBe(true);
+    expect((await loadSettings(account.uid)).marketing).toBe(true);
+
+    expect(
+      (await saveSettings(account.uid, { marketing: false })).marketing
+    ).toBe(false);
+    expect((await loadSettings(account.uid)).marketing).toBe(false);
+  });
+
+  test("leave the activity settings alone", async () => {
+    const account = await createAccount({ uid: "marketing-independent" });
+
+    await saveSettings(account.uid, { categories: { orders: false } });
+    const saved = await saveSettings(account.uid, { marketing: true });
+
+    expect(saved.categories.orders).toBe(false);
+    expect(saved.categories.sales).toBe(true);
+    expect(await isEmailAllowed(account.uid, "order_confirmed")).toBe(false);
+  });
+
+  test("stay as they were when Zoho refuses the change", async () => {
+    const account = await createAccount({
+      email: "collector+zoho-fails@example.com",
+      uid: "marketing-zoho-down",
+    });
+
+    const result = await callRoute(savePreferencesRoute, {
+      as: account.uid,
+      body: { marketing: true },
+      method: "PATCH",
+      path: PATH,
+    });
+
+    expect(result.status).toBe(502);
+    expect((await loadSettings(account.uid)).marketing).toBe(false);
+  });
+
+  test("are changed on their own, not bundled with other settings", async () => {
+    const account = await createAccount({ uid: "marketing-bundled" });
+
+    const result = await callRoute(savePreferencesRoute, {
+      as: account.uid,
+      body: { categories: { orders: false }, marketing: true },
+      method: "PATCH",
+      path: PATH,
+    });
+
+    expect(result.status).toBe(400);
+    expect(await loadSettings(account.uid)).toEqual({
+      categories: ALL_ON,
+      kinds: {},
+      marketing: false,
+    });
+  });
+
+  test("switch on when the owner signs up in the footer with their own address", async () => {
+    const account = await createAccount({
+      email: "Footer.Collector@example.com",
+      uid: "marketing-footer-own",
+    });
+
+    await callRouteOk(newsletterSignupRoute, {
+      as: account.uid,
+      body: {
+        emails: ["footer.collector@example.com"],
+        listKey: COLLECTOR_LIST_KEY,
+      },
+      path: "/api/zoho-campaigns",
+    });
+
+    expect((await loadSettings(account.uid)).marketing).toBe(true);
+  });
+
+  test("stay off when a signed-in person subscribes someone else", async () => {
+    const account = await createAccount({ uid: "marketing-footer-other" });
+
+    await callRouteOk(newsletterSignupRoute, {
+      as: account.uid,
+      body: { emails: ["a.friend@example.com"], listKey: COLLECTOR_LIST_KEY },
+      path: "/api/zoho-campaigns",
+    });
+
+    expect((await loadSettings(account.uid)).marketing).toBe(false);
+  });
+
+  test("let a signed-out visitor sign up as before", async () => {
+    const result = await callRoute(newsletterSignupRoute, {
+      body: { emails: ["visitor@example.com"], listKey: COLLECTOR_LIST_KEY },
+      path: "/api/zoho-campaigns",
+    });
+
+    expect(result.status).toBe(200);
   });
 });

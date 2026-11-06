@@ -1,57 +1,17 @@
-// app/api/zoho-bulk/route.ts
 import { NextResponse } from "next/server";
 
-type CachedToken = { access_token: string; expires_at: number };
-
-// Held in module memory. A Worker isolate is reused across requests until the
-// platform recycles it, so this saves most refreshes without needing a
-// writable filesystem (Workers have none). A cold isolate just refreshes.
-let cachedToken: CachedToken | null = null;
+import { COLLECTOR_LIST_KEY } from "@/constants/newsletter.constants";
+import { getAuthenticatedSession } from "@/lib/auth/server-session";
+import { recordMarketingConsent } from "@/lib/notifications/preferences";
+import { addSubscribersInBulk } from "@/lib/marketing/zoho";
 
 /**
- * Get a valid access token.
- * Cached in memory for ~59 min per isolate.
+ * The newsletter signup behind the footer and journal pages.
+ *
+ * Anyone may post here; a signed-in caller who subscribes their own account
+ * address also has it recorded against the account, so the marketing toggle in
+ * account settings shows what they just did.
  */
-async function getAccessToken(): Promise<string> {
-  // 1. Try cache
-  if (cachedToken && cachedToken.expires_at > Date.now() / 1000 + 300) {
-    return cachedToken.access_token;
-  }
-
-  // 2. Refresh
-  const body = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: process.env.ZOHO_REFRESH_TOKEN!,
-    client_id: process.env.ZOHO_CLIENT_ID!,
-    client_secret: process.env.ZOHO_CLIENT_SECRET!,
-  });
-
-  const res = await fetch(
-    `https://accounts.zoho.${process.env.ZOHO_DC}/oauth/v2/token`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    }
-  );
-
-  const data = await res.json();
-  if (!data.access_token) {
-    throw new Error(`Token refresh failed: ${JSON.stringify(data)}`);
-  }
-
-  // Cache for ~59 min
-  cachedToken = {
-    access_token: data.access_token,
-    expires_at: Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600),
-  };
-
-  return data.access_token;
-}
-
-/* ------------------------------------------------------------------ */
-/* --------------------------- POST HANDLER -------------------------- */
-/* ------------------------------------------------------------------ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -87,41 +47,26 @@ export async function POST(req: Request) {
       );
     }
 
-    // ---------- get fresh token ----------
-    const accessToken = await getAccessToken();
+    const result = await addSubscribersInBulk(listKey, emails);
 
-    // ---------- call Zoho ----------
-    const emailIds = emails.join(",");
-    const url = `https://campaigns.zoho.${process.env.ZOHO_DC}/api/v1.1/addlistsubscribersinbulk?listkey=${listKey}&emailids=${encodeURIComponent(
-      emailIds
-    )}&resfmt=JSON`;
-
-    const zohoRes = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Zoho-oauthtoken ${accessToken}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    const zohoData = await zohoRes.json();
-
-    if (!zohoRes.ok || zohoData.code !== "0") {
+    if (!result.ok) {
       return NextResponse.json(
         {
           error: "Failed to add contacts to Zoho Campaigns",
-          details: zohoData,
+          details: result.details,
         },
-        { status: zohoRes.status || 500 }
+        { status: result.status ?? 500 }
       );
+    }
+
+    if (listKey === COLLECTOR_LIST_KEY) {
+      await recordSignupAgainstAccount(req, emails);
     }
 
     return NextResponse.json(
       {
         success: true,
         message: `Successfully added ${emails.length} email(s) to list`,
-        listkey: zohoData.listkey,
-        listname: zohoData.listname,
       },
       { status: 200 }
     );
@@ -137,7 +82,33 @@ export async function POST(req: Request) {
   }
 }
 
-/* ------------------------------------------------------------------ */
+/**
+ * Mark the account as opted in when its owner signs up with their own address.
+ *
+ * Only their own address: subscribing a friend from your account must not
+ * change your preference. Best effort — the subscription already succeeded, so
+ * a failure here is logged rather than turned into an error the person sees.
+ */
+async function recordSignupAgainstAccount(req: Request, emails: string[]) {
+  if (!req.headers.get("authorization")) {
+    return;
+  }
+
+  try {
+    const session = await getAuthenticatedSession(req);
+    const accountEmail = session.user.email?.trim().toLowerCase();
+
+    if (
+      accountEmail &&
+      emails.some((email) => email.trim().toLowerCase() === accountEmail)
+    ) {
+      await recordMarketingConsent(session.uid, true);
+    }
+  } catch (error) {
+    console.error("Unable to record the newsletter signup", error);
+  }
+}
+
 export async function GET() {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }

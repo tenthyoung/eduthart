@@ -49,7 +49,25 @@ export type EmailKindOverrides = Partial<
 export type NotificationSettings = {
   categories: EmailPreferences;
   kinds: EmailKindOverrides;
+  /**
+   * Whether this person has opted in to the collector newsletter.
+   *
+   * Kept apart from `categories` on purpose. Categories are opt-out activity
+   * mail and gate `isEmailAllowed`; marketing is opt-in, defaults to off, and
+   * is delivered by Zoho Campaigns rather than by the site.
+   */
+  marketing: boolean;
 };
+
+/**
+ * Wording for the newsletter row. Says what arrives and how often, so that
+ * switching it on is an informed choice rather than a reflex.
+ */
+export const MARKETING_EMAIL_COPY = {
+  description:
+    "New work, collector notes and the occasional announcement. A few emails a month at most, and every one has an unsubscribe link.",
+  title: "Newsletter",
+} as const;
 
 export const EMAIL_CATEGORIES: readonly EmailCategory[] = [
   "orders",

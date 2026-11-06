@@ -322,3 +322,45 @@ test("deletes the account after explicit confirmation and blocks account access 
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login\?next=\/account$/);
 });
+
+test("switches the newsletter on and off from account settings, and agrees with the footer signup", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "newsletter-user",
+    email: "newsletter.user@example.com",
+  });
+
+  await page.goto("/account");
+  const newsletter = page.getByRole("checkbox", { name: "Newsletter" });
+
+  // Opt-in: nobody is on the list until they say so.
+  await expect(newsletter).not.toBeChecked();
+  await expect(newsletter).toBeEnabled();
+
+  await newsletter.click();
+  await expect(newsletter).toBeChecked();
+  await page.reload();
+  await expect(newsletter).toBeChecked();
+
+  await newsletter.click();
+  await expect(newsletter).not.toBeChecked();
+  await page.reload();
+  await expect(newsletter).not.toBeChecked();
+
+  // Signing up in the footer with the account's own address switches it on.
+  // The account pages have no footer, so sign up from the home page.
+  await page.goto("/");
+  const footer = page.locator("footer");
+  await footer
+    .getByPlaceholder("you@example.com")
+    .fill("newsletter.user@example.com");
+  await footer
+    .getByLabel("Yes, send me new work and collector emails.")
+    .click();
+  await footer.getByRole("button", { name: "Subscribe" }).click();
+  await expect(footer.getByText("Thank you for subscribing.")).toBeVisible();
+
+  await page.goto("/account");
+  await expect(newsletter).toBeChecked();
+});
