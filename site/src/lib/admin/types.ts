@@ -68,47 +68,77 @@ export type AdminUserDetail = {
   } | null;
   billing: BillingSummary;
   adminRole: Record<string, unknown> | null;
-  publicDecks: PublicDeckSummary[];
+  publishedArtworks: AdminArtworkSummary[];
+};
+
+/** One listing an artist has published, as the admin user page lists them. */
+export type AdminArtworkSummary = {
+  artworkKey: string;
+  availability: string;
+  href: string | null;
+  imageUrl: string | null;
+  itemId: string;
+  listed: boolean;
+  moderationStatus: string | null;
+  title: string;
 };
 
 export type ModerationQueueItem = {
-  publicDeckId: string;
-  deckName: string;
-  ownerUid: string | null;
-  openReportCount: number;
+  artistName: string;
+  artistUid: string;
+  artistUsername: string;
+  artworkKey: string;
+  href: string;
+  imageUrl: string | null;
   latestReason: string;
   latestReportType: string;
-  visibility: string | null;
-  publicationStatus: string | null;
+  latestReportedAt: string;
+  listed: boolean;
+  moderationStatus: string | null;
+  openReportCount: number;
+  title: string;
 };
 
-export type PublicDeckReport = {
+export type ArtworkReportRecord = {
+  createdAt: string;
+  details: string;
   id: string;
   reason: string;
-  details: string | null;
-  reportType: string;
+  reportSource: string;
   reportSubcategory: string | null;
-  reportSource: string | null;
-  reporterUid: string | null;
+  reportType: string;
   reporterEmail: string | null;
-  createdAt: string | null;
+  resolutionAction: string | null;
+  resolvedAt: string | null;
+  status: string;
 };
 
-export type PublicDeckSummary = {
-  id: string;
-  ownerUid?: string | null;
-  sourceDeckId?: string | null;
-  visibility?: string | null;
-  publicationStatus?: string | null;
-  moderationStatus?: string | null;
-  moderationReason?: string | null;
-  updatedAt?: string | null;
-  deckSnapshot?: {
-    name?: string;
-    description?: string;
-  };
-  openReports?: PublicDeckReport[];
+export type ArtworkModerationState = {
+  moderatedAt: string;
+  moderatedBy: string;
+  reason: string;
+  status: string;
 };
+
+export type ArtworkModerationDetail = {
+  artistName: string;
+  artistUid: string;
+  artistUsername: string;
+  artworkKey: string;
+  availability: string;
+  href: string;
+  imageUrl: string | null;
+  itemId: string;
+  listed: boolean;
+  moderation: ArtworkModerationState | null;
+  openReports: ArtworkReportRecord[];
+  priceDisplay: string;
+  resolvedReports: ArtworkReportRecord[];
+  title: string;
+};
+
+export type ArtworkModerationAction =
+  "dismiss" | "hide" | "remove" | "restore" | "warn";
 
 export type RefundRequestRecord = {
   id: string;

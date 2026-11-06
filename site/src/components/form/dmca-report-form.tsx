@@ -33,7 +33,7 @@ const schema = z.object({
     .min(20, "Please describe the copyrighted work."),
   contentUrls: z
     .string()
-    .min(1, "At least one direct public deck URL is required."),
+    .min(1, "At least one EduthArt artwork URL is required."),
   explanation: z.string().min(20, "Please explain what is infringing."),
   signature: z.string().min(1, "Your typed signature is required."),
   goodFaith: z.boolean().refine((value) => value, {
@@ -46,11 +46,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function DmcaReportForm({
-  initialDeckUrl,
-}: {
-  initialDeckUrl?: string | null;
-}) {
+export function DmcaReportForm({ initialUrl }: { initialUrl?: string | null }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -69,11 +65,11 @@ export function DmcaReportForm({
   });
 
   useEffect(() => {
-    if (!initialDeckUrl || form.getValues("contentUrls").trim().length > 0) {
+    if (!initialUrl || form.getValues("contentUrls").trim().length > 0) {
       return;
     }
-    form.setValue("contentUrls", initialDeckUrl, { shouldDirty: false });
-  }, [form, initialDeckUrl]);
+    form.setValue("contentUrls", initialUrl, { shouldDirty: false });
+  }, [form, initialUrl]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -214,16 +210,18 @@ export function DmcaReportForm({
           name="contentUrls"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Specific infringing content URLs</FormLabel>
+              <FormLabel>Infringing artwork URLs</FormLabel>
               <FormDescription>
-                Paste one direct public deck URL per line so we can locate the
-                reported content precisely.
+                Paste one URL per line, copied from the artwork&apos;s page on
+                EduthArt, so we can find exactly what is being reported. An
+                artist&apos;s page URL is accepted too, but naming the specific
+                artworks lets us act faster.
               </FormDescription>
               <FormControl>
                 <Textarea
                   rows={5}
                   className="min-h-36 resize-y"
-                  placeholder="https://app.eduthart.com/public-decks/your-deck-id"
+                  placeholder="https://www.eduthart.com/artists/artist-name/art/artwork-id"
                   {...field}
                 />
               </FormControl>

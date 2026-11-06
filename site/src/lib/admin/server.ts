@@ -4,13 +4,18 @@ import {
   type DocumentSnapshot as QueryDocumentSnapshot,
 } from "@/lib/firebase/firestore-rest";
 
+import { buildArtworkHref } from "@/lib/artists/public-artwork";
+import {
+  isPubliclyListed,
+  loadListingStudio,
+} from "@/lib/artists/listing-store";
+import { buildArtworkKey } from "@/lib/collectors/artwork-reference";
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase/admin";
 
 // Resolved per call rather than at module scope: importing this file must not
 // require credentials, or `next build` fails in any environment without them.
 const db = () => getFirebaseAdminDb();
 const auth = () => getFirebaseAdminAuth();
-const SERIOUS_MODERATION_ACTIONS = new Set(["warn", "remove"]);
 const BOOTSTRAP_SUPER_ADMIN_EMAILS = new Set([
   "izzy@hendecalabs.com",
   "tenthyoung@gmail.com",
@@ -106,10 +111,6 @@ export async function verifyAdminSessionCookie(sessionCookie: string) {
 function normalizedEmail(value: unknown): string | null {
   const email = value?.toString().trim().toLowerCase();
   return email ? email : null;
-}
-
-function nowIsoString(): string {
-  return new Date().toISOString();
 }
 
 function parseOptionalTimestamp(value: unknown): Timestamp | null {
@@ -351,25 +352,31 @@ async function buildBillingSummary(
   };
 }
 
-function serializePublicDeckSummary(
-  docId: string,
-  data: Record<string, unknown>
-): Record<string, unknown> {
-  const deckSnapshot =
-    (data.deckSnapshot as Record<string, unknown> | undefined) ?? {};
-  return {
-    id: docId,
-    ownerUid: data.ownerUid ?? null,
-    sourceDeckId: data.sourceDeckId ?? null,
-    name: deckSnapshot.name ?? "Untitled Deck",
-    visibility: data.visibility ?? null,
-    publicationStatus: data.publicationStatus ?? null,
-    moderationStatus: data.moderationStatus ?? null,
-    moderationReason: data.moderationReason ?? null,
-    updatedAt: timestampToIsoString(data.updatedAt) ?? data.updatedAt ?? null,
-    reportCount: data.reportCount ?? 0,
-    deckSnapshot,
-  };
+/**
+ * Every listing the artist has marked public, including any an admin has
+ * taken down. Read from the studio rather than the public index precisely so
+ * the taken-down ones still show, with their moderation state.
+ */
+async function listPublishedArtworksForAdmin(
+  artistUid: string,
+  username: string | null
+) {
+  const studio = await loadListingStudio(artistUid);
+
+  return (studio?.items ?? [])
+    .filter(
+      (item) => item.salesVisibility.public && !item.salesVisibility.draft
+    )
+    .map((item) => ({
+      artworkKey: buildArtworkKey({ artistUid, itemId: item.id }),
+      availability: item.pricingInventory.availability,
+      href: username ? buildArtworkHref(username, item.id) : null,
+      imageUrl: item.media.mainImageUrl,
+      itemId: item.id,
+      listed: isPubliclyListed(item),
+      moderationStatus: item.moderation?.status ?? null,
+      title: item.artworkDetails.title || "Untitled artwork",
+    }));
 }
 
 export async function searchUsersForAdmin(query: string) {
@@ -470,12 +477,6 @@ export async function getAdminUserDetails(targetUid: string) {
     .collection("settings")
     .doc("credits")
     .get();
-  const publicDecksSnap = await db()
-    .collection("public_decks")
-    .where("ownerUid", "==", targetUid)
-    .orderBy("updatedAt", "desc")
-    .limit(25)
-    .get();
   const roleSnap = await db()
     .collection(ADMIN_ROLE_COLLECTION)
     .doc(targetUid)
@@ -502,8 +503,9 @@ export async function getAdminUserDetails(targetUid: string) {
     credits: creditsSnap.data() ?? null,
     billing: await buildBillingSummary(targetUid),
     adminRole: roleSnap.exists ? (roleSnap.data() ?? null) : null,
-    publicDecks: publicDecksSnap.docs.map((doc) =>
-      serializePublicDeckSummary(doc.id, doc.data() as Record<string, unknown>)
+    publishedArtworks: await listPublishedArtworksForAdmin(
+      targetUid,
+      typeof userData.username === "string" ? userData.username : null
     ),
   };
 }
@@ -648,289 +650,6 @@ export async function updateUserModerationState(
   }
 
   await userRef.set(updates, { merge: true });
-  return { success: true };
-}
-
-export async function listModerationQueue() {
-  const reportsSnapshot = await db()
-    .collection("deck_reports")
-    .where("status", "==", "open")
-    .orderBy("createdAt", "desc")
-    .limit(100)
-    .get();
-
-  const grouped = new Map<
-    string,
-    {
-      publicDeckId: string;
-      openReportCount: number;
-      latestReason: string;
-      latestReportType: string;
-    }
-  >();
-
-  for (const doc of reportsSnapshot.docs) {
-    const data = doc.data();
-    const publicDeckId = data.publicDeckId as string;
-    const existing = grouped.get(publicDeckId);
-    if (!existing) {
-      grouped.set(publicDeckId, {
-        publicDeckId,
-        openReportCount: 1,
-        latestReason: (data.reason as string | undefined) ?? "Reported",
-        latestReportType: (data.reportType as string | undefined) ?? "policy",
-      });
-      continue;
-    }
-    existing.openReportCount += 1;
-  }
-
-  return Promise.all(
-    Array.from(grouped.values()).map(async (group) => {
-      const publicDeckSnap = await db()
-        .collection("public_decks")
-        .doc(group.publicDeckId)
-        .get();
-      const publicDeck = publicDeckSnap.data() as
-        Record<string, unknown> | undefined;
-      return {
-        publicDeckId: group.publicDeckId,
-        deckName:
-          ((publicDeck?.deckSnapshot as Record<string, unknown> | undefined)
-            ?.name as string | undefined) ?? "Untitled Deck",
-        ownerUid: publicDeck?.ownerUid ?? null,
-        openReportCount: group.openReportCount,
-        latestReason: group.latestReason,
-        latestReportType: group.latestReportType,
-        visibility: publicDeck?.visibility ?? null,
-        publicationStatus: publicDeck?.publicationStatus ?? null,
-      };
-    })
-  );
-}
-
-export async function getPublicDeckDetails(publicDeckId: string) {
-  const snapshot = await db()
-    .collection("public_decks")
-    .doc(publicDeckId)
-    .get();
-  if (!snapshot.exists) {
-    return null;
-  }
-
-  const reportsSnapshot = await db()
-    .collection("deck_reports")
-    .where("publicDeckId", "==", publicDeckId)
-    .where("status", "==", "open")
-    .orderBy("createdAt", "desc")
-    .get();
-
-  return {
-    id: snapshot.id,
-    ...(snapshot.data() as Record<string, unknown>),
-    openReports: reportsSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        reason: data.reason ?? "Reported",
-        details: data.details ?? null,
-        reportType: data.reportType ?? "policy",
-        reportSubcategory: data.reportSubcategory ?? null,
-        reportSource: data.reportSource ?? null,
-        reporterUid: data.reporterUid ?? null,
-        reporterEmail: data.reporterEmail ?? null,
-        createdAt:
-          data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toISOString()
-            : (data.createdAt ?? null),
-      };
-    }),
-  };
-}
-
-async function createUserNotification({
-  userUid,
-  title,
-  body,
-  type,
-  actionRoute,
-  status,
-  publicDeckId,
-  sourceDeckId,
-}: {
-  userUid: string;
-  title: string;
-  body: string;
-  type: string;
-  actionRoute: string | null;
-  status: string;
-  publicDeckId: string;
-  sourceDeckId: string;
-}) {
-  await db().collection("user_notifications").add({
-    userUid,
-    title,
-    body,
-    type,
-    actionRoute,
-    status,
-    publicDeckId,
-    sourceDeckId,
-    createdAt: Timestamp.now(),
-    readAt: null,
-  });
-}
-
-async function queueModerationEmail({
-  userUid,
-  action,
-  deckName,
-  reason,
-}: {
-  userUid: string;
-  action: string;
-  deckName: string;
-  reason: string;
-}) {
-  await db().collection("moderation_email_queue").add({
-    userUid,
-    action,
-    deckName,
-    reason,
-    status: "pending",
-    createdAt: Timestamp.now(),
-  });
-}
-
-export async function moderateDeck(
-  moderatorUid: string,
-  publicDeckId: string,
-  action: "warn" | "hide" | "remove",
-  reason: string
-) {
-  if (!publicDeckId || !action || !reason) {
-    throw new AdminRouteError(
-      "invalid-argument",
-      "publicDeckId, action, and reason are required.",
-      400
-    );
-  }
-  if (!["warn", "hide", "remove"].includes(action)) {
-    throw new AdminRouteError(
-      "invalid-argument",
-      "Unsupported moderation action.",
-      400
-    );
-  }
-
-  const publicDeckRef = db().collection("public_decks").doc(publicDeckId);
-  const publicDeckSnap = await publicDeckRef.get();
-  if (!publicDeckSnap.exists) {
-    throw new AdminRouteError("not-found", "Public deck not found.", 404);
-  }
-  const publicDeck = publicDeckSnap.data() as Record<string, unknown>;
-  const ownerUid = publicDeck.ownerUid?.toString();
-  const sourceDeckId = publicDeck.sourceDeckId?.toString();
-  if (!ownerUid || !sourceDeckId) {
-    throw new AdminRouteError(
-      "failed-precondition",
-      "Deck ownership metadata is missing.",
-      400
-    );
-  }
-
-  const now = nowIsoString();
-  const publicUpdate: Record<string, unknown> = {
-    moderationReason: reason,
-    moderatedAt: now,
-    moderatedBy: moderatorUid,
-    updatedAt: now,
-  };
-  const privateUpdate: Record<string, unknown> = {
-    moderationReason: reason,
-    moderatedAt: now,
-    moderatedBy: moderatorUid,
-    updatedAt: now,
-  };
-
-  if (action === "warn") {
-    publicUpdate.moderationStatus = "warned";
-    privateUpdate.moderationStatus = "warned";
-  } else if (action === "hide") {
-    publicUpdate.moderationStatus = "hidden";
-    publicUpdate.publicationStatus = "hidden";
-    privateUpdate.moderationStatus = "hidden";
-    privateUpdate.visibility = "private";
-    privateUpdate.publicationStatus = "hidden";
-  } else {
-    publicUpdate.moderationStatus = "removed";
-    publicUpdate.publicationStatus = "removed";
-    privateUpdate.moderationStatus = "removed";
-    privateUpdate.visibility = "private";
-    privateUpdate.publicationStatus = "removed";
-  }
-
-  await publicDeckRef.set(publicUpdate, { merge: true });
-  await db()
-    .collection("users")
-    .doc(ownerUid)
-    .collection("decks")
-    .doc(sourceDeckId)
-    .set(privateUpdate, { merge: true });
-
-  const openReports = await db()
-    .collection("deck_reports")
-    .where("publicDeckId", "==", publicDeckId)
-    .where("status", "==", "open")
-    .get();
-  await Promise.all(
-    openReports.docs.map((doc) =>
-      doc.ref.set(
-        {
-          status: "resolved",
-          resolvedAt: Timestamp.now(),
-          resolvedBy: moderatorUid,
-          resolutionAction: action,
-        },
-        { merge: true }
-      )
-    )
-  );
-
-  await db().collection("deck_moderation_events").add({
-    publicDeckId,
-    ownerUid,
-    sourceDeckId,
-    action,
-    reason,
-    moderatedBy: moderatorUid,
-    createdAt: Timestamp.now(),
-  });
-
-  const deckName =
-    ((publicDeck.deckSnapshot as Record<string, unknown> | undefined)?.name as
-      string | undefined) ?? "Untitled Deck";
-
-  await createUserNotification({
-    userUid: ownerUid,
-    title: `Your deck "${deckName}" was moderated`,
-    body: `Status: ${action}. Reason: ${reason}`,
-    type: action === "warn" ? "warning" : "alert",
-    actionRoute: `deck/${sourceDeckId}`,
-    status: action,
-    publicDeckId,
-    sourceDeckId,
-  });
-
-  if (SERIOUS_MODERATION_ACTIONS.has(action)) {
-    await queueModerationEmail({
-      userUid: ownerUid,
-      action,
-      deckName,
-      reason,
-    });
-  }
-
   return { success: true };
 }
 

@@ -5,8 +5,9 @@ import type {
   AdminRoleRecord,
   AdminUserDetail,
   AdminUserSummary,
+  ArtworkModerationAction,
+  ArtworkModerationDetail,
   ModerationQueueItem,
-  PublicDeckSummary,
   RefundRequestRecord,
 } from "./types";
 
@@ -144,22 +145,25 @@ export async function listModerationQueue(): Promise<ModerationQueueItem[]> {
   return response.items ?? [];
 }
 
-export async function moderateDeck(
-  publicDeckId: string,
-  action: "warn" | "hide" | "remove",
+export async function moderateArtwork(
+  artworkKey: string,
+  action: ArtworkModerationAction,
   reason: string
 ) {
-  return adminRequest(`/api/admin/public-decks/${publicDeckId}/moderation`, {
-    method: "POST",
-    body: JSON.stringify({ action, reason }),
-  });
+  return adminRequest(
+    `/api/admin/artworks/${encodeURIComponent(artworkKey)}/moderation`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action, reason }),
+    }
+  );
 }
 
-export async function getPublicDeckDetails(
-  publicDeckId: string
-): Promise<PublicDeckSummary | null> {
-  return adminRequest<PublicDeckSummary | null>(
-    `/api/admin/public-decks/${publicDeckId}`
+export async function getArtworkModerationDetail(
+  artworkKey: string
+): Promise<ArtworkModerationDetail | null> {
+  return adminRequest<ArtworkModerationDetail | null>(
+    `/api/admin/artworks/${encodeURIComponent(artworkKey)}`
   );
 }
 

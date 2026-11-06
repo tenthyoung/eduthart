@@ -8,6 +8,7 @@ import {
 } from "@/lib/artists/listing-flow";
 import { syncArtworkIndex } from "@/lib/artists/artwork-index";
 import { notifyFollowersOfListingChanges } from "@/lib/artists/listing-notifications";
+import { loadListingStudio } from "@/lib/artists/listing-store";
 import {
   buildProfileDisplayName,
   loadAccountProfile,
@@ -178,6 +179,19 @@ export async function PATCH(request: Request) {
       existingAddress: profile.shippingOriginAddress,
     });
     normalizedFlow.updatedAt = new Date().toISOString();
+
+    // Moderation is the admin console's to set, never the studio's. The client
+    // sends the whole studio back, so without this an artist could clear a
+    // takedown by saving, and a stale tab could reapply one that was lifted.
+    const storedModeration = new Map(
+      ((await loadListingStudio(session.uid))?.items ?? []).map((item) => [
+        item.id,
+        item.moderation,
+      ])
+    );
+    for (const item of normalizedFlow.items) {
+      item.moderation = storedModeration.get(item.id) ?? null;
+    }
 
     if (normalizedFlow.shared.shippingOriginAddress?.line1) {
       await saveAccountProfile(session.uid, {
