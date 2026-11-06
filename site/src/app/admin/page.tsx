@@ -148,7 +148,7 @@ export default function AdminOverviewPage() {
                   Moderation queue
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Deck reports currently open.
+                  Artworks with open reports.
                 </p>
               </div>
               <Button variant="outline" asChild>
@@ -162,18 +162,20 @@ export default function AdminOverviewPage() {
                 </p>
               ) : moderationQueue.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No reported decks right now.
+                  No reported artworks right now.
                 </p>
               ) : (
                 moderationQueue.slice(0, 4).map((item) => (
                   <Link
-                    key={item.publicDeckId}
-                    href={`/admin/moderation/${item.publicDeckId}`}
+                    key={item.artworkKey}
+                    href={`/admin/moderation/${encodeURIComponent(item.artworkKey)}`}
                     className="block rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3 transition-colors hover:bg-black/[0.04]"
                   >
-                    <p className="font-medium">{item.deckName}</p>
+                    <p className="font-medium">{item.title}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {item.openReportCount} open reports • {item.latestReason}
+                      {item.artistName} • {item.openReportCount} open report
+                      {item.openReportCount === 1 ? "" : "s"} •{" "}
+                      {item.latestReason}
                     </p>
                   </Link>
                 ))

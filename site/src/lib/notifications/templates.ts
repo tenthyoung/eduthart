@@ -215,3 +215,70 @@ export function followedArtistPriceDropNotification({
     title: `Price drop on "${artworkTitle}"`,
   };
 }
+
+export type ListingModerationNotice = "hide" | "remove" | "restore" | "warn";
+
+/**
+ * Tell an artist what an admin did to one of their listings and why.
+ *
+ * Each action gets its own wording because they call for different things
+ * from the artist: a warning asks for a fix, a takedown explains the piece is
+ * off the site and how to dispute that, and a restore is good news.
+ */
+export function listingModeratedNotification({
+  action,
+  artworkHref,
+  artworkTitle,
+  listingHref,
+  reason,
+}: {
+  action: ListingModerationNotice;
+  artworkHref: string;
+  artworkTitle: string;
+  listingHref: string;
+  reason: string;
+}): NotificationTemplate {
+  const base = {
+    imageUrl: null,
+    kind: "listing_moderated" as const,
+  };
+
+  switch (action) {
+    case "warn":
+      return {
+        ...base,
+        actionHref: listingHref,
+        actionLabel: "Review your listing",
+        body: `EduthArt received a report about "${artworkTitle}". The piece stays listed for now, but please review it and make any changes needed.\n\nReason: ${reason}`,
+        emailSubject: `A warning about your listing "${artworkTitle}"`,
+        title: `A warning about "${artworkTitle}"`,
+      };
+    case "hide":
+      return {
+        ...base,
+        actionHref: listingHref,
+        actionLabel: "Review your listing",
+        body: `"${artworkTitle}" has been taken off EduthArt while we review a report about it. It stays in your studio but is no longer shown to collectors.\n\nReason: ${reason}\n\nIf you believe this is a mistake, reply to this message with any details that support your right to sell the piece.`,
+        emailSubject: `Your listing "${artworkTitle}" has been taken down`,
+        title: `"${artworkTitle}" has been taken down`,
+      };
+    case "remove":
+      return {
+        ...base,
+        actionHref: listingHref,
+        actionLabel: "Review your listing",
+        body: `"${artworkTitle}" has been removed from EduthArt and can no longer be listed.\n\nReason: ${reason}\n\nIf you believe this is a mistake, reply to this message with any details that support your right to sell the piece.`,
+        emailSubject: `Your listing "${artworkTitle}" has been removed`,
+        title: `"${artworkTitle}" has been removed`,
+      };
+    case "restore":
+      return {
+        ...base,
+        actionHref: artworkHref,
+        actionLabel: "View the artwork",
+        body: `"${artworkTitle}" is back on EduthArt and visible to collectors again.\n\nNote from the team: ${reason}`,
+        emailSubject: `Your listing "${artworkTitle}" is back on EduthArt`,
+        title: `"${artworkTitle}" is back on EduthArt`,
+      };
+  }
+}

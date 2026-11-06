@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getTeamInbox, sendEmail } from "@/lib/email/send";
-import { getFirebaseAdminDb } from "@/lib/firebase/admin";
-import { createExternalDeckReports, parsePublicDeckIds } from "@/lib/reporting";
+import { createArtworkReports, parseReportedPages } from "@/lib/reporting";
+import { SITE_URL } from "@/lib/site-url";
+import { createDocumentId, saveRootDocument } from "@/lib/store/document-store";
+
+const DMCA_NOTICES_COLLECTION = "dmca_notices";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -29,24 +32,24 @@ export async function POST(request: NextRequest) {
 
     if (urls.length === 0) {
       return NextResponse.json(
-        { error: "At least one direct public deck URL is required." },
+        { error: "At least one EduthArt artwork URL is required." },
         { status: 400 }
       );
     }
-    if (parsePublicDeckIds(urls).length === 0) {
+
+    const pages = parseReportedPages(urls);
+    if (pages.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "Please include at least one valid direct EduthArt public deck URL.",
+          error: `Please include at least one EduthArt artwork or artist page URL, for example ${SITE_URL}/artists/artist-name/art/artwork-id.`,
         },
         { status: 400 }
       );
     }
 
-    const db = getFirebaseAdminDb();
-    const submissionRef = db.collection("dmca_notices").doc();
-    await submissionRef.set({
-      id: submissionRef.id,
+    const submissionId = createDocumentId("dmca");
+    await saveRootDocument(DMCA_NOTICES_COLLECTION, submissionId, {
+      id: submissionId,
       fullName: body.fullName,
       email: body.email,
       mailingAddress: body.mailingAddress,
@@ -74,16 +77,34 @@ export async function POST(request: NextRequest) {
       body.explanation,
     ].join("\n");
 
-    const publicDeckIds = await createExternalDeckReports({
-      urls,
-      reportType: "copyright",
-      reportSubcategory: body.relationship,
-      reason: "DMCA notice submitted",
+    const matched = await createArtworkReports({
       details: queueDetails,
+      pages,
+      reason: "DMCA notice submitted",
+      reportSubcategory: body.relationship,
       reporterEmail: body.email,
-      submissionCollection: "dmca_notices",
-      submissionId: submissionRef.id,
+      submissionCollection: DMCA_NOTICES_COLLECTION,
+      submissionId,
     });
+
+    const matchedArtworks =
+      matched.artworks.length > 0
+        ? matched.artworks
+            .map(
+              (artwork) =>
+                `- "${artwork.title}" by ${artwork.artistName} — ${SITE_URL}${artwork.href}`
+            )
+            .join("\n")
+        : "None";
+    const matchedArtists =
+      matched.artists.length > 0
+        ? matched.artists
+            .map(
+              (artist) =>
+                `- ${artist.artistName} — ${SITE_URL}/artists/${artist.username}`
+            )
+            .join("\n")
+        : "None";
 
     // The submission is already saved, so a failed email is logged rather than
     // failing the request: retrying would file the same notice twice.
@@ -99,10 +120,15 @@ Claimant: ${body.fullName}
 Email: ${body.email}
 Phone: ${body.phone}
 Relationship: ${body.relationship}
-Matched deck IDs: ${publicDeckIds.join(", ") || "None"}
 Signature: ${body.signature}
 
-URLs:
+Matched artworks (flagged in the moderation queue):
+${matchedArtworks}
+
+Artist pages named:
+${matchedArtists}
+
+URLs as submitted:
 ${urls.join("\n")}
 
 Copyrighted work description:

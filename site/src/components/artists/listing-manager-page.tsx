@@ -32,8 +32,9 @@ import {
   createEmptyListingStudio,
   getItemDisplayTitle,
   getItemProgressPercent,
-  normalizeListingStudio,
+  isTakenDown,
   type ListingStudioDraft,
+  normalizeListingStudio,
 } from "@/lib/artists/listing-flow";
 import {
   buildArtistPageHref,
@@ -525,13 +526,15 @@ export function ListingManagerPage({ username }: { username: string }) {
             const selected = selectedItemIds.includes(item.id);
             const progress = getItemProgressPercent(item, studio.shared);
             const title = getItemDisplayTitle(item, index);
-            const visibility = item.salesVisibility.public
-              ? "Public"
-              : item.salesVisibility.unlisted
-                ? "Unlisted"
-                : item.salesVisibility.private
-                  ? "Private"
-                  : "Draft";
+            const visibility = isTakenDown(item)
+              ? "Taken down"
+              : item.salesVisibility.public
+                ? "Public"
+                : item.salesVisibility.unlisted
+                  ? "Unlisted"
+                  : item.salesVisibility.private
+                    ? "Private"
+                    : "Draft";
             const mediumLine = [
               item.artworkDetails.category,
               item.artworkDetails.medium,

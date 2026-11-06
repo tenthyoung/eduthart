@@ -25,7 +25,6 @@ export default function robots(): MetadataRoute.Robots {
         "/login",
         "/notifications",
         "/signup",
-        "/test-content-report",
         "/welcome",
         "/artists/*/listings/",
       ],

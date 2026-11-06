@@ -31,7 +31,7 @@ export type EmailPreferences = Record<EmailCategory, boolean>;
  */
 export type ControllableEmailKind = Exclude<
   NotificationKind,
-  "choose_username" | "email_changed" | "password_changed"
+  "choose_username" | "email_changed" | "listing_moderated" | "password_changed"
 >;
 
 /**
@@ -87,6 +87,10 @@ export const EMAIL_CATEGORIES: readonly EmailCategory[] = [
  *   message that tells the owner it happened, and a preference toggle is
  *   exactly that silencer.
  * - `choose_username` carries no `emailSubject`, so it never emails anyway.
+ * - `listing_moderated` is the notice that an admin has acted on one of the
+ *   artist's listings. It carries the reason and what to do about it, and an
+ *   artist who had switched it off would only learn of a takedown from an
+ *   empty gallery page.
  */
 const CATEGORY_BY_KIND: Record<NotificationKind, EmailCategory | null> = {
   artwork_sold: "sales",
@@ -94,6 +98,7 @@ const CATEGORY_BY_KIND: Record<NotificationKind, EmailCategory | null> = {
   email_changed: null,
   followed_artist_listed: "followed_artists",
   followed_artist_price_drop: "followed_artists",
+  listing_moderated: null,
   order_confirmed: "orders",
   order_delivered: "orders",
   order_shipped: "orders",

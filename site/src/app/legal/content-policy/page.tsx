@@ -113,19 +113,13 @@ export default function ContentPolicy() {
               available.
             </p>
             <p>
-              For educator reports about test banks, exam answers, or other
-              assessment misuse, use{" "}
-              <Link
-                href="/test-content-report"
-                className="text-primary hover:underline"
-              >
-                the test content report form
-              </Link>
-              . For copyright complaints, use{" "}
+              If an artwork listed on EduthArt infringes a copyright you own or
+              represent, use{" "}
               <Link href="/legal/dmca" className="text-primary hover:underline">
                 the DMCA form
-              </Link>
-              .
+              </Link>{" "}
+              so the notice reaches the right people with the details the law
+              requires.
             </p>
           </section>
         </div>

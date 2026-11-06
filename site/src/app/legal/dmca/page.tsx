@@ -4,9 +4,9 @@ import { SUPPORT_EMAIL } from "@/constants/contact.constants";
 export default async function DmcaPolicyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deckUrl?: string }>;
+  searchParams: Promise<{ url?: string }>;
 }) {
-  const { deckUrl } = await searchParams;
+  const { url } = await searchParams;
 
   return (
     <div className="min-h-screen bg-background py-30 lg:py-40">
@@ -19,7 +19,7 @@ export default async function DmcaPolicyPage({
         <div className="prose prose-invert mb-10 max-w-none space-y-5">
           <p>
             EduthArt is committed to respecting the intellectual property rights
-            of others. If you believe that content in a public EduthArt deck
+            of others. If you believe that an artwork listed on EduthArt
             infringes your copyright, you may submit a DMCA notice using the
             form below.
           </p>
@@ -36,19 +36,19 @@ export default async function DmcaPolicyPage({
           </p>
           <p>
             Complete complaints should include valid contact information, a
-            description of the copyrighted work, the specific URLs of the
-            allegedly infringing content, the required good-faith and accuracy
+            description of the copyrighted work, the URLs of the artwork pages
+            you believe are infringing, the required good-faith and accuracy
             statements, and your physical or electronic signature.
           </p>
           <p>
-            EduthArt may share your notice with the affected publisher when
-            appropriate and may terminate repeat infringers in accordance with
-            applicable law.
+            EduthArt may share your notice with the artist whose listing it
+            concerns when appropriate and may terminate repeat infringers in
+            accordance with applicable law.
           </p>
         </div>
 
         <div className="rounded-[2rem] border border-border/60 bg-card/90 p-6 shadow-sm sm:p-8">
-          <DmcaReportForm initialDeckUrl={deckUrl} />
+          <DmcaReportForm initialUrl={url} />
         </div>
       </div>
     </div>

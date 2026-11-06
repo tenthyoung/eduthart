@@ -98,7 +98,7 @@ export default function AdminUserDetailPage() {
           ? fullName || detail.user.email || detail.user.uid
           : "User detail"
       }
-      description="Moderate account state, inspect billing and AI usage, and review any public decks this user owns."
+      description="Moderate account state, inspect billing and usage, and review any artworks this user has listed."
       actions={
         <div className="flex flex-wrap gap-2">
           <Button
@@ -237,29 +237,34 @@ export default function AdminUserDetailPage() {
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <AdminCard>
               <h3 className="text-xl font-semibold tracking-[-0.04em]">
-                Public decks
+                Published artworks
               </h3>
               <div className="mt-6 space-y-3">
-                {detail.publicDecks.length === 0 ? (
+                {detail.publishedArtworks.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    This user has no public decks returned by the admin detail
-                    endpoint.
+                    This user has not published any artworks.
                   </p>
                 ) : (
-                  detail.publicDecks.map((deck) => (
+                  detail.publishedArtworks.map((artwork) => (
                     <Link
-                      key={deck.id}
-                      href={`/admin/moderation/${deck.id}`}
+                      key={artwork.artworkKey}
+                      href={`/admin/moderation/${encodeURIComponent(artwork.artworkKey)}`}
                       className="block rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-4 transition-colors hover:bg-black/[0.04]"
                     >
-                      <p className="font-medium">
-                        {deck.deckSnapshot?.name ?? "Untitled deck"}
-                      </p>
+                      <p className="font-medium">{artwork.title}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {[
-                          deck.publicationStatus,
-                          deck.visibility,
-                          deck.moderationStatus,
+                          artwork.moderationStatus === "hidden"
+                            ? "Taken down"
+                            : artwork.moderationStatus === "removed"
+                              ? "Removed"
+                              : artwork.listed
+                                ? "Listed"
+                                : "Not listed",
+                          artwork.moderationStatus === "warned"
+                            ? "Warned"
+                            : null,
+                          artwork.availability,
                         ]
                           .filter(Boolean)
                           .join(" • ")}

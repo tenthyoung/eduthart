@@ -119,11 +119,35 @@ export type ListingSalesVisibility = {
   unlisted: boolean;
 };
 
+export type ListingModerationStatus = "hidden" | "removed" | "warned";
+
+/**
+ * An admin's decision about one listing, set from the moderation console.
+ *
+ * Lives on the item rather than beside it so every reader of a studio sees it,
+ * and `isPubliclyListed` can keep a taken-down piece off the site no matter
+ * what the artist's own visibility flags say. Only the admin API writes it;
+ * the listing studio carries the stored value forward on every save.
+ */
+export type ListingModeration = {
+  moderatedAt: string;
+  moderatedBy: string;
+  reason: string;
+  status: ListingModerationStatus;
+};
+
+/** Whether an admin has taken this listing off the site. */
+export function isTakenDown(item: Pick<ListingItemDraft, "moderation">) {
+  const status = item.moderation?.status;
+  return status === "hidden" || status === "removed";
+}
+
 export type ListingItemDraft = {
   artworkDetails: ListingArtworkDetails;
   dimensions: ListingDimensions;
   id: string;
   media: ListingMedia;
+  moderation: ListingModeration | null;
   pricingInventory: ListingPricingInventory;
   salesVisibility: ListingSalesVisibility;
   updatedAt: string | null;
@@ -219,6 +243,7 @@ export function createEmptyListingItem(
       videoUrl: null,
       ...seed?.media,
     },
+    moderation: seed?.moderation ?? null,
     pricingInventory: {
       acceptOffers: false,
       artistProofsAvailable: false,

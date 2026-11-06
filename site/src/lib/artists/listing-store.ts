@@ -1,6 +1,8 @@
 import {
+  isTakenDown,
   normalizeListingStudio,
   type ListingItemDraft,
+  type ListingModeration,
   type ListingStudioDraft,
 } from "@/lib/artists/listing-flow";
 import {
@@ -34,7 +36,11 @@ export async function loadListingStudio(
 }
 
 export function isPubliclyListed(item: ListingItemDraft) {
-  return item.salesVisibility.public && !item.salesVisibility.draft;
+  return (
+    item.salesVisibility.public &&
+    !item.salesVisibility.draft &&
+    !isTakenDown(item)
+  );
 }
 
 export async function listPublishedArtworks(
@@ -42,6 +48,28 @@ export async function listPublishedArtworks(
 ): Promise<ListingItemDraft[]> {
   const studio = await loadListingStudio(uid);
   return studio ? studio.items.filter(isPubliclyListed) : [];
+}
+
+/**
+ * Write a studio back as the server, bypassing the listing API's ownership
+ * guard. Checkout fulfilment and the moderation console both run as someone
+ * other than the artist, so they have to reach the seller document this way.
+ */
+async function saveListingStudio(
+  artistUid: string,
+  studio: ListingStudioDraft
+) {
+  if (isE2EAuthEnabled()) {
+    await updateE2EListingFlow(artistUid, studio);
+    return;
+  }
+
+  await getFirebaseAdminDb()
+    .collection("users")
+    .doc(artistUid)
+    .collection("seller")
+    .doc("listing_flow")
+    .set(studio, { merge: false });
 }
 
 /**
@@ -70,17 +98,34 @@ export async function setListingAvailability(
   item.updatedAt = new Date().toISOString();
   studio.updatedAt = item.updatedAt;
 
-  if (isE2EAuthEnabled()) {
-    await updateE2EListingFlow(artistUid, studio);
-    return item;
-  }
-
-  await getFirebaseAdminDb()
-    .collection("users")
-    .doc(artistUid)
-    .collection("seller")
-    .doc("listing_flow")
-    .set(studio, { merge: false });
+  await saveListingStudio(artistUid, studio);
 
   return item;
+}
+
+/**
+ * Record or clear an admin's moderation decision on one listing.
+ *
+ * Returns the whole studio so the caller can re-sync the public index from
+ * it without a second read: a hidden piece has to leave browse at once.
+ */
+export async function setListingModeration(
+  artistUid: string,
+  itemId: string,
+  moderation: ListingModeration | null
+): Promise<ListingStudioDraft | null> {
+  const studio = await loadListingStudio(artistUid);
+  const item = studio?.items.find((candidate) => candidate.id === itemId);
+
+  if (!studio || !item) {
+    return null;
+  }
+
+  item.moderation = moderation;
+  item.updatedAt = new Date().toISOString();
+  studio.updatedAt = item.updatedAt;
+
+  await saveListingStudio(artistUid, studio);
+
+  return studio;
 }

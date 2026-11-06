@@ -4,6 +4,7 @@ export type NotificationKind =
   | "email_changed"
   | "followed_artist_listed"
   | "followed_artist_price_drop"
+  | "listing_moderated"
   | "order_confirmed"
   | "order_delivered"
   | "order_shipped"
