@@ -39,8 +39,9 @@ afterEach(() => setEmailBindingForTesting(undefined));
 describe("sending email through Cloudflare", () => {
   test("is off outside a Worker, where there is no binding", async () => {
     expect(isEmailConfigured()).toBe(false);
-    await expect(sendEmail({ to: "a@example.com", subject: "Hi" })).rejects
-      .toBeInstanceOf(EmailNotConfiguredError);
+    await expect(
+      sendEmail({ to: "a@example.com", subject: "Hi" })
+    ).rejects.toBeInstanceOf(EmailNotConfiguredError);
   });
 
   test("always sends from support@ with the given display name", async () => {

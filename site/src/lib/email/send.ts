@@ -83,7 +83,8 @@ export async function sendEmail(email: OutgoingEmail) {
   const to = (Array.isArray(email.to) ? email.to : [email.to])
     .map((address) => address.trim())
     .filter(Boolean);
-  if (to.length === 0) throw new Error("An email needs at least one recipient.");
+  if (to.length === 0)
+    throw new Error("An email needs at least one recipient.");
 
   return binding.send({
     to,

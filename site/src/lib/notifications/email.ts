@@ -1,8 +1,4 @@
-import {
-  escapeHtml,
-  isEmailConfigured,
-  sendEmail,
-} from "@/lib/email/send";
+import { escapeHtml, isEmailConfigured, sendEmail } from "@/lib/email/send";
 import type { NotificationTemplate } from "@/lib/notifications/types";
 
 export function getSiteUrl() {
