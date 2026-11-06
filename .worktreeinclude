@@ -1,0 +1,3 @@
+# Gitignored files Claude Code copies into every new worktree, so the dev
+# server there has its Firebase, Stripe and Shippo settings.
+site/.env.local
