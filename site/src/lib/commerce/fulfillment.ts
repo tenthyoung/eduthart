@@ -3,6 +3,7 @@ import { setListingAvailability } from "@/lib/artists/listing-store";
 import { loadAccountProfile } from "@/lib/auth/profile-store";
 import { listCollectorsWhoSaved } from "@/lib/collectors/favorites";
 import { clearCart } from "@/lib/commerce/cart";
+import { issueCertificates } from "@/lib/commerce/certificates";
 import { purchaseShippingLabel } from "@/lib/commerce/labels";
 import {
   findOrderByCheckoutSession,
@@ -138,6 +139,17 @@ export async function fulfillCheckoutSession(session: FulfillableSession) {
   const shippedOrder = await purchaseShippingLabel(paidOrder, {
     signatureRequired: paidOrder.shipment.signatureRequired,
   });
+
+  // Like the label, a certificate that fails to issue must not undo a sale. The
+  // download route issues any that are missing the first time one is asked for.
+  try {
+    await issueCertificates(shippedOrder);
+  } catch (error) {
+    console.error(
+      `Could not issue certificates for order ${shippedOrder.number}`,
+      error
+    );
+  }
 
   await notifyEveryone(shippedOrder);
 

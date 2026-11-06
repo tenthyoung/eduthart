@@ -12,6 +12,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
  */
 export default defineConfig({
   plugins: [tsconfigPaths()],
+  // Lets a test render a server component, as Next.js's own compiler would.
+  esbuild: { jsx: "automatic" },
   test: {
     environment: "node",
     globals: false,

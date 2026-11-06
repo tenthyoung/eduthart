@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AccountShell } from "@/components/account/account-shell";
 import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
 import {
+  DownloadCertificateButton,
   DownloadInvoiceButton,
   OrderStatusBadge,
 } from "@/components/collectors/order-summary";
@@ -138,6 +139,14 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
                   <p className="mt-1 text-sm text-muted-foreground">
                     by {order.sellerName}
                   </p>
+                  {order.status === "paid" ? (
+                    <div className="mt-3">
+                      <DownloadCertificateButton
+                        itemId={item.itemId}
+                        orderId={order.id}
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <p className="shrink-0 font-semibold">
                   {formatMinorUnits(item.unitAmountMinor, order.currency)}

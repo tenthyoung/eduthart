@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2 } from "lucide-react";
+import { Award, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -84,6 +84,75 @@ export function DownloadInvoiceButton({ order }: { order: Order }) {
     >
       {downloading ? <Loader2 className="animate-spin" /> : <Download />}
       {downloading ? "Preparing..." : "Download invoice"}
+    </Button>
+  );
+}
+
+/**
+ * Download the certificate of authenticity for one original in an order.
+ *
+ * Fetched with the bearer token for the same reason as the invoice.
+ */
+export function DownloadCertificateButton({
+  itemId,
+  orderId,
+}: {
+  itemId: string;
+  orderId: string;
+}) {
+  const { user } = useAuth();
+  const [downloading, setDownloading] = useState(false);
+
+  const download = async () => {
+    if (!user) {
+      return;
+    }
+
+    setDownloading(true);
+
+    try {
+      const response = await fetch(
+        `/api/commerce/orders/${orderId}/certificate/${itemId}`,
+        { headers: { authorization: `Bearer ${await user.getIdToken()}` } }
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to download that certificate.");
+      }
+
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const fileName =
+        /filename="([^"]+)"/.exec(disposition)?.[1] ??
+        "eduthart-certificate.html";
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = url;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      toast.error(
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Unable to download that certificate."
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <Button
+      disabled={downloading}
+      onClick={() => void download()}
+      size="sm"
+      variant="outline"
+    >
+      {downloading ? <Loader2 className="animate-spin" /> : <Award />}
+      {downloading ? "Preparing..." : "Certificate of authenticity"}
     </Button>
   );
 }
