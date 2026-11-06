@@ -17,45 +17,53 @@ export default function PrivacyPolicy() {
               1. Information We Collect
             </h2>
             <p className="mb-4">
-              Our guiding principle is to collect what we need to run EduthArt,
-              support users, improve the product, prevent abuse, and keep the
-              service secure.
+              Our guiding principle is to collect what we need to run the
+              marketplace, complete orders, support artists and collectors,
+              prevent abuse, and keep the service secure.
             </p>
             <h3 className="mb-3 text-xl font-bold">Account and profile data</h3>
             <p>
               When you create an account, we collect information such as your
               email address, sign-in method, authentication identifiers, and any
               profile information you choose to add, including a username,
-              display name, biography, or avatar.
+              display name, biography, or avatar. If you apply to sell on
+              EduthArt, we also collect what you tell us in that application.
             </p>
-            <h3 className="mb-3 text-xl font-bold">Study content and files</h3>
+            <h3 className="mb-3 text-xl font-bold">
+              Listings and artwork files
+            </h3>
             <p>
-              We store the content you create or upload in EduthArt, including
-              decks, cards, notes, folders, review history, learning progress,
-              profile images, and attached media such as images or audio.
+              We store the listings artists create, including artwork titles,
+              descriptions, statements, medium, dimensions, edition and pricing
+              details, AI and copyright declarations, shipping settings, the
+              address a work ships from, and uploaded media such as artwork
+              photographs, signature images, and video.
+            </p>
+            <h3 className="mb-3 text-xl font-bold">Collector activity</h3>
+            <p>
+              If you browse as a collector, we store the artworks you save, the
+              collections you build, the artists you follow, the works you
+              compare or have recently viewed, your cart, and the delivery
+              addresses you choose to keep on your account.
             </p>
             <h3 className="mb-3 text-xl font-bold">Public content</h3>
             <p>
-              If you choose to publish a deck or folder, or post a rating or
-              comment, that content may become visible to other users and
-              visitors together with profile details you have made public.
+              If you publish a listing or an artist profile, or share a
+              collection by link, that content may become visible to other users
+              and visitors together with profile details you have made public.
             </p>
             <h3 className="mb-3 text-xl font-bold">
-              Billing and subscription data
+              Orders, payments, and shipping
             </h3>
             <p>
-              If you use a paid plan, we collect subscription and billing
-              metadata such as your plan, purchase status, renewal dates,
-              receipts, and store or provider customer identifiers. Payment card
-              details are handled by the relevant app store or payment processor
-              rather than stored directly by EduthArt.
-            </p>
-            <h3 className="mb-3 text-xl font-bold">AI interactions</h3>
-            <p>
-              If you use AI-powered features, we process the prompts,
-              instructions, uploaded source material, generated outputs, model
-              selection, and usage metadata needed to provide those features and
-              apply usage limits or cost controls.
+              When you buy a work, we keep a record of the order, including the
+              artwork, price, shipping rate, delivery address, invoice, payment
+              status, and shipment tracking. Payment card details are handled by
+              our payment processor rather than stored directly by EduthArt; if
+              you save a card for later, we keep only the processor&apos;s
+              reference to it. For each original sold we also issue a
+              certificate of authenticity, whose public verification page shows
+              the work and the artist but nothing about the buyer.
             </p>
             <h3 className="mb-3 text-xl font-bold">
               Device, log, and usage data
@@ -84,22 +92,22 @@ export default function PrivacyPolicy() {
             <ul className="list-disc pl-6 space-y-2">
               <li>Create, authenticate, and secure accounts.</li>
               <li>
-                Provide study tools, syncing, public publishing, and AI
-                features.
+                Show listings and artist profiles, and let collectors save,
+                collect, and follow what interests them.
               </li>
               <li>
-                Process subscriptions, receipts, refunds, and billing support.
+                Process orders, calculate shipping, issue certificates of
+                authenticity, pay artists, and provide billing support.
               </li>
               <li>
-                Detect abuse, investigate moderation issues, and protect the
-                service.
+                Detect abuse, investigate reports, and protect the service.
               </li>
               <li>
                 Respond to support requests and improve product reliability.
               </li>
               <li>
-                Send service-related notices and, if you opt in, marketing
-                updates.
+                Send service-related notices and, if you opt in, the collector
+                newsletter.
               </li>
             </ul>
           </section>
@@ -116,18 +124,21 @@ export default function PrivacyPolicy() {
             <ul className="list-disc pl-6 space-y-2">
               <li>
                 Service providers that help with hosting, storage,
-                authentication, analytics, AI processing, billing, email, or
-                support workflows.
+                authentication, payment processing, shipping rates, labels and
+                tracking, email, or support workflows.
               </li>
               <li>
-                Public information you intentionally publish, such as public
-                decks, folders, ratings, comments, usernames, display names, or
-                profile images.
+                The artist whose work you order, who receives what they need to
+                fulfil it, such as your name and delivery address.
               </li>
               <li>
-                Internal review of account or content information when needed to
-                investigate abuse, fraud, moderation reports, or security
-                incidents.
+                Public information you intentionally publish, such as listings,
+                artist profiles, shared collections, usernames, display names,
+                or profile images.
+              </li>
+              <li>
+                Internal review of account or listing information when needed to
+                investigate abuse, fraud, reports, or security incidents.
               </li>
               <li>
                 Legal compliance, lawful process, emergency requests, or a
@@ -144,7 +155,7 @@ export default function PrivacyPolicy() {
               EduthArt may use cookies, local storage, and similar technologies
               for sign-in, session continuity, preference storage, security, and
               core product functionality. If you disable these technologies,
-              parts of the website or web app may not function correctly.
+              parts of the website may not function correctly.
             </p>
           </section>
 
@@ -154,8 +165,10 @@ export default function PrivacyPolicy() {
               We keep information for as long as needed to provide the service,
               maintain legitimate business records, investigate abuse, resolve
               disputes, enforce our agreements, and meet legal obligations.
-              Retention periods vary based on the type of information and the
-              reason it was collected.
+              Order records and certificates of authenticity are kept after a
+              sale so that both sides have a record of it. Retention periods
+              otherwise vary based on the type of information and the reason it
+              was collected.
             </p>
           </section>
 
@@ -163,13 +176,21 @@ export default function PrivacyPolicy() {
             <h2 className="mb-4 text-2xl font-bold">6. Your Choices</h2>
             <ul className="list-disc pl-6 space-y-2">
               <li>
-                You can update certain account and profile details in the app.
+                You can update certain account and profile details in your
+                account settings.
               </li>
               <li>
                 You can delete your account using the account settings flow.
               </li>
-              <li>You can choose whether to publish study content publicly.</li>
-              <li>You can opt out of non-essential marketing emails.</li>
+              <li>
+                Artists can choose whether each listing is public, unlisted, or
+                private, and collectors can choose whether to share a
+                collection.
+              </li>
+              <li>
+                You can choose which order, sale, and activity emails you
+                receive, and opt out of the newsletter at any time.
+              </li>
               <li>You can contact us with privacy questions or requests.</li>
             </ul>
           </section>

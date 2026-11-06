@@ -12,8 +12,8 @@ export default function TermsOfService() {
             <h2 className="mb-4 text-2xl font-bold">1. Scope and Acceptance</h2>
             <p>
               These Terms govern your access to and use of the EduthArt website,
-              applications, study tools, content publishing features, AI-powered
-              workflows, and related services.
+              marketplace, artist listing tools, collector accounts, checkout,
+              and related services.
             </p>
             <p>
               By creating an account, accessing, or using EduthArt, you agree to
@@ -42,56 +42,74 @@ export default function TermsOfService() {
               3. What EduthArt Provides
             </h2>
             <p>
-              EduthArt is a learning platform designed to help users create,
-              organize, study, publish, and review educational material using
-              spaced repetition, syncing, and AI-assisted study tools.
+              EduthArt is an online marketplace where artists list original work
+              and collectors buy it. We host listings and artist profiles, run
+              checkout, arrange shipping, issue a certificate of authenticity
+              for each original sold, and pay artists their share of each sale.
+              Artists sell through EduthArt once their application to join is
+              accepted.
             </p>
           </section>
 
           <section>
             <h2 className="mb-4 text-2xl font-bold">
-              4. Subscriptions, Billing, and Refunds
+              4. Purchases, Payments, and Fees
             </h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Certain features require a paid subscription.</li>
               <li>
-                Pricing, plan features, and usage limits may change over time
-                with reasonable notice.
+                Artists set the price of their work. Shipping is calculated at
+                checkout from the artist&apos;s location and the buyer&apos;s
+                delivery address, and shown before you pay.
               </li>
               <li>
-                Subscriptions purchased through Apple or Google are billed and
-                renewed by those platforms under their own billing rules.
+                Payment is taken through our payment processor on a secure
+                checkout page. An order is confirmed only once the processor
+                tells us the payment succeeded.
               </li>
               <li>
-                You can manage or cancel store-based subscriptions through the
-                applicable app store account settings.
+                Each original is one of a kind. It is held for you briefly while
+                you check out, and the hold is released if the checkout is
+                abandoned.
               </li>
               <li>
-                EduthArt may offer an in-app refund request flow, but final
-                billing outcomes can still depend on the payment provider or app
-                store.
+                EduthArt keeps a commission on each sale, disclosed to artists
+                when they list, and pays the artist the remainder.
+              </li>
+              <li>
+                Questions about an order, a cancellation, or a refund go to{" "}
+                <a
+                  href="mailto:support@eduthart.com"
+                  className="text-primary hover:underline"
+                >
+                  support@eduthart.com
+                </a>
+                . Requests are reviewed case by case, and the outcome can depend
+                on the payment processor and on whether the work has shipped.
               </li>
             </ul>
           </section>
 
           <section>
             <h2 className="mb-4 text-2xl font-bold">
-              5. User Content and Public Publishing
+              5. Listings, Profiles, and Other Content
             </h2>
             <p className="mb-4">
-              You retain ownership of the study content you create, subject to
-              the rights needed for us to host, process, store, display, sync,
-              and moderate that content as part of the service.
+              Artists retain copyright in the work they list, subject to the
+              rights needed for us to host, process, store, display, and promote
+              listings and profiles as part of the service, and to moderate
+              them.
             </p>
             <p className="mb-4">
-              If you publish a deck, folder, comment, or rating publicly, you
-              understand that other users may be able to view that content and
-              associated public profile details.
+              When you list a work you confirm that you created it or hold the
+              rights to sell it, that it contains no material you lack
+              permission to use, that the listing is accurate, and that your AI
+              disclosure is truthful. Collectors buy in reliance on those
+              statements.
             </p>
             <p>
-              You are responsible for making sure that any content you upload,
-              generate, or publish does not violate the law, the rights of
-              others, or these Terms.
+              If you publish a listing or profile, or share a collection by
+              link, you understand that other users and visitors may be able to
+              view that content and associated public profile details.
             </p>
           </section>
 
@@ -102,7 +120,10 @@ export default function TermsOfService() {
             <p className="mb-4">You agree not to:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>Use the service unlawfully or in a way that harms others.</li>
-              <li>Upload content you do not have permission to use.</li>
+              <li>
+                List work you do not have the right to sell, or misrepresent a
+                work&apos;s authorship, edition, condition, or authenticity.
+              </li>
               <li>Harass, impersonate, threaten, or abuse other users.</li>
               <li>
                 Attempt to scrape, disrupt, probe, reverse engineer, or bypass
@@ -114,24 +135,31 @@ export default function TermsOfService() {
               </li>
             </ul>
             <p className="mt-4">
-              We may investigate reports, remove or restrict content, disable
-              publishing, suspend accounts, or terminate access when we believe
-              it is necessary to protect users, enforce these Terms, or comply
-              with the law.
+              We may investigate reports, take down or remove listings, disable
+              selling, suspend accounts, or terminate access when we believe it
+              is necessary to protect users, enforce these Terms, or comply with
+              the law. Our{" "}
+              <Link
+                href="/legal/content-policy"
+                className="text-primary hover:underline"
+              >
+                Content Policy
+              </Link>{" "}
+              describes these standards in more detail.
             </p>
           </section>
 
           <section>
-            <h2 className="mb-4 text-2xl font-bold">7. AI Features</h2>
+            <h2 className="mb-4 text-2xl font-bold">7. AI Disclosure</h2>
             <p className="mb-4">
-              EduthArt may offer AI-assisted tools for creating, revising, or
-              studying content. AI output can be inaccurate, incomplete,
-              misleading, or unsuitable for your intended use.
+              When listing a work, the artist states whether it was made
+              entirely with AI tools, with AI assistance, or without AI. The
+              artist is responsible for that disclosure being accurate.
             </p>
             <p>
-              You are responsible for reviewing AI-generated or AI-assisted
-              output before relying on it, sharing it, or publishing it
-              publicly.
+              A listing that misstates how a work was made may be taken down,
+              and repeated misstatements may lead to selling being disabled for
+              the account.
             </p>
           </section>
 
@@ -146,11 +174,13 @@ export default function TermsOfService() {
             <p>
               These Terms do not grant you ownership of our software, branding,
               or other proprietary materials except for the limited right to use
-              the service under these Terms.
+              the service under these Terms. Buying a work transfers the
+              physical piece to you; it does not transfer the artist&apos;s
+              copyright unless the artist says otherwise.
             </p>
             <p className="mt-4">
-              If you believe public EduthArt content infringes your copyright,
-              you may submit a notice through our{" "}
+              If you believe an artwork listed on EduthArt infringes your
+              copyright, you may submit a notice through our{" "}
               <Link href="/legal/dmca" className="text-primary hover:underline">
                 DMCA policy and reporting page
               </Link>
@@ -162,9 +192,10 @@ export default function TermsOfService() {
             <h2 className="mb-4 text-2xl font-bold">9. Third-Party Services</h2>
             <p>
               EduthArt relies on third-party tools and infrastructure, including
-              authentication, hosting, AI, billing, and app-store platforms. We
-              are not responsible for third-party services or external sites
-              that operate under their own terms and policies.
+              authentication, hosting, payment processing, shipping carriers,
+              and email delivery. We are not responsible for third-party
+              services or external sites that operate under their own terms and
+              policies.
             </p>
           </section>
 
@@ -175,9 +206,10 @@ export default function TermsOfService() {
             <p>
               The service is provided on an &quot;as is&quot; and &quot;as
               available&quot; basis without warranties of any kind, whether
-              express or implied. We do not guarantee uninterrupted
-              availability, error-free operation, or any specific academic,
-              professional, or personal learning outcome.
+              express or implied. We do not guarantee uninterrupted availability
+              or error-free operation. Listings are written by the artists who
+              sell through EduthArt, and we do not guarantee the accuracy of a
+              listing or the future value of any work.
             </p>
           </section>
 
