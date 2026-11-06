@@ -9,28 +9,8 @@ import {
 } from "@/lib/email/send";
 import { sendNotificationEmail } from "@/lib/notifications/email";
 
+import { fakeEmailBinding } from "./support/email";
 import { callRoute, type RouteHandler } from "./support/routes";
-
-type SentMessage = Parameters<
-  NonNullable<Parameters<typeof setEmailBindingForTesting>[0]>["send"]
->[0];
-
-/** A stand-in for the Cloudflare send_email binding that records each send. */
-function fakeBinding(options: { fail?: boolean } = {}) {
-  const sent: SentMessage[] = [];
-  setEmailBindingForTesting({
-    async send(message) {
-      if (options.fail) {
-        throw Object.assign(new Error("Daily limit reached"), {
-          code: "E_DAILY_LIMIT_EXCEEDED",
-        });
-      }
-      sent.push(message);
-      return { messageId: `msg-${sent.length}` };
-    },
-  });
-  return sent;
-}
 
 const contact = contactRoute as unknown as RouteHandler;
 
@@ -45,7 +25,7 @@ describe("sending email through Cloudflare", () => {
   });
 
   test("always sends from support@ with the given display name", async () => {
-    const sent = fakeBinding();
+    const sent = fakeEmailBinding();
 
     const result = await sendEmail({
       fromName: "EduthArt Support",
@@ -63,7 +43,7 @@ describe("sending email through Cloudflare", () => {
   });
 
   test("a notification email is skipped, not thrown, when sending fails", async () => {
-    fakeBinding({ fail: true });
+    fakeEmailBinding({ fail: true });
 
     await expect(
       sendNotificationEmail("buyer@example.com", {
@@ -84,7 +64,7 @@ describe("contact form", () => {
   };
 
   test("emails the team with a reply-to of the person who wrote", async () => {
-    const sent = fakeBinding();
+    const sent = fakeEmailBinding();
 
     const { status } = await callRoute(contact, { body: message });
 
@@ -102,7 +82,7 @@ describe("contact form", () => {
   });
 
   test("reports a failure when the email can't be sent", async () => {
-    fakeBinding({ fail: true });
+    fakeEmailBinding({ fail: true });
 
     const { status, body } = await callRoute<{ error: string }>(contact, {
       body: message,
