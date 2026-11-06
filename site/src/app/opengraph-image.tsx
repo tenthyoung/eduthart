@@ -1,19 +1,23 @@
 import { ImageResponse } from "next/og";
 
+import { BRAND_MARK_ASPECT, brandMarkDataUrl } from "@/lib/brand/mark-svg";
+
 export const alt = "EduthArt - Buy Original Art Online";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
- * Fetches Gloock (the wordmark face) from Google Fonts at build time. Satori
- * needs the raw font file, and the site's `next/font` copy isn't reachable from
- * here. Returns null if the fetch fails so the card still renders, in a serif
- * fallback, instead of breaking the build.
+ * Fetches a weight of Inter Tight (the wordmark face) from Google Fonts at
+ * build time. Satori needs the raw font file, and the site's `next/font` copy
+ * isn't reachable from here. Returns null if the fetch fails so the card still
+ * renders, in a sans fallback, instead of breaking the build.
  */
-async function loadGloock(): Promise<ArrayBuffer | null> {
+async function loadInterTight(weight: 500 | 700): Promise<ArrayBuffer | null> {
   try {
     const css = await (
-      await fetch("https://fonts.googleapis.com/css2?family=Gloock")
+      await fetch(
+        `https://fonts.googleapis.com/css2?family=Inter+Tight:wght@${weight}`
+      )
     ).text();
     const url = css.match(
       /src: url\((.+?)\) format\('(opentype|truetype)'\)/
@@ -29,21 +33,28 @@ async function loadGloock(): Promise<ArrayBuffer | null> {
 /**
  * The link-preview card for the whole site: shown by Messenger, iMessage,
  * Slack, LinkedIn and X whenever a page doesn't set its own image. White
- * ground, ink wordmark and brass bars to match the redesign. The bar geometry
- * mirrors components/brand-mark.tsx (the logo's source of truth), scaled up.
+ * ground, the ink brushstroke E and the lowercase wordmark, as in the header.
  */
 export default async function OpengraphImage() {
-  const font = await loadGloock();
-
-  const bar = (top: number, width: number, from: string, to: string) => ({
-    position: "absolute" as const,
-    left: 0,
-    top,
-    width,
-    height: 46,
-    borderRadius: 23,
-    background: `linear-gradient(135deg, ${from}, ${to})`,
-  });
+  const [bold, medium] = await Promise.all([
+    loadInterTight(700),
+    loadInterTight(500),
+  ]);
+  const fonts = [
+    bold && { name: "Inter Tight", data: bold, style: "normal", weight: 700 },
+    medium && {
+      name: "Inter Tight",
+      data: medium,
+      style: "normal",
+      weight: 500,
+    },
+  ].filter(Boolean) as {
+    name: string;
+    data: ArrayBuffer;
+    style: "normal";
+    weight: 500 | 700;
+  }[];
+  const markHeight = 168;
 
   return new ImageResponse(
     <div
@@ -56,46 +67,44 @@ export default async function OpengraphImage() {
         padding: "0 96px",
         background: "#ffffff",
         color: "#1f1f1f",
-        fontFamily: font ? "Gloock" : "serif",
+        fontFamily: fonts.length ? "Inter Tight" : "sans-serif",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <img
+          alt=""
+          height={markHeight}
+          src={brandMarkDataUrl("#1f1f1f")}
+          style={{ marginRight: 36 }}
+          width={Math.round(markHeight * BRAND_MARK_ASPECT)}
+        />
         <div
           style={{
             display: "flex",
-            position: "relative",
-            width: 190,
-            height: 190,
-            marginRight: 48,
+            fontSize: 150,
+            fontWeight: 700,
+            letterSpacing: -6,
+            lineHeight: 1,
           }}
         >
-          <div style={bar(18, 190, "#e3c9a2", "#d4af7c")} />
-          <div style={bar(72, 136, "#dcbc8f", "#c9a069")} />
-          <div style={bar(126, 190, "#d4af7c", "#b08a52")} />
-        </div>
-        <div style={{ display: "flex", fontSize: 150, lineHeight: 1 }}>
-          EduthArt
+          eduthart
         </div>
       </div>
       <div
         style={{
           display: "flex",
           marginTop: 56,
-          width: 120,
-          height: 4,
-          background: "#85622f",
+          width: "100%",
+          height: 2,
+          background: "#1f1f1f",
         }}
       />
       <div
         style={{
           display: "flex",
-          marginTop: 32,
+          marginTop: 28,
           fontSize: 38,
+          fontWeight: 500,
           lineHeight: 1.3,
           color: "#4a4a4a",
         }}
@@ -103,11 +112,6 @@ export default async function OpengraphImage() {
         Original art, straight from the artists who make it.
       </div>
     </div>,
-    {
-      ...size,
-      fonts: font
-        ? [{ name: "Gloock", data: font, style: "normal", weight: 400 }]
-        : undefined,
-    }
+    { ...size, fonts: fonts.length ? fonts : undefined }
   );
 }

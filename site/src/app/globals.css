@@ -68,9 +68,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-inter), "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  /* Gloock is the display serif shared with Hendeca Labs: the wordmark and the
-     odd accent word, never body copy or whole headings. */
+    var(--font-inter-tight), "Inter Tight", "Inter", "Segoe UI", ui-sans-serif,
+    system-ui, sans-serif;
+  /* Gloock is the display serif shared with Hendeca Labs: the odd accent word,
+     never body copy or whole headings. The wordmark is now the sans. */
   --font-serif: var(--font-gloock), ui-serif, Georgia, serif;
   --font-display: var(--font-gloock), ui-serif, Georgia, serif;
   --color-brass: var(--brass);
@@ -116,7 +117,8 @@
 }
 
 :root {
-  --font-inter: "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-inter-tight:
+    "Inter Tight", "Inter", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-gloock: ui-serif, Georgia, serif;
   --font-jetbrains-mono:
     "SF Mono", "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular,

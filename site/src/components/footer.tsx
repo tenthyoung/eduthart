@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand-mark";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { SocialIcon } from "@/components/ui/social-icon";
 import { SOCIAL_MEDIA_LINKS } from "@/constants/social-media.constants";
@@ -77,12 +78,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 py-14 lg:grid-cols-[1.1fr_repeat(3,minmax(0,0.6fr))_1.4fr] lg:gap-10 lg:py-16">
           <div className="space-y-5">
-            <Link
-              href="/"
-              className="font-display text-[1.75rem] leading-none text-foreground"
-            >
-              EduthArt
-            </Link>
+            <BrandLogo />
             <p className="max-w-xs text-sm leading-6 text-muted-foreground">
               Original art, bought straight from the people who make it.
             </p>

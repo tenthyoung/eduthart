@@ -1,54 +1,50 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+/** The mark's artwork, cropped tight to its three strokes. */
+export const BRAND_MARK_SRC = "/brand/eduthart-mark.svg";
 
 /**
  * The EduthArt brand mark — the single source of truth for the logo icon.
  * Every surface (navbar, footer, decorative art) renders this component, so
  * changing the design here changes it everywhere.
  *
- * Current design: the three-bars "E" in a diagonal gold gradient running from
- * the theme's light gold through the brand gold to a deeper tone, so it reads
- * on both the light and dark backgrounds. The gradient id is fixed, which
- * stays harmless when the mark renders more than once per page because every
- * instance defines the identical gradient.
+ * Current design: the brushstroke E, three pulls of one loaded brush. The SVG
+ * is used as a mask over `currentColor`, so the mark takes the text colour it
+ * sits in and follows light and dark mode without a second file. Size it with
+ * a height class; the width follows from the artwork's proportions.
  */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
+    <span
       aria-hidden="true"
-      className={cn("h-9 w-auto", className)}
+      className={cn(
+        "inline-block aspect-[351/359] h-9 shrink-0 bg-current",
+        className
+      )}
+      style={{
+        mask: `url(${BRAND_MARK_SRC}) center / contain no-repeat`,
+        WebkitMask: `url(${BRAND_MARK_SRC}) center / contain no-repeat`,
+      }}
+    />
+  );
+}
+
+/** The mark beside the lowercase wordmark, linked home: the logo in the header and footer. */
+export function BrandLogo({ className }: { className?: string }) {
+  return (
+    <Link
+      aria-label="EduthArt home"
+      className={cn(
+        "inline-flex flex-shrink-0 items-center gap-2 text-foreground",
+        className
+      )}
+      href="/"
     >
-      <defs>
-        <linearGradient id="brand-mark-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--primary-light, #e3c9a2)" />
-          <stop offset="0.55" stopColor="var(--primary, #d4af7c)" />
-          <stop offset="1" stopColor="#b08a52" />
-        </linearGradient>
-      </defs>
-      <rect
-        x="14"
-        y="10"
-        width="36"
-        height="10"
-        rx="5"
-        fill="url(#brand-mark-gold)"
-      />
-      <rect
-        x="14"
-        y="27"
-        width="26"
-        height="10"
-        rx="5"
-        fill="url(#brand-mark-gold)"
-      />
-      <rect
-        x="14"
-        y="44"
-        width="36"
-        height="10"
-        rx="5"
-        fill="url(#brand-mark-gold)"
-      />
-    </svg>
+      <BrandMark className="h-8" />
+      <span className="text-[1.5rem] leading-none font-bold tracking-[-0.03em]">
+        eduthart
+      </span>
+    </Link>
   );
 }

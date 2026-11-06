@@ -6,17 +6,18 @@ import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provide
 import { SiteShell } from "@/components/site-shell";
 import { SITE_URL } from "@/lib/site-url";
 import type { Metadata } from "next";
-import { Gloock, Inter } from "next/font/google";
+import { Gloock, Inter_Tight } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const inter = Inter({
+// The site's one sans, from the wordmark down to the price labels.
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-inter-tight",
   display: "swap",
 });
 
-// The display serif shared with Hendeca Labs, for the wordmark and accent words.
+// The display serif shared with Hendeca Labs, kept for the odd accent word.
 const gloock = Gloock({
   subsets: ["latin"],
   variable: "--font-gloock",
@@ -46,7 +47,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${gloock.variable} antialiased`}>
+      <body className={`${interTight.variable} ${gloock.variable} antialiased`}>
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider defaultTheme="light">
