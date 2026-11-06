@@ -36,7 +36,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { siFacebook, siInstagram, siX, siYoutube } from "simple-icons";
+import { siInstagram, siYoutube } from "simple-icons";
 import { buildBrowseHref } from "@/lib/artists/artwork-search";
 import { isArtistCapableUsername, SHOP_CATEGORIES } from "@/lib/navigation";
 import {
@@ -99,12 +99,6 @@ export function Navbar() {
       href: SOCIAL_MEDIA_LINKS.INSTAGRAM,
       label: "Instagram",
     },
-    {
-      iconPath: siFacebook.path,
-      href: SOCIAL_MEDIA_LINKS.FACEBOOK,
-      label: "Facebook",
-    },
-    { iconPath: siX.path, href: SOCIAL_MEDIA_LINKS.X, label: "X" },
     {
       iconPath: siYoutube.path,
       href: SOCIAL_MEDIA_LINKS.YOUTUBE,

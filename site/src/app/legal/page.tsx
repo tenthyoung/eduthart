@@ -7,25 +7,25 @@ const policies = [
     title: "Terms of Service",
     href: "/legal/terms-of-service",
     description:
-      "How EduthArt accounts, subscriptions, public sharing, AI features, and platform rules work.",
+      "How EduthArt accounts, listings, purchases, fees, and platform rules work.",
   },
   {
     title: "Privacy Policy",
     href: "/legal/privacy-policy",
     description:
-      "What account, study, billing, AI, and support data we collect, how we use it, and the choices you have.",
+      "What account, listing, order, payment, and support data we collect, how we use it, and the choices you have.",
   },
   {
-    title: "Study Content Policy",
+    title: "Content Policy",
     href: "/legal/content-policy",
     description:
-      "Rules for public decks, comments, ratings, copyrighted material, abuse, and moderation enforcement.",
+      "Rules for what may be listed and shared on EduthArt, copyrighted material, abuse, and moderation enforcement.",
   },
   {
     title: "DMCA & Copyright",
     href: "/legal/dmca",
     description:
-      "How to report copyrighted material in public decks and submit a formal DMCA notice.",
+      "How to report an artwork that infringes your copyright and submit a formal DMCA notice.",
   },
   {
     title: "Refund & Cancellation Policy",

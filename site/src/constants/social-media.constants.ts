@@ -1,7 +1,10 @@
+/**
+ * Only accounts EduthArt actually runs. X pointed at the flashcard app's old
+ * account and Facebook at facebook.com itself (EDUTHA-116); add them back here,
+ * with an icon in the navbar and footer, once real pages exist.
+ */
 export const SOCIAL_MEDIA_LINKS = {
-  FACEBOOK: "https://www.facebook.com/",
   INSTAGRAM: "https://www.instagram.com/eduthart.app/",
-  X: "https://x.com/memdojoapp",
   LINKEDIN: "https://www.linkedin.com/company/eduthart/",
   YOUTUBE: "https://www.youtube.com/@eduthart",
 };

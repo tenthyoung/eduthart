@@ -9,7 +9,7 @@ export default function AccessibilityStatement() {
           <section>
             <p className="text-lg">
               EduthArt is actively working to make the website and app easier to
-              use for a broader range of learners, devices, and assistive
+              use for a broader range of people, devices, and assistive
               technologies.
             </p>
             <p>
