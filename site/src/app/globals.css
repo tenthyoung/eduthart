@@ -138,6 +138,8 @@
   --brass: #85622f;
   --highlight: #d4af7c;
   --highlight-foreground: #1f1f1f;
+  /* The logo's middle stroke: "Ink, gold middle". */
+  --mark-mid: #c9a35c;
   --secondary: #f4f3f0;
   --secondary-foreground: #1f1f1f;
   --muted: #f4f3f0;
@@ -176,6 +178,7 @@
   --brass: #d4af7c;
   --highlight: #d4af7c;
   --highlight-foreground: #161615;
+  --mark-mid: #d4af7c;
   --secondary: #262624;
   --secondary-foreground: #f6f5f2;
   --muted: #262624;

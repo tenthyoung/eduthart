@@ -1,12 +1,12 @@
 import { ImageResponse } from "next/og";
 
-import { BRAND_MARK_ASPECT, brandMarkDataUrl } from "@/lib/brand/mark-svg";
+import { BRAND_MARK_ASPECT, brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
 
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 
 /**
- * The favicon — the brushstroke E in ink on a rounded white square. The tile
+ * The favicon — the brushstroke E in ink, gold middle stroke, on a rounded white square. The tile
  * keeps the ink mark readable on dark browser chrome as well as light; the
  * mark itself is the same artwork components/brand-mark.tsx masks with.
  */
@@ -28,7 +28,7 @@ export default function Icon() {
       <img
         alt=""
         height={height}
-        src={brandMarkDataUrl("#1f1f1f")}
+        src={brandMarkTwoToneDataUrl()}
         width={Math.round(height * BRAND_MARK_ASPECT)}
       />
     </div>,

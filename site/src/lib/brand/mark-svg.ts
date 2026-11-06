@@ -13,8 +13,37 @@ export const BRAND_MARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="
 /** Width over height of the mark's artwork, cropped tight to its strokes. */
 export const BRAND_MARK_ASPECT = 351 / 359;
 
+/** The logo's colours: ink strokes with a gold middle stroke ("Ink, gold middle"). */
+export const BRAND_MARK_INK = "#1f1f1f";
+export const BRAND_MARK_GOLD = "#c9a35c";
+
+/**
+ * The band (in viewBox units) that holds only the middle stroke. Its edges sit
+ * in the gaps between strokes, as in components/brand-mark.tsx.
+ */
+const MIDDLE_BAND = { y: 184, height: 138 };
+
 /** The mark as a data URL in one colour, ready for an `<img>` inside ImageResponse. */
 export function brandMarkDataUrl(color: string) {
   const svg = BRAND_MARK_SVG.replaceAll("#000", color);
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
+/**
+ * The mark with its middle stroke in a second colour: the whole mark drawn in
+ * `color`, then the middle band drawn again on top in `middle`.
+ */
+export function brandMarkTwoToneDataUrl(
+  color: string = BRAND_MARK_INK,
+  middle: string = BRAND_MARK_GOLD
+) {
+  const open = BRAND_MARK_SVG.slice(0, BRAND_MARK_SVG.indexOf(">") + 1);
+  const body = BRAND_MARK_SVG.slice(open.length, BRAND_MARK_SVG.lastIndexOf("</svg>"));
+  const svg =
+    open +
+    `<defs><clipPath id="mid"><rect x="0" y="${MIDDLE_BAND.y}" width="1000" height="${MIDDLE_BAND.height}"/></clipPath></defs>` +
+    `<g>${body.replaceAll("#000", color)}</g>` +
+    `<g clip-path="url(#mid)">${body.replaceAll("#000", middle)}</g>` +
+    "</svg>";
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }

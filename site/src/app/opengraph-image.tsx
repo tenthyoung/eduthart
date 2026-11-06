@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-import { BRAND_MARK_ASPECT, brandMarkDataUrl } from "@/lib/brand/mark-svg";
+import { BRAND_MARK_ASPECT, brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
 
 export const alt = "EduthArt - Buy Original Art Online";
 export const size = { width: 1200, height: 630 };
@@ -74,7 +74,7 @@ export default async function OpengraphImage() {
         <img
           alt=""
           height={markHeight}
-          src={brandMarkDataUrl("#1f1f1f")}
+          src={brandMarkTwoToneDataUrl()}
           style={{ marginRight: 36 }}
           width={Math.round(markHeight * BRAND_MARK_ASPECT)}
         />
