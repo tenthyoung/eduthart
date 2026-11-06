@@ -1,12 +1,9 @@
-import { SUPPORT_EMAIL } from "@/constants/contact.constants";
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
+
+import { escapeHtml, getTeamInbox, sendEmail } from "@/lib/email/send";
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Resend at runtime to avoid build-time errors
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     const body = await request.json();
     const { name, email, message } = body;
 
@@ -27,110 +24,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send email using Resend API
-    const data = await resend.emails.send({
-      from:
-        process.env.RESEND_FROM_EMAIL || `EduthArt Support <${SUPPORT_EMAIL}>`,
-      to: [process.env.CONTACT_EMAIL || SUPPORT_EMAIL],
+    const sentOn = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const data = await sendEmail({
+      fromName: "EduthArt Support",
+      to: getTeamInbox(),
+      replyTo: { email, name },
       subject: `New EduthArt support message from ${name}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Contact Form Submission</title>
-        </head>
-        <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <!-- Header -->
-            <div style="background: linear-gradient(135deg, #6ee44f 0%, #4ade80 100%); padding: 30px; text-align: center;">
-              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">EduthArt</h1>
-              <p style="margin: 10px 0 0 0; color: white; opacity: 0.9;">New support message</p>
-            </div>
-            
-            <!-- Content -->
-            <div style="padding: 30px;">
-              <!-- Contact Details -->
-              <div style="margin-bottom: 30px;">
-                <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px; border-bottom: 2px solid #6ee44f; padding-bottom: 10px;">Contact Information</h2>
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Name:</strong></td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${name}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><a href="mailto:${email}" style="color: #6ee44f; text-decoration: none;">${email}</a></td>
-                  </tr>
-                </table>
-              </div>
-
-              <!-- Message -->
-              <div style="margin-bottom: 30px;">
-                <h2 style="margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 2px solid #6ee44f; padding-bottom: 10px;">Message</h2>
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; border-left: 4px solid #6ee44f;">
-                  <p style="margin: 0; line-height: 1.6; color: #555; white-space: pre-wrap;">${message}</p>
-                </div>
-              </div>
-
-              <!-- Footer -->
-              <div style="text-align: center; padding-top: 20px; border-top: 1px solid #eee;">
-                <p style="margin: 0; color: #999; font-size: 14px;">
-                  This message was sent from the EduthArt support form.<br>
-                  <span style="color: #6ee44f;">🚁</span> Sent on ${new Date().toLocaleDateString(
-                    "en-US",
-                    {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-      text: `
-MEMDOJO - New Support Message
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CONTACT INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      html: `<!DOCTYPE html>
+<html>
+<body style="background:#f6f3ef;margin:0;padding:32px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+  <div style="background:#ffffff;border-radius:20px;margin:0 auto;max-width:560px;overflow:hidden">
+    <div style="border-bottom:1px solid #efe9e2;padding:26px 32px">
+      <span style="color:#2f241c;font-size:19px;font-weight:700;letter-spacing:0.02em">EduthArt</span>
+      <span style="color:#8d8178;font-size:14px;margin-left:8px">New support message</span>
+    </div>
+    <div style="padding:32px">
+      <p style="color:#2f241c;font-size:15px;line-height:1.6;margin:0 0 4px"><strong>${escapeHtml(name)}</strong></p>
+      <p style="margin:0 0 24px"><a href="mailto:${escapeHtml(email)}" style="color:#8a6a2f;font-size:15px">${escapeHtml(email)}</a></p>
+      <p style="color:#5b5048;font-size:15px;line-height:1.7;margin:0;white-space:pre-wrap">${escapeHtml(message)}</p>
+    </div>
+    <div style="border-top:1px solid #efe9e2;color:#8d8178;font-size:12px;line-height:1.6;padding:20px 32px">
+      Sent from the EduthArt support form on ${escapeHtml(sentOn)}. Reply to this email to answer ${escapeHtml(name)} directly.
+    </div>
+  </div>
+</body>
+</html>`,
+      text: `New EduthArt support message
 
 Name: ${name}
 Email: ${email}
 
-MESSAGE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 ${message}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This message was sent from the EduthArt support form.
-Sent on: ${new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
-      `,
+Sent from the EduthArt support form on ${sentOn}.
+Reply to this email to answer ${name} directly.
+`,
     });
 
     return NextResponse.json(
       {
         success: true,
         message: "Message sent successfully!",
-        messageId: data.data?.id,
+        messageId: data.messageId,
       },
       { status: 200 }
     );
@@ -140,7 +83,6 @@ Sent on: ${new Date().toLocaleDateString("en-US", {
     return NextResponse.json(
       {
         error: "Failed to send message. Please try again later.",
-        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

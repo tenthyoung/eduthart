@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { z } from "zod";
 
-import { SUPPORT_EMAIL } from "@/constants/contact.constants";
+import { getTeamInbox, sendEmail } from "@/lib/email/send";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 import { createExternalDeckReports, parsePublicDeckIds } from "@/lib/reporting";
 
@@ -86,13 +85,15 @@ export async function POST(request: NextRequest) {
       submissionId: submissionRef.id,
     });
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from:
-        process.env.RESEND_FROM_EMAIL || `EduthArt Support <${SUPPORT_EMAIL}>`,
-      to: [process.env.CONTACT_EMAIL || SUPPORT_EMAIL],
-      subject: `EduthArt DMCA notice (${urls.length} URL${urls.length === 1 ? "" : "s"})`,
-      text: `New EduthArt DMCA notice
+    // The submission is already saved, so a failed email is logged rather than
+    // failing the request: retrying would file the same notice twice.
+    try {
+      await sendEmail({
+        fromName: "EduthArt Support",
+        to: getTeamInbox(),
+        replyTo: body.email,
+        subject: `EduthArt DMCA notice (${urls.length} URL${urls.length === 1 ? "" : "s"})`,
+        text: `New EduthArt DMCA notice
 
 Claimant: ${body.fullName}
 Email: ${body.email}
@@ -110,7 +111,10 @@ ${body.copyrightedWorkDescription}
 Explanation:
 ${body.explanation}
 `,
-    });
+      });
+    } catch (emailError) {
+      console.error("Unable to email the team about a submission", emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

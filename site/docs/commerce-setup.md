@@ -90,13 +90,19 @@ stays pending.
 - The buyer is told when the parcel first enters transit and when it is
   delivered. Both are deduped, so Shippo retries do not send twice.
 
-## Resend
+## Email (Cloudflare Email Service)
 
-Notification emails go out through Resend, which the contact form already uses.
+Notification emails, the contact form and the DMCA and report forms all send
+through `src/lib/email/send.ts`, which uses Cloudflare Email Service via the
+`EMAIL` binding in `wrangler.jsonc`. Mail goes out as `support@eduthart.com`.
 
-- `RESEND_API_KEY` enables sending. Without it, notifications are still written
-  to the in-app centre and only the email is skipped.
-- `RESEND_FROM_EMAIL` sets the sender.
+- There is no API key. eduthart.com is onboarded under Compute → Email Service
+  → Email Sending in the Cloudflare dashboard, and that needs the Workers Paid
+  plan (3,000 emails a month included, then $0.35 per 1,000).
+- Under plain `next dev` there is no binding, so notifications are still written
+  to the in-app centre and only the email is skipped. `wrangler dev` (or
+  `npm run preview`) uses the real binding and sends real mail.
+- `CONTACT_EMAIL` sets where contact-form messages and reports are delivered.
 - `NEXT_PUBLIC_SITE_URL` is used for the absolute links inside emails and
   invoices, so set it per environment.
 
