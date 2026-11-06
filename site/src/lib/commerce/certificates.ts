@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 
 import type { Order, OrderLineItem } from "@/lib/commerce/orders";
-import { getSiteUrl } from "@/lib/notifications/email";
+import { SITE_URL } from "@/lib/site-url";
 import {
   getRootDocument,
   listRootDocuments,
@@ -229,7 +229,7 @@ export async function findPublicCertificateByCode(code: string) {
 }
 
 export function buildVerificationUrl(code: string) {
-  return `${getSiteUrl()}/verify/${code}`;
+  return `${SITE_URL}/verify/${code}`;
 }
 
 export function buildCertificateFileName(certificate: Certificate) {

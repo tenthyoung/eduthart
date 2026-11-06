@@ -152,6 +152,8 @@ describe("downloading a certificate", () => {
       expect(html).toContain("Harbour Light");
       expect(html).toContain("Marina Vale");
       expect(html).toContain("<svg");
+      // The printed link uses the canonical host, not one that redirects.
+      expect(html).toContain("www.eduthart.com/verify/");
     }
   });
 
