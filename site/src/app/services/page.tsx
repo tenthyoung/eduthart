@@ -47,7 +47,8 @@ export default function ServicesPage() {
       icon: Sparkles,
       title: "Acquisition Support",
       description:
-        "Receive practical guidance on available works, placement, framing, and the purchasing process.",
+        "Ask a curator to help you choose: share your budget, room and taste, and get a free shortlist of works.",
+      href: "/advisory",
       features: [
         "Availability guidance",
         "Placement recommendations",
@@ -120,10 +121,10 @@ export default function ServicesPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
-                <Link href="/pricing">Explore Membership</Link>
+                <Link href="/advisory">Help Me Choose</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link href="/about">Learn About EduthArt</Link>
+                <Link href="/pricing">Explore Membership</Link>
               </Button>
             </div>
           </MotionFade>
@@ -160,6 +161,11 @@ export default function ServicesPage() {
                         </li>
                       ))}
                     </ul>
+                    {"href" in service && service.href ? (
+                      <Button variant="outline" asChild>
+                        <Link href={service.href}>Ask a curator</Link>
+                      </Button>
+                    ) : null}
                   </div>
                 </MotionFade>
               );

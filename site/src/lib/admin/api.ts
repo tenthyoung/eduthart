@@ -1,6 +1,11 @@
 "use client";
 
 import type {
+  AdvisoryInboxItem,
+  AdvisoryRequest,
+} from "@/lib/advisory/requests";
+
+import type {
   AdminAccess,
   AdminRoleRecord,
   AdminUserDetail,
@@ -178,6 +183,35 @@ export async function updateRefundRequestStatus(
   return adminRequest(`/api/admin/refunds/${refundRequestId}`, {
     method: "POST",
     body: JSON.stringify({ status, adminNotes }),
+  });
+}
+
+export async function listAdvisoryRequests(): Promise<AdvisoryInboxItem[]> {
+  const response = await adminRequest<{ items?: AdvisoryInboxItem[] }>(
+    "/api/admin/advisory"
+  );
+  return response.items ?? [];
+}
+
+export async function setAdvisoryRequestStatus(
+  requestId: string,
+  status: string
+): Promise<AdvisoryRequest> {
+  const response = await adminRequest<{ item: AdvisoryRequest }>(
+    `/api/admin/advisory/${requestId}`,
+    { method: "PATCH", body: JSON.stringify({ status }) }
+  );
+  return response.item;
+}
+
+export async function sendAdvisoryShortlist(
+  requestId: string,
+  picks: string[],
+  message: string
+): Promise<{ emailSent: boolean; sharePath: string }> {
+  return adminRequest(`/api/admin/advisory/${requestId}/shortlist`, {
+    method: "POST",
+    body: JSON.stringify({ message, picks }),
   });
 }
 

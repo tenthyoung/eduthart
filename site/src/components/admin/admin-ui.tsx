@@ -9,6 +9,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  MessageSquareHeart,
   Search,
   Shield,
   Users,
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/users", label: "Users", icon: Search },
   { href: "/admin/moderation", label: "Moderation", icon: Shield },
   { href: "/admin/refunds", label: "Refunds", icon: CreditCard },
+  { href: "/admin/advisory", label: "Advisory", icon: MessageSquareHeart },
   { href: "/admin/roles", label: "Roles", icon: Users },
   { href: "/admin/docs", label: "Documentation", icon: BookOpen },
 ];

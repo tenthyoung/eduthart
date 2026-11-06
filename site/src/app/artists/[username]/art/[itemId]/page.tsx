@@ -359,6 +359,17 @@ export default async function PublicArtworkPage({
             />
           </div>
 
+          <p className="text-sm text-muted-foreground">
+            Not sure it&apos;s the one?{" "}
+            <Link
+              className="font-medium text-foreground underline underline-offset-4"
+              href="/advisory"
+            >
+              Ask a curator
+            </Link>{" "}
+            to help you choose. It&apos;s free.
+          </p>
+
           <ul className="flex flex-col border-t border-border">
             {assurances.map((assurance) => {
               const Icon = assurance.icon;
