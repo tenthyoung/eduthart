@@ -60,9 +60,15 @@ itself is still a Zoho mailbox, which receives replies.
       **Checked:** public DNS has the `cf-bounce` MX and SPF, the
       `cf-bounce._domainkey` DKIM key, and `_dmarc` at `p=reject`. Zoho's main
       MX, SPF and `zmail._domainkey` DKIM are untouched.
-- [ ] The Cloudflare account is on Workers Paid (needed to send to any address).
-- [ ] Send a real test email to a Gmail and an Outlook address and confirm it
-      reaches the inbox.
+- [x] The main SPF record also names Cloudflare
+      (`v=spf1 include:zohomail.com include:_spf.mx.cloudflare.net ~all`,
+      2026-11-06). Without it, Zoho quarantined site mail addressed to
+      support@ as a spoof of its own domain, even though DMARC passed.
+- [x] Real test sends (2026-11-06, via `wrangler dev`): a contact-form message
+      reached a Google Workspace inbox with SPF, DKIM and DMARC passing, and
+      reached the support@ Zoho inbox once the SPF record above was in place.
+      Sending to an un-verified address worked, which needs Workers Paid.
+- [ ] Send one to an Outlook / Hotmail address too.
 - [ ] `CONTACT_EMAIL` / the contact form delivers to a monitored inbox.
 
 ## Accounts and security
