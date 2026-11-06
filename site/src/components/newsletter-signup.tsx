@@ -5,13 +5,11 @@ import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-
-/** The Zoho Campaigns list that collects the collector newsletter. */
-const COLLECTOR_LIST_KEY =
-  "3z04b4ed98938ff07d4f2d0fec7f8d43a56513e22250d799f540df80ee69696f93";
+import { COLLECTOR_LIST_KEY } from "@/constants/newsletter.constants";
 
 type NewsletterFormData = {
   email: string;
@@ -26,8 +24,12 @@ type NewsletterFormData = {
  *
  * Field ids come from `useId`, so the form can appear more than once on a page
  * (the footer sits under every page that also has its own signup box).
+ *
+ * A signed-in visitor's request carries their token, so signing up with the
+ * account's own address also switches on the newsletter in account settings.
  */
 export function NewsletterSignup() {
+  const { user } = useAuth();
   const id = useId();
   const emailId = `${id}-email`;
   const consentId = `${id}-consent`;
@@ -56,9 +58,17 @@ export function NewsletterSignup() {
     }
 
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (user) {
+        headers.authorization = `Bearer ${await user.getIdToken()}`;
+      }
+
       const response = await fetch("/api/zoho-campaigns", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           emails: [data.email],
           listKey: COLLECTOR_LIST_KEY,

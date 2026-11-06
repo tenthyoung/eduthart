@@ -8,6 +8,8 @@ import {
   type EmailPreferences,
   type NotificationSettings,
 } from "@/lib/notifications/email-categories";
+import { COLLECTOR_LIST_KEY } from "@/constants/newsletter.constants";
+import { subscribeContact, unsubscribeContact } from "@/lib/marketing/zoho";
 import { getUserDocument, saveUserDocument } from "@/lib/store/document-store";
 
 import type { NotificationKind } from "@/lib/notifications/types";
@@ -33,6 +35,8 @@ const EMAIL_PREFERENCES_ID = "email-preferences";
  * toggle cannot silently wipe the others in one environment and not the other.
  */
 const KIND_FIELD_PREFIX = "kind__";
+
+const MARKETING_FIELD = "marketing";
 
 function kindField(kind: NotificationKind) {
   return `${KIND_FIELD_PREFIX}${kind}`;
@@ -89,6 +93,10 @@ function toSettings(
   return {
     categories: toCategories(document),
     kinds: toKindOverrides(document),
+    // Opt-in: anything but an explicit `true` is off, including every account
+    // that existed before this setting did. Nobody is put on a marketing list
+    // by a default.
+    marketing: document?.[MARKETING_FIELD] === true,
   };
 }
 
@@ -156,6 +164,60 @@ export async function saveNotificationSettings(
   );
 
   return toSettings(saved);
+}
+
+/**
+ * Record the newsletter choice against the account, without touching Zoho.
+ *
+ * For callers that have already changed the list themselves — the footer
+ * signup, once Zoho has accepted the address.
+ */
+export async function recordMarketingConsent(uid: string, subscribed: boolean) {
+  const saved = await saveUserDocument(
+    uid,
+    PREFERENCES_COLLECTION,
+    EMAIL_PREFERENCES_ID,
+    { [MARKETING_FIELD]: subscribed }
+  );
+
+  return toSettings(saved);
+}
+
+/**
+ * Switch the newsletter on or off from the account.
+ *
+ * Zoho first, then the record. Zoho is what actually sends the mail, so the
+ * account must never claim a state the list does not have: if the call fails,
+ * nothing is saved and the caller sees the error.
+ */
+export async function setMarketingEmails(
+  uid: string,
+  email: string | null,
+  subscribed: boolean
+): Promise<NotificationSettings> {
+  if (!email) {
+    throw new Error(
+      "Your account has no email address, so it cannot receive the newsletter."
+    );
+  }
+
+  const result = subscribed
+    ? await subscribeContact(COLLECTOR_LIST_KEY, email)
+    : await unsubscribeContact(COLLECTOR_LIST_KEY, email);
+
+  if (!result.ok) {
+    console.error(
+      "Zoho Campaigns rejected a newsletter change",
+      result.details
+    );
+    throw new Error(
+      subscribed
+        ? "We could not subscribe you right now. Please try again."
+        : "We could not unsubscribe you right now. Please try again."
+    );
+  }
+
+  return recordMarketingConsent(uid, subscribed);
 }
 
 /**

@@ -10,11 +10,13 @@ import {
 import {
   loadNotificationSettings,
   saveNotificationSettings,
+  setMarketingEmails,
 } from "@/lib/notifications/preferences";
 
 type PreferencesBody = {
   categories?: Record<string, unknown>;
   kinds?: Record<string, unknown>;
+  marketing?: unknown;
 };
 
 export function GET(request: Request) {
@@ -40,6 +42,46 @@ export function PATCH(request: Request) {
     for (const [key, value] of Object.entries(body.kinds ?? {})) {
       if (isControllableEmailKind(key) && typeof value === "boolean") {
         kinds[key] = value;
+      }
+    }
+
+    // The newsletter goes through Zoho and can fail on its own, so it is saved
+    // on its own rather than alongside the activity settings: a failed
+    // unsubscribe must not take a category change down with it, or the other
+    // way round.
+    if (typeof body.marketing === "boolean") {
+      if (Object.keys(categories).length || Object.keys(kinds).length) {
+        return apiError(
+          "Change the newsletter on its own, not with other settings.",
+          400,
+          "invalid-argument"
+        );
+      }
+
+      if (!session.user.email) {
+        return apiError(
+          "Your account has no email address, so it cannot receive the newsletter.",
+          400,
+          "failed-precondition"
+        );
+      }
+
+      try {
+        return NextResponse.json({
+          settings: await setMarketingEmails(
+            session.uid,
+            session.user.email,
+            body.marketing
+          ),
+        });
+      } catch (error) {
+        return apiError(
+          error instanceof Error
+            ? error.message
+            : "That change could not be saved.",
+          502,
+          "unavailable"
+        );
       }
     }
 
