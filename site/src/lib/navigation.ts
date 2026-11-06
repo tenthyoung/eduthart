@@ -18,7 +18,8 @@ export const SHOP_CATEGORIES = [
 ];
 
 const ARTIST_PUBLIC_ROUTE = /^\/artists\/([^/]+)\/?$/;
-const ARTIST_WORKSPACE_ROUTE = /^\/artists\/([^/]+)\/listings(?:\/|$)/;
+const ARTIST_WORKSPACE_ROUTE =
+  /^\/artists\/([^/]+)\/(?:listings|sales)(?:\/|$)/;
 
 export function isArtistCapableUsername(username?: string | null) {
   return typeof username === "string" && username.trim().length > 0;

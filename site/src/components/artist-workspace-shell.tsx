@@ -32,6 +32,7 @@ type ArtistWorkspaceShellProps = {
 function buildArtistNavItems(username: string): WorkspaceNavItem[] {
   const publicGalleryHref = buildArtistPageHref(username);
   const listingsHref = `/artists/${username}/listings/new`;
+  const salesHref = `/artists/${username}/sales`;
 
   return [
     {
@@ -59,8 +60,9 @@ function buildArtistNavItems(username: string): WorkspaceNavItem[] {
       label: "Profile",
     },
     {
-      badge: "Soon",
+      href: salesHref,
       icon: Wallet,
+      isActive: (pathname) => pathname.startsWith(salesHref),
       label: "Orders & Payouts",
     },
     {
@@ -110,10 +112,12 @@ export function ArtistWorkspaceShell({
         </>
       }
       headerTitle={
-        pathname.startsWith(`/artists/${username}/listings/`) &&
-        pathname !== `/artists/${username}/listings/new`
-          ? "Listing Editor"
-          : "Listings Dashboard"
+        pathname.startsWith(`/artists/${username}/sales`)
+          ? "Orders & Payouts"
+          : pathname.startsWith(`/artists/${username}/listings/`) &&
+              pathname !== `/artists/${username}/listings/new`
+            ? "Listing Editor"
+            : "Listings Dashboard"
       }
       navItems={navItems}
       navLabel="Artist dashboard"
