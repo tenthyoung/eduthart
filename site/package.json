@@ -29,7 +29,6 @@
     "test:e2e:report": "npm run check:node && playwright show-report"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "@hookform/resolvers": "^5.2.2",
     "@mux/mux-player-react": "3.7.0",
     "@opennextjs/cloudflare": "^1.20.16",
@@ -65,7 +64,6 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.65.0",
     "react-leaflet": "^5.0.0",
-    "resend": "^6.1.2",
     "simple-icons": "^15.16.0",
     "sonner": "^2.0.7",
     "stripe": "^22.5.0",

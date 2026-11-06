@@ -50,21 +50,25 @@ the model behind the shop is in [../../docs/marketplace-commerce.md](../../docs/
 - [ ] `SHIPPO_WEBHOOK_SECRET` is set and the Track Updated webhook points at
       `https://www.eduthart.com/api/commerce/shipping-webhook?token=<secret>`.
 
-## Email (Resend)
+## Email (Cloudflare Email Service)
 
-The code sends as `EduthArt <support@eduthart.com>` through Resend, while
-`support@eduthart.com` itself is a Zoho mailbox.
+The code sends as `EduthArt <support@eduthart.com>` through Cloudflare Email
+Service (the `EMAIL` binding in `wrangler.jsonc`). `support@eduthart.com`
+itself is still a Zoho mailbox, which receives replies.
 
-- [ ] `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set in Vercel Production.
-- [ ] The sending domain is **verified in Resend**. **Checked, and it looks
-      unfinished:** public DNS for `eduthart.com` has an SPF record that names
-      only Zoho (`v=spf1 include:zohomail.com ~all`), no DMARC record, and no
-      Resend DKIM or `send.` records at the usual names. Without them, order
-      and account emails are likely to land in spam or be rejected. Add the
-      records Resend lists for the domain, merge Resend into the one SPF record
-      (a domain may have only one), and add a DMARC record.
-- [ ] Send a real test email to a Gmail and an Outlook address and confirm it
-      reaches the inbox.
+- [x] eduthart.com is onboarded in Email Sending (EDUTHA-106, 2026-11-06).
+      **Checked:** public DNS has the `cf-bounce` MX and SPF, the
+      `cf-bounce._domainkey` DKIM key, and `_dmarc` at `p=reject`. Zoho's main
+      MX, SPF and `zmail._domainkey` DKIM are untouched.
+- [x] The main SPF record also names Cloudflare
+      (`v=spf1 include:zohomail.com include:_spf.mx.cloudflare.net ~all`,
+      2026-11-06). Not needed for delivery, but right to have now that
+      Cloudflare sends as the domain.
+- [x] Real test sends (2026-11-06, via `wrangler dev`): contact-form messages
+      reached the support@ Zoho inbox and a Google Workspace inbox, the latter
+      with SPF, DKIM and DMARC all passing.
+      Sending to an un-verified address worked, which needs Workers Paid.
+- [ ] Send one to an Outlook / Hotmail address too.
 - [ ] `CONTACT_EMAIL` / the contact form delivers to a monitored inbox.
 
 ## Accounts and security
@@ -89,7 +93,7 @@ The code sends as `EduthArt <support@eduthart.com>` through Resend, while
       or what happens when an artist and a buyer disagree. Have the policy
       written or reviewed for the marketplace model (ideally by a lawyer), then
       update the three pages. The privacy policy should also name Stripe,
-      Shippo, Resend and Firebase as processors.
+      Shippo, Cloudflare and Firebase as processors.
 
 ## The real test
 

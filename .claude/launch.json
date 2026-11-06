@@ -4,7 +4,12 @@
     {
       "name": "site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "site", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "site",
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
     },
@@ -23,6 +28,15 @@
       ],
       "port": 3005,
       "autoPort": true
+    },
+    {
+      "name": "site-workers",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd site && npx wrangler dev --port 8787"
+      ],
+      "port": 8787
     }
   ]
 }
