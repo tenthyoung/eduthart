@@ -126,4 +126,5 @@ sign-up lands on `/welcome` to collect the rest.
 The plan in [marketplace-commerce.md](./marketplace-commerce.md) also calls for
 Stripe Connect destination charges so artists are paid directly. That is not
 built: today the platform is the merchant of record, and there is no artist
-payout or application fee.
+payout or application fee. The agreed commission is 33% (an application fee of
+3300 basis points once Connect is built).

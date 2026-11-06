@@ -38,9 +38,9 @@ the model behind the shop is in [../../docs/marketplace-commerce.md](../../docs/
 - [ ] Stripe account is activated: business details, bank account for payouts.
 - [x] **Checked:** the webhook route exists and rejects plain GETs (405).
 - [ ] Decide the marketplace questions in `docs/marketplace-commerce.md` under
-      "Required platform decisions": application fee, who is the merchant of
-      record, refund / dispute / tax / payout policy. The code does not settle
-      these.
+      "Required platform decisions". Settled: 33% commission and EduthArt as
+      merchant of record. Still open: payout method and timing, legal entity,
+      refund / dispute / tax policy. The code does not settle these.
 
 ## Shippo (shipping)
 

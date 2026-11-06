@@ -26,9 +26,21 @@ EduthArt uses a one-artist-per-checkout marketplace model built on Stripe-hosted
 
 ## Required platform decisions
 
-- EduthArt application fee.
-- Merchant/business-of-record position.
-- Refund, cancellation, dispute, tax, and payout policies.
+Decided (Jong, 2026-07-24):
+
+- EduthArt's commission is 33% of the sale; the artist keeps 67%. Artists are
+  responsible for shipping. When Stripe Connect is built, that is an
+  application fee of 3300 basis points.
+- EduthArt is the merchant/business of record, with one Stripe account and
+  one Shippo account, and pays the artists.
+
+Still open (tracked in Notion, "Business decisions with Jong"):
+
+- Whether an artist's shipping cost comes out of their 67% or is added to the
+  buyer's total, and who absorbs Stripe's card fee.
+- Stripe Connect payouts or manual payouts, and payout timing.
+- Which legal entity is the business of record.
+- Refund, cancellation, dispute, and tax policies.
 - Reservation duration.
 - Supported seller and buyer countries.
 - Shipping insurance and signature thresholds.
