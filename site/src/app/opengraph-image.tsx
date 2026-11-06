@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 
-import { BRAND_MARK_ASPECT, brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
+import {
+  BRAND_MARK_ASPECT,
+  brandMarkTwoToneDataUrl,
+} from "@/lib/brand/mark-svg";
 
 export const alt = "EduthArt - Buy Original Art Online";
 export const size = { width: 1200, height: 630 };

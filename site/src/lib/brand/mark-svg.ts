@@ -38,7 +38,10 @@ export function brandMarkTwoToneDataUrl(
   middle: string = BRAND_MARK_GOLD
 ) {
   const open = BRAND_MARK_SVG.slice(0, BRAND_MARK_SVG.indexOf(">") + 1);
-  const body = BRAND_MARK_SVG.slice(open.length, BRAND_MARK_SVG.lastIndexOf("</svg>"));
+  const body = BRAND_MARK_SVG.slice(
+    open.length,
+    BRAND_MARK_SVG.lastIndexOf("</svg>")
+  );
   const svg =
     open +
     `<defs><clipPath id="mid"><rect x="0" y="${MIDDLE_BAND.y}" width="1000" height="${MIDDLE_BAND.height}"/></clipPath></defs>` +

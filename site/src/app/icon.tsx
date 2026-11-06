@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 
-import { BRAND_MARK_ASPECT, brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
+import {
+  BRAND_MARK_ASPECT,
+  brandMarkTwoToneDataUrl,
+} from "@/lib/brand/mark-svg";
 
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
