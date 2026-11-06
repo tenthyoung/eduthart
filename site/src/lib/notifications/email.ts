@@ -1,6 +1,4 @@
-import { Resend } from "resend";
-
-import { SUPPORT_EMAIL } from "@/constants/contact.constants";
+import { isEmailConfigured, sendEmail } from "@/lib/email/send";
 import type { NotificationTemplate } from "@/lib/notifications/types";
 
 export function getSiteUrl() {
@@ -52,14 +50,14 @@ function renderEmail(template: NotificationTemplate) {
 }
 
 export function isNotificationEmailEnabled() {
-  return Boolean(process.env.RESEND_API_KEY);
+  return isEmailConfigured();
 }
 
 /**
  * Deliver a notification by email.
  *
  * Email is a secondary channel: the in-app notification is the record of
- * truth, so a missing API key or a Resend outage is logged and swallowed
+ * truth, so a missing email binding or a Cloudflare outage is logged and swallowed
  * rather than failing the action that triggered the notification.
  */
 export async function sendNotificationEmail(
@@ -71,11 +69,8 @@ export async function sendNotificationEmail(
   }
 
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || `EduthArt <${SUPPORT_EMAIL}>`,
-      to: [to.trim()],
+    await sendEmail({
+      to: to.trim(),
       subject: template.emailSubject,
       html: renderEmail(template),
       text: [

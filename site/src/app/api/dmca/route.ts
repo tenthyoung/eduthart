@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { z } from "zod";
 
 import { SUPPORT_EMAIL } from "@/constants/contact.constants";
+import { sendEmail } from "@/lib/email/send";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 import { createExternalDeckReports, parsePublicDeckIds } from "@/lib/reporting";
 
@@ -86,11 +86,10 @@ export async function POST(request: NextRequest) {
       submissionId: submissionRef.id,
     });
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from:
-        process.env.RESEND_FROM_EMAIL || `EduthArt Support <${SUPPORT_EMAIL}>`,
-      to: [process.env.CONTACT_EMAIL || SUPPORT_EMAIL],
+    await sendEmail({
+      fromName: "EduthArt Support",
+      to: process.env.CONTACT_EMAIL || SUPPORT_EMAIL,
+      replyTo: body.email,
       subject: `EduthArt DMCA notice (${urls.length} URL${urls.length === 1 ? "" : "s"})`,
       text: `New EduthArt DMCA notice
 
