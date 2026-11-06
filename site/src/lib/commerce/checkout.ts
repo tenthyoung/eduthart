@@ -52,7 +52,22 @@ function toLineItem(
     itemId: item.id,
     title: item.artworkDetails.title || "Untitled artwork",
     unitAmountMinor: toMinorUnits(item.pricingInventory.price, currency),
+    dimensions: formatDimensions(item.dimensions),
+    medium: item.artworkDetails.medium || null,
+    signatureImageUrl: item.media.signatureImageUrl,
+    yearCreated: item.artworkDetails.yearCreated || null,
   };
+}
+
+/** "24 × 36 in", or null when the artist has not entered a width and height. */
+function formatDimensions(dimensions: ListingItemDraft["dimensions"]) {
+  const { depth, height, unit, width } = dimensions;
+
+  if (!width || !height) {
+    return null;
+  }
+
+  return `${[width, height, depth].filter(Boolean).join(" × ")} ${unit}`;
 }
 
 async function resolveAddress(

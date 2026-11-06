@@ -63,6 +63,15 @@ export type OrderLineItem = {
   itemId: string;
   title: string;
   unitAmountMinor: number;
+  /**
+   * What the certificate of authenticity states, frozen at checkout so a later
+   * edit to the listing cannot change what was sold. Optional because orders
+   * placed before certificates existed do not carry them.
+   */
+  dimensions?: string | null;
+  medium?: string | null;
+  signatureImageUrl?: string | null;
+  yearCreated?: string | null;
 };
 
 export type Order = {
