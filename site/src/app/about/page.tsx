@@ -8,18 +8,8 @@ import TiltedCard from "@/components/ui/tilted-card";
 import Link from "next/link";
 import { STORY_SECTIONS, VALUES } from "./story/aboutStory.constants";
 import { StorySection } from "./story/StorySection";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { useEffect, useState } from "react";
-// import { OurTeamTabContent } from "./team/OurTeamTabContent";
 
 export default function AboutPage() {
-  // const [activeTab, setActiveTab] = useState("mission");
-  // useEffect(() => {
-  //   if (window.location.hash === "#team") {
-  //     setActiveTab("team");
-  //   }
-  // }, []);
-
   return (
     <div className="min-h-screen bg-background text-foreground pt-24">
       <div className="container mx-auto px-4 py-16 max-w-4xl">
@@ -31,21 +21,6 @@ export default function AboutPage() {
         </div>
 
         <div className="mb-16 space-y-12">
-          {/* Tabs UI and team content temporarily hidden */}
-          {/* <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-16">
-            <TabsList className="grid w-full grid-cols-2 mb-8 max-w-2xl mx-auto">
-              <TabsTrigger value="mission" className="text-lg font-medium">
-                Our Story
-              </TabsTrigger>
-              <TabsTrigger value="team" className="text-lg font-medium">
-                Our Team
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="team">
-              <OurTeamTabContent />
-            </TabsContent>
-          </Tabs> */}
-
           <div className="space-y-6">
             {STORY_SECTIONS.map((section, index) => (
               <MotionFade key={index}>
