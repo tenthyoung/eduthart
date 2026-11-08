@@ -12,8 +12,12 @@
 name: Refresh portfolio screenshot
 
 on:
+  # Both: Cloudflare creates its finished check run already completed rather
+  # than moving one to completed, and it isn't documented which action that
+  # sends. The success filter below drops the in-progress one; a doubled ping
+  # costs one capture that finds nothing new.
   check_run:
-    types: [completed]
+    types: [created, completed]
 
 permissions: {}
 
@@ -37,9 +41,17 @@ jobs:
             echo "::notice::PORTFOLIO_DISPATCH_TOKEN isn't set, so the portfolio screenshots weren't refreshed."
             exit 0
           fi
+          failed=0
           for repo in $TARGETS; do
-            gh api --silent "repos/$repo/dispatches" \
-              -f event_type=site-deployed \
-              -f "client_payload[site]=$SITE"
-            echo "Pinged $repo"
+            if gh api --silent "repos/$repo/dispatches" \
+                -f event_type=site-deployed \
+                -f "client_payload[site]=$SITE"; then
+              echo "Pinged $repo"
+            else
+              # Keep going: one repo missing from the token shouldn't stop
+              # the other from hearing about the deploy.
+              echo "::warning::Couldn't ping $repo (is it on PORTFOLIO_DISPATCH_TOKEN, and is the token current?)"
+              failed=1
+            fi
           done
+          exit $failed
