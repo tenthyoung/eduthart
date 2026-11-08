@@ -1,0 +1,45 @@
+# Tells the portfolio sites that eduthart.com just shipped, so its screenshot on
+# their work cards is re-captured within minutes instead of the next morning.
+#
+# Runs when Cloudflare's production build of this site ("Workers Builds:
+# eduthart") passes on main, and sends a `site-deployed` repository_dispatch
+# to tenthyoung (only tenthyoung.com shows it); their refresh-screens workflow re-captures eduthart.com
+# and commits the new picture if it changed.
+#
+# Needs the repo secret PORTFOLIO_DISPATCH_TOKEN: a fine-grained token with
+# Contents read and write on tenthyoung/tenthyoung. Without it the job notes that
+# and does nothing, so it never fails a deploy.
+name: Refresh portfolio screenshot
+
+on:
+  check_run:
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  ping:
+    if: >-
+      github.event.check_run.app.slug == 'cloudflare-workers-and-pages' &&
+      github.event.check_run.name == 'Workers Builds: eduthart' &&
+      github.event.check_run.conclusion == 'success' &&
+      github.event.check_run.check_suite.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping the portfolio sites
+        env:
+          GH_TOKEN: ${{ secrets.PORTFOLIO_DISPATCH_TOKEN }}
+          SITE: eduthart.com
+          TARGETS: tenthyoung/tenthyoung
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::PORTFOLIO_DISPATCH_TOKEN isn't set, so the portfolio screenshots weren't refreshed."
+            exit 0
+          fi
+          for repo in $TARGETS; do
+            gh api --silent "repos/$repo/dispatches" \
+              -f event_type=site-deployed \
+              -f "client_payload[site]=$SITE"
+            echo "Pinged $repo"
+          done
