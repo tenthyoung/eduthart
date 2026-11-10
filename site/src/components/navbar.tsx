@@ -55,7 +55,6 @@ type NavItem = {
 /** The header's own links; the categories sit on the home page's strip and in the mobile menu. */
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { name: "Browse", href: "/browse" },
-  { name: "Editorial", href: "/blog" },
   { name: "Sell", href: "/for-artists" },
 ];
 

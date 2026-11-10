@@ -2,9 +2,8 @@ import type { MetadataRoute } from "next";
 
 import { listIndexedArtworks } from "@/lib/artists/artwork-index";
 import { SITE_URL } from "@/lib/site-url";
-import { client } from "@/sanity/client";
 
-// Artworks and posts change as artists publish; rebuild the map hourly.
+// Artworks change as artists publish; rebuild the map hourly.
 export const revalidate = 3600;
 
 const STATIC_PATHS = [
@@ -14,10 +13,6 @@ const STATIC_PATHS = [
   "/contact",
   "/for-artists",
   "/apply-to-be-an-artist",
-  "/pricing",
-  "/services",
-  "/insights",
-  "/blog",
   "/legal",
   "/legal/privacy-policy",
   "/legal/terms-of-service",
@@ -26,14 +21,7 @@ const STATIC_PATHS = [
   "/legal/accessibility",
   "/legal/dmca",
   "/legal/trademark-notice",
-  "/legal/evidence-request-policy",
-  "/legal/surveillance-policy",
 ];
-
-const POSTS_QUERY = `*[_type == "post" && defined(slug.current)]{
-  "slug": slug.current,
-  "updatedAt": coalesce(_updatedAt, publishedAt)
-}`;
 
 function toDate(value: string | undefined) {
   const date = value ? new Date(value) : null;
@@ -54,12 +42,7 @@ async function safely<T>(load: () => Promise<T[]>): Promise<T[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [artworks, posts] = await Promise.all([
-    safely(listIndexedArtworks),
-    safely(() =>
-      client.fetch<{ slug: string; updatedAt?: string }[]>(POSTS_QUERY)
-    ),
-  ]);
+  const artworks = await safely(listIndexedArtworks);
 
   const entries: MetadataRoute.Sitemap = STATIC_PATHS.map((path) => ({
     url: `${SITE_URL}${path === "/" ? "" : path}`,
@@ -86,13 +69,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push({
       url: `${SITE_URL}/artists/${username}`,
       lastModified: toDate(updatedAt),
-    });
-  }
-
-  for (const post of posts) {
-    entries.push({
-      url: `${SITE_URL}/${post.slug}`,
-      lastModified: toDate(post.updatedAt),
     });
   }
 

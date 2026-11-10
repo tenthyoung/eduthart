@@ -10,18 +10,17 @@ the model behind the shop is in [../../docs/marketplace-commerce.md](../../docs/
 
 ## Domain
 
-- [x] **Checked:** `www.eduthart.com` serves the site over HTTPS on Vercel.
-- [x] **Checked:** `eduthart.com` redirects (308) to `www.eduthart.com`, so
-      **`www` is the canonical host.**
-- [ ] Set `NEXT_PUBLIC_SITE_URL=https://www.eduthart.com` in Vercel
-      (Production). Today it is unset: the live share card points at
-      `https://eduthart.com/...`, which redirects. The code fallback now
-      defaults to `www`, but set the variable so it is explicit. Emails link to
-      this too.
+- [x] **Checked (2026-11-10):** `eduthart.com` serves the site over HTTPS on
+      Cloudflare, and `www.eduthart.com` redirects (308) to it. **The bare
+      `eduthart.com` is the canonical host** (Izzy, 2026-11-10).
+- [ ] `NEXT_PUBLIC_SITE_URL` in the Cloudflare production build is
+      `https://eduthart.com`, or unset (the code falls back to it). On
+      2026-11-10 the live share card and sitemap still pointed at `www`, which
+      redirects. Emails link to this too.
 - [ ] Firebase Console > Authentication > Settings > Authorized domains lists
-      `www.eduthart.com` and `eduthart.com`. Without it, Google sign-in and
+      `eduthart.com` and `www.eduthart.com`. Without it, Google sign-in and
       email-link flows fail on the live domain.
-- [ ] Firebase email action URL is `https://www.eduthart.com/auth/action`.
+- [ ] Firebase email action URL is `https://eduthart.com/auth/action`.
 
 ## Vercel plan
 
@@ -32,7 +31,7 @@ the model behind the shop is in [../../docs/marketplace-commerce.md](../../docs/
 
 - [ ] `STRIPE_SECRET_KEY` in Vercel Production is a **live** key (`sk_live_...`).
 - [ ] A live-mode webhook endpoint points at
-      `https://www.eduthart.com/api/commerce/webhook`, subscribed to the four
+      `https://eduthart.com/api/commerce/webhook`, subscribed to the four
       `checkout.session.*` events in [commerce-setup.md](commerce-setup.md), and
       its signing secret is `STRIPE_WEBHOOK_SECRET` (live, not the test one).
 - [ ] Stripe account is activated: business details, bank account for payouts.
@@ -48,7 +47,7 @@ the model behind the shop is in [../../docs/marketplace-commerce.md](../../docs/
 - [ ] At least one carrier account is connected, or checkout only offers the
       artist's own stated rate.
 - [ ] `SHIPPO_WEBHOOK_SECRET` is set and the Track Updated webhook points at
-      `https://www.eduthart.com/api/commerce/shipping-webhook?token=<secret>`.
+      `https://eduthart.com/api/commerce/shipping-webhook?token=<secret>`.
 
 ## Email (Cloudflare Email Service)
 
