@@ -1,9 +1,12 @@
 import { ImageResponse } from "next/og";
 
 import {
+  BRAND_LOCKUP,
   BRAND_MARK_ASPECT,
-  brandMarkTwoToneDataUrl,
-} from "@/lib/brand/mark-svg";
+  BRAND_MARK_INK,
+  BRAND_WORDMARK,
+} from "@/lib/brand/logo";
+import { brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
 
 export const alt = "EduthArt - Buy Original Art Online";
 export const size = { width: 1200, height: 630 };
@@ -57,7 +60,9 @@ export default async function OpengraphImage() {
     style: "normal";
     weight: 500 | 700;
   }[];
-  const markHeight = 168;
+  // The lockup in lib/brand/logo.ts's proportions, at a size that fills the card.
+  const wordmarkSize = 126;
+  const markHeight = Math.round(wordmarkSize * BRAND_LOCKUP.markHeightEm);
 
   return new ImageResponse(
     <div
@@ -78,19 +83,22 @@ export default async function OpengraphImage() {
           alt=""
           height={markHeight}
           src={brandMarkTwoToneDataUrl()}
-          style={{ marginRight: 36 }}
+          style={{
+            marginRight: Math.round(wordmarkSize * BRAND_LOCKUP.gapEm),
+          }}
           width={Math.round(markHeight * BRAND_MARK_ASPECT)}
         />
         <div
           style={{
             display: "flex",
-            fontSize: 150,
-            fontWeight: 700,
-            letterSpacing: -6,
+            fontSize: wordmarkSize,
+            fontWeight: BRAND_LOCKUP.wordmarkWeight,
+            letterSpacing: wordmarkSize * BRAND_LOCKUP.wordmarkTrackingEm,
             lineHeight: 1,
+            color: BRAND_MARK_INK,
           }}
         >
-          eduthart
+          {BRAND_WORDMARK}
         </div>
       </div>
       <div

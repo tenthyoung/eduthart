@@ -1,3 +1,4 @@
+import { brandLogoHtml } from "@/lib/brand/logo";
 import { escapeHtml, isEmailConfigured, sendEmail } from "@/lib/email/send";
 import type { NotificationTemplate } from "@/lib/notifications/types";
 
@@ -6,6 +7,17 @@ export function getSiteUrl() {
     /\/+$/,
     ""
   );
+}
+
+/**
+ * The logo for the top of an email. Points at the PNG of the mark
+ * (app/brand/mark.png), because mail clients won't show SVG or data URLs.
+ */
+export function emailLogoHtml() {
+  return brandLogoHtml({
+    markSrc: `${getSiteUrl()}/brand/mark.png`,
+    fontSize: 19,
+  });
 }
 
 function toAbsoluteUrl(href: string) {
@@ -25,7 +37,7 @@ function renderEmail(template: NotificationTemplate) {
 <body style="background:#f6f3ef;margin:0;padding:32px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
   <div style="background:#ffffff;border-radius:20px;margin:0 auto;max-width:560px;overflow:hidden">
     <div style="border-bottom:1px solid #efe9e2;padding:26px 32px">
-      <span style="color:#2f241c;font-size:19px;font-weight:700;letter-spacing:0.02em">EduthArt</span>
+      ${emailLogoHtml()}
     </div>
     <div style="padding:32px">
       <h1 style="color:#2f241c;font-size:22px;line-height:1.35;margin:0 0 14px">${escapeHtml(template.title)}</h1>

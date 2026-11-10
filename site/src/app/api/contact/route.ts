@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { escapeHtml, getTeamInbox, sendEmail } from "@/lib/email/send";
+import { emailLogoHtml } from "@/lib/notifications/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,8 +44,8 @@ export async function POST(request: NextRequest) {
 <body style="background:#f6f3ef;margin:0;padding:32px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
   <div style="background:#ffffff;border-radius:20px;margin:0 auto;max-width:560px;overflow:hidden">
     <div style="border-bottom:1px solid #efe9e2;padding:26px 32px">
-      <span style="color:#2f241c;font-size:19px;font-weight:700;letter-spacing:0.02em">EduthArt</span>
-      <span style="color:#8d8178;font-size:14px;margin-left:8px">New support message</span>
+      ${emailLogoHtml()}
+      <p style="color:#8d8178;font-size:14px;margin:10px 0 0">New support message</p>
     </div>
     <div style="padding:32px">
       <p style="color:#2f241c;font-size:15px;line-height:1.6;margin:0 0 4px"><strong>${escapeHtml(name)}</strong></p>
