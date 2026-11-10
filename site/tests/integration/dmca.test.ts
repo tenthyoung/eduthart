@@ -72,7 +72,7 @@ describe("reading the URLs in a notice", () => {
     expect(
       parseReportedPages([
         "https://eduthart.com/artists/marina/art/item-1",
-        "https://eduthart.com/artists/Marina/art/item-1",
+        "https://www.eduthart.com/artists/Marina/art/item-1",
         "https://eduthart.com/artists/marina",
         "https://eduthart.com/artists/marina/",
         "https://eduthart.com/browse?category=Painting",
