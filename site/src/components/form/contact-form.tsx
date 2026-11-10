@@ -91,6 +91,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
   return (
     <Form {...form}>
       <form
+        method="post"
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn("space-y-6", className)}
       >
