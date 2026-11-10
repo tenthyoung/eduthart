@@ -6,7 +6,7 @@ import { recordMarketingConsent } from "@/lib/notifications/preferences";
 import { addSubscribersInBulk } from "@/lib/marketing/zoho";
 
 /**
- * The newsletter signup behind the footer and journal pages.
+ * The newsletter signup behind the footer.
  *
  * Anyone may post here; a signed-in caller who subscribes their own account
  * address also has it recorded against the account, so the marketing toggle in
