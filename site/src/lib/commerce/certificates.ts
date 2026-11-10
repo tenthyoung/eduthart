@@ -1,5 +1,7 @@
 import QRCode from "qrcode";
 
+import { brandLogoHtml } from "@/lib/brand/logo";
+import { brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
 import type { Order, OrderLineItem } from "@/lib/commerce/orders";
 import { SITE_URL } from "@/lib/site-url";
 import {
@@ -304,7 +306,6 @@ export async function renderCertificateHtml(certificate: Certificate) {
   * { box-sizing: border-box; }
   body { background: #f4f4f2; color: #111; font-family: "Inter Tight", -apple-system, Segoe UI, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 20px; }
   .sheet { background: #fff; border: 1px solid #111; margin: 0 auto; max-width: 720px; padding: 56px; }
-  .brand { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
   h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 40px 0 8px; }
   .lede { color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 32px; max-width: 520px; }
   .work { align-items: flex-start; border-top: 1px solid #111; display: flex; gap: 28px; padding-top: 28px; }
@@ -334,7 +335,7 @@ export async function renderCertificateHtml(certificate: Certificate) {
 </head>
 <body>
   <div class="sheet">
-    <p class="brand">eduthart</p>
+    ${brandLogoHtml({ markSrc: brandMarkTwoToneDataUrl(), fontSize: 20 })}
     <h1>Certificate of authenticity</h1>
     <p class="lede">This certifies that the original artwork described below was created by the artist named and sold through EduthArt. Anyone can confirm it is genuine with the code at the bottom of this page.</p>
 

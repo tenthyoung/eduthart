@@ -1,34 +1,46 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
+
+import {
+  BRAND_LOCKUP,
+  BRAND_MARK_ASPECT,
+  BRAND_NAME,
+  BRAND_WORDMARK,
+} from "@/lib/brand/logo";
 import { cn } from "@/lib/utils";
 
 /** The mark's artwork, cropped tight to its three strokes. */
 export const BRAND_MARK_SRC = "/brand/eduthart-mark.svg";
 
 /**
- * The EduthArt brand mark — the single source of truth for the logo icon.
- * Every surface (navbar, footer, decorative art) renders this component, so
- * changing the design here changes it everywhere.
+ * The EduthArt brand mark, the brushstroke E: three pulls of one loaded brush,
+ * ink with a gold middle stroke (`--mark-mid` in globals.css). Its look is set
+ * in lib/brand/logo.ts; every surface that shows the logo renders this
+ * component or `BrandLogo`, so a change there changes it everywhere.
  *
- * Current design: the brushstroke E, three pulls of one loaded brush, ink with
- * a gold middle stroke (`--mark-mid` in globals.css). The SVG
- * is used as a mask over `currentColor`, so the mark takes the text colour it
- * sits in and follows light and dark mode without a second file. Size it with
- * a height class; the width follows from the artwork's proportions.
+ * The SVG is used as a mask over `currentColor`, so the mark takes the text
+ * colour it sits in and follows light and dark mode without a second file.
+ * Size it with a height; the width follows from the artwork's proportions.
  */
-export function BrandMark({ className }: { className?: string }) {
+export function BrandMark({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
   // Each stroke paints through its own band, so a colourway can tint one
   // stroke (`--mark-top`, `--mark-mid`, `--mark-bottom`). Unset, all three
   // fall back to the text colour. Band edges sit in the gaps between strokes.
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        "relative inline-block aspect-[351/359] h-9 shrink-0",
-        className
-      )}
+      className={cn("relative inline-block h-9 shrink-0", className)}
       style={{
+        aspectRatio: BRAND_MARK_ASPECT,
         mask: `url(${BRAND_MARK_SRC}) center / contain no-repeat`,
         WebkitMask: `url(${BRAND_MARK_SRC}) center / contain no-repeat`,
+        ...style,
       }}
     >
       <span className="absolute inset-x-0 top-0 h-[31%] bg-[var(--mark-top,currentColor)]" />
@@ -38,21 +50,41 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-/** The mark beside the lowercase wordmark, linked home: the logo in the header and footer. */
+/** The text logo: "eduthart", lowercase, bold, tracked tight, at the inherited font size. */
+export function BrandWordmark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn("leading-none", className)}
+      style={{
+        fontWeight: BRAND_LOCKUP.wordmarkWeight,
+        letterSpacing: `${BRAND_LOCKUP.wordmarkTrackingEm}em`,
+      }}
+    >
+      {BRAND_WORDMARK}
+    </span>
+  );
+}
+
+/**
+ * The logo: the mark beside the text logo, linked home. Used in the site
+ * header and footer, the workspace sidebars and the admin console.
+ *
+ * Size it with a font-size class (`text-xl`); the mark and gap scale with it,
+ * so the lockup keeps one shape everywhere. Defaults to the header's size.
+ */
 export function BrandLogo({ className }: { className?: string }) {
   return (
     <Link
-      aria-label="EduthArt home"
+      aria-label={`${BRAND_NAME} home`}
       className={cn(
-        "inline-flex flex-shrink-0 items-center gap-2 text-foreground",
+        "inline-flex shrink-0 items-center text-[1.5rem] text-foreground",
         className
       )}
       href="/"
+      style={{ gap: `${BRAND_LOCKUP.gapEm}em` }}
     >
-      <BrandMark className="h-8" />
-      <span className="text-[1.5rem] leading-none font-bold tracking-[-0.03em] text-[var(--wordmark,currentColor)]">
-        eduthart
-      </span>
+      <BrandMark style={{ height: `${BRAND_LOCKUP.markHeightEm}em` }} />
+      <BrandWordmark />
     </Link>
   );
 }

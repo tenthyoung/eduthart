@@ -1,3 +1,5 @@
+import { brandLogoHtml } from "@/lib/brand/logo";
+import { brandMarkTwoToneDataUrl } from "@/lib/brand/mark-svg";
 import { formatAddressLines } from "@/lib/collectors/address-format";
 import { formatMinorUnits } from "@/lib/commerce/money";
 import type { Order } from "@/lib/commerce/orders";
@@ -66,7 +68,6 @@ export function renderInvoiceHtml(order: Order) {
   body { background: #f6f3ef; color: #2f241c; font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 20px; }
   .sheet { background: #fff; border-radius: 20px; margin: 0 auto; max-width: 720px; padding: 48px; }
   header { align-items: flex-start; border-bottom: 1px solid #efe9e2; display: flex; justify-content: space-between; padding-bottom: 24px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
   h2 { font-size: 13px; letter-spacing: 0.18em; margin: 0 0 8px; text-transform: uppercase; }
   .muted { color: #8d8178; font-size: 13px; }
   .grid { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; padding: 28px 0; }
@@ -92,7 +93,7 @@ export function renderInvoiceHtml(order: Order) {
   <div class="sheet">
     <header>
       <div>
-        <h1>EduthArt</h1>
+        <div style="margin:0 0 8px">${brandLogoHtml({ markSrc: brandMarkTwoToneDataUrl(), fontSize: 22 })}</div>
         <p class="muted">${escapeHtml(getSiteUrl())}</p>
       </div>
       <div style="text-align:right">
