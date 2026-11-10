@@ -30,11 +30,17 @@ export const BRAND_MARK_GOLD_DARK = "#d4af7c";
 
 /**
  * The lockup's proportions, in ems of the text logo's font size, so the logo
- * keeps its shape at any size. At the header's 24px text: a 32px mark, 8px gap.
+ * keeps its shape at any size. At the header's 24px text: a 21px mark, 6px gap.
+ *
+ * 0.875em is the text logo's ascender-to-baseline height (0.73em in bold Inter
+ * Tight) plus a small overshoot each way, so the top stroke lines up with the
+ * tops of "d", "t" and "h" and the bottom stroke with the baseline. At that
+ * size the mark's strokes are about as thick as the letters' stems. Any taller
+ * and the top and bottom strokes hang outside the text and outweigh it.
  */
 export const BRAND_LOCKUP = {
-  markHeightEm: 4 / 3,
-  gapEm: 1 / 3,
+  markHeightEm: 0.875,
+  gapEm: 0.25,
   wordmarkWeight: 700,
   wordmarkTrackingEm: -0.03,
 } as const;

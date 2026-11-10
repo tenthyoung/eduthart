@@ -71,13 +71,16 @@ export function BrandWordmark({ className }: { className?: string }) {
  *
  * Size it with a font-size class (`text-xl`); the mark and gap scale with it,
  * so the lockup keeps one shape everywhere. Defaults to the header's size.
+ *
+ * The lockup is only one line of text tall, so a `before:` overlay stretches
+ * the tap target 8px above and below without moving anything around it.
  */
 export function BrandLogo({ className }: { className?: string }) {
   return (
     <Link
       aria-label={`${BRAND_NAME} home`}
       className={cn(
-        "inline-flex shrink-0 items-center text-[1.5rem] text-foreground",
+        "relative inline-flex shrink-0 items-center text-[1.5rem] text-foreground before:absolute before:inset-x-0 before:-inset-y-2 before:content-['']",
         className
       )}
       href="/"
