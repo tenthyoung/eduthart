@@ -17,7 +17,7 @@ type NewsletterFormData = {
 };
 
 /**
- * The newsletter signup used in the footer and on the journal pages: an email
+ * The newsletter signup used in the footer: an email
  * field, an explicit opt-in checkbox, and a thank-you in place of the form once
  * it works. The email stays in the field if the request fails, so a dropped
  * connection never makes someone retype it.

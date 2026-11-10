@@ -29,10 +29,7 @@ const linkColumns = [
   },
   {
     title: "Company",
-    links: [
-      { name: "About", href: "/about" },
-      { name: "Journal", href: "/blog" },
-    ],
+    links: [{ name: "About", href: "/about" }],
   },
 ];
 
