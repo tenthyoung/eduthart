@@ -73,7 +73,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
         throw new Error(errorData.error || "Failed to send message");
       }
 
-      toast.success("Message sent successfully. The gallery will reply soon.");
+      toast.success("Message sent. We'll reply by email soon.");
       form.reset();
     } catch (error) {
       toast.error(
