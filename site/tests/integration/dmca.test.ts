@@ -40,7 +40,7 @@ const dmca = dmcaRoute as unknown as RouteHandler;
 const loadStudio = listingFlowGet as unknown as RouteHandler;
 const saveStudio = listingFlowPatch as unknown as RouteHandler;
 
-const SITE = "https://www.eduthart.com";
+const SITE = "https://eduthart.com";
 
 function noticeFor(urls: string[]) {
   return {
@@ -71,7 +71,7 @@ describe("reading the URLs in a notice", () => {
   test("keeps artwork and artist pages on EduthArt hosts and drops the rest", () => {
     expect(
       parseReportedPages([
-        "https://www.eduthart.com/artists/marina/art/item-1",
+        "https://eduthart.com/artists/marina/art/item-1",
         "https://eduthart.com/artists/Marina/art/item-1",
         "https://eduthart.com/artists/marina",
         "https://eduthart.com/artists/marina/",

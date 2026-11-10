@@ -221,7 +221,7 @@ export function DmcaReportForm({ initialUrl }: { initialUrl?: string | null }) {
                 <Textarea
                   rows={5}
                   className="min-h-36 resize-y"
-                  placeholder="https://www.eduthart.com/artists/artist-name/art/artwork-id"
+                  placeholder="https://eduthart.com/artists/artist-name/art/artwork-id"
                   {...field}
                 />
               </FormControl>
