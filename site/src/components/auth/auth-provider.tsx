@@ -107,6 +107,8 @@ const LEGAL_VERSION = "2026-07-07";
 const E2E_STORAGE_KEY = "eduthart:e2e-user";
 const E2E_AUTH_EVENT = "eduthart:e2e-auth-changed";
 const E2E_AUTH_ENABLED = process.env.NEXT_PUBLIC_E2E_AUTH === "1";
+/** In E2E mode, the current password that `changePassword` treats as wrong. */
+export const E2E_WRONG_PASSWORD = "wrong-password";
 const RESET_PASSWORD_RETURN_PATH = "/login?reset=success";
 export const MIN_PASSWORD_LENGTH = 8;
 
@@ -700,6 +702,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!nextUser) {
           throw new Error("You need to be signed in to change your password.");
+        }
+
+        // E2E accounts have no stored password, so this one value stands in
+        // for a wrong one: it lets the specs exercise the failure path.
+        if (currentPassword === E2E_WRONG_PASSWORD) {
+          throw new Error("That current password is not correct.");
         }
 
         await reportSecurityEvent(
