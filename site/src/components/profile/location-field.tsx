@@ -60,7 +60,11 @@ export function LocationField({
   const describedBy = invalid ? formMessageId : undefined;
   const [mode, setMode] = useState<Mode>("loading");
   // Searching for a new city while the saved one stays in the form.
-  const [replacing, setReplacing] = useState(false);
+  // Starts true when the form already holds text typed over a saved city
+  // (the dialog was closed mid-search), so that text is visible, not hidden.
+  const [replacing, setReplacing] = useState(() =>
+    Boolean(value.pendingQuery.trim() && normalizeProfileLocation(value))
+  );
   const [suggestions, setSuggestions] = useState<CitySuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -99,10 +103,18 @@ export function LocationField({
       .then((response) => (response.ok ? response.json() : { enabled: false }))
       .catch(() => ({ enabled: false }))
       .then((payload: { enabled?: boolean }) => {
-        if (!cancelled) {
-          setMode(
-            payload.enabled && !hasPartialManualInput ? "search" : "manual"
-          );
+        if (cancelled) {
+          return;
+        }
+
+        if (payload.enabled && !hasPartialManualInput) {
+          setMode("search");
+        } else if (valueRef.current.pendingQuery.trim()) {
+          // Search text left from before can't sit hidden in manual mode,
+          // where nothing could clear it and it would block the save.
+          switchToManual();
+        } else {
+          setMode("manual");
         }
       });
 
@@ -116,24 +128,43 @@ export function LocationField({
   /**
    * Switch to the plain inputs, carrying over whatever was typed (or the
    * city that was just clicked) so the person never retypes it.
+   *
+   * A saved city is never overwritten: its parts stay in the inputs, and the
+   * typed text is named in the notice so they can enter it themselves.
    */
-  const switchToManual = (seed?: string) => {
+  const switchToManual = (seed?: string, reason?: string) => {
     const current = valueRef.current;
     const carried = (seed ?? current.pendingQuery).trim();
+    const saved = normalizeProfileLocation(current);
+    // Cancels any lookup still in flight.
+    latestPick.current += 1;
 
-    onChangeRef.current(
-      carried
-        ? {
-            ...current,
-            city: carried,
-            region: "",
-            country: "",
-            countryCode: "",
-            placeId: "",
-            pendingQuery: "",
-          }
-        : { ...current, pendingQuery: "" }
-    );
+    if (carried && saved) {
+      onChangeRef.current({ ...current, pendingQuery: "" });
+      setNotice(
+        [
+          reason,
+          `Your saved city is below. To change it to \u201c${carried}\u201d, edit the fields.`,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+    } else {
+      onChangeRef.current(
+        carried
+          ? {
+              ...current,
+              city: carried,
+              region: "",
+              country: "",
+              countryCode: "",
+              placeId: "",
+              pendingQuery: "",
+            }
+          : { ...current, pendingQuery: "" }
+      );
+    }
+
     setReplacing(false);
     setSuggestions([]);
     setMode("manual");
@@ -171,6 +202,9 @@ export function LocationField({
 
   useEffect(() => {
     if (!showSearch) {
+      // A search already sent must not act once the box has closed.
+      latestQuery.current = "";
+      setSearching(false);
       return;
     }
 
@@ -201,7 +235,7 @@ export function LocationField({
           setNotice(caught instanceof Error ? caught.message : null);
 
           if (caught instanceof PlacesUnavailableError) {
-            switchToManual();
+            switchToManual(undefined, caught.message);
           }
         })
         .finally(() => {
@@ -254,7 +288,7 @@ export function LocationField({
 
       if (caught instanceof PlacesUnavailableError) {
         // Keep the city they clicked rather than the half-typed query.
-        switchToManual(option.label);
+        switchToManual(option.label, caught.message);
       }
     } finally {
       if (pick === latestPick.current) {
@@ -314,9 +348,11 @@ export function LocationField({
           // Search starts at two letters, so don't open "No cities match"
           // after one.
           minQueryLength={2}
-          onQueryChange={(next) =>
-            onChange({ ...valueRef.current, pendingQuery: next })
-          }
+          onQueryChange={(next) => {
+            // Typing again cancels a pick still being looked up.
+            latestPick.current += 1;
+            onChange({ ...valueRef.current, pendingQuery: next });
+          }}
           onSelect={handlePick}
           options={options}
           placeholder="Search for your city"
@@ -405,6 +441,7 @@ export function LocationField({
               type="button"
               className="underline underline-offset-2 hover:text-foreground"
               onClick={() => {
+                latestPick.current += 1;
                 onChange({ ...value, pendingQuery: "" });
                 setReplacing(false);
               }}
