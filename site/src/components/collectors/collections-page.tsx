@@ -101,10 +101,7 @@ export function CollectionsPage() {
 
   if (loading) {
     return (
-      <AccountShell
-        description="Group the artwork you saved."
-        title="Collections"
-      >
+      <AccountShell description="Group the artwork you saved." title="Saved">
         <CollectorLoadingPanel label="Loading your collections..." />
       </AccountShell>
     );
@@ -113,11 +110,11 @@ export function CollectionsPage() {
   return (
     <AccountShell
       description="Group the artwork you saved into themes, then publish a collection to share it with someone else."
-      title="Collections"
+      title="Saved"
     >
       {error ? (
         <Alert variant="destructive">
-          <AlertTitle>Collections error</AlertTitle>
+          <AlertTitle>Couldn&apos;t load your saved collections</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}

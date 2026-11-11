@@ -211,7 +211,7 @@ export function EmailPreferencesSection() {
   return (
     <AccountPanel
       className="space-y-4"
-      description="Choose which emails EduthArt sends you. These do not affect your notifications here on the site."
+      description="Choose which emails EduthArt sends you. On-site notifications are not affected."
       icon={Mail}
       title="Email preferences"
     >
@@ -221,7 +221,9 @@ export function EmailPreferencesSection() {
         </p>
       ) : null}
 
-      <div className="space-y-3">
+      {/* One list rather than a card per category: the section used to be the
+          tallest thing on the page, most of it padding and repeated borders. */}
+      <ul className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-muted/35">
         {EMAIL_CATEGORIES.map((category) => {
           const copy = EMAIL_CATEGORY_COPY[category];
           const kinds = EMAIL_KINDS_BY_CATEGORY[category];
@@ -232,110 +234,102 @@ export function EmailPreferencesSection() {
           const showKinds = kinds.length > 1;
 
           return (
-            <div
-              className="rounded-2xl border border-border/70 bg-muted/35 p-4"
-              key={category}
-            >
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  aria-describedby={`${categoryId}-description`}
-                  checked={categoryCheckedState(settings, category)}
-                  className="mt-0.5"
-                  disabled={loading || saving}
-                  id={categoryId}
-                  onCheckedChange={(checked) =>
-                    handleCategoryToggle(category, checked !== false)
-                  }
-                />
-                <div className="space-y-1">
-                  <Label className="font-medium" htmlFor={categoryId}>
-                    {copy.title}
-                  </Label>
-                  <p
-                    className="text-sm text-muted-foreground"
-                    id={`${categoryId}-description`}
-                  >
-                    {copy.description}
-                  </p>
-                </div>
-              </div>
+            <li className="px-4 py-3" key={category}>
+              <PreferenceRow
+                checked={categoryCheckedState(settings, category)}
+                description={copy.description}
+                disabled={loading || saving}
+                id={categoryId}
+                onCheckedChange={(checked) =>
+                  handleCategoryToggle(category, checked !== false)
+                }
+                title={copy.title}
+              />
 
               {showKinds ? (
-                <div className="mt-3 space-y-2 border-t border-border/60 pt-3 pl-7">
+                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 pl-7">
                   {kinds.map((kind) => {
-                    const kindCopy = EMAIL_KIND_COPY[kind];
                     const kindId = `email-preference-kind-${kind}`;
 
                     return (
-                      <div className="flex items-start gap-3" key={kind}>
+                      <div className="flex items-center gap-2" key={kind}>
                         <Checkbox
-                          aria-describedby={`${kindId}-description`}
                           checked={resolveKindEnabled(settings, kind)}
-                          className="mt-0.5"
                           disabled={loading || saving}
                           id={kindId}
                           onCheckedChange={(checked) =>
                             handleKindToggle(kind, checked === true)
                           }
                         />
-                        <div>
-                          <Label className="text-sm" htmlFor={kindId}>
-                            {kindCopy.title}
-                          </Label>
-                          <p
-                            className="text-sm text-muted-foreground"
-                            id={`${kindId}-description`}
-                          >
-                            {kindCopy.description}
-                          </p>
-                        </div>
+                        <Label
+                          className="text-sm font-normal text-muted-foreground"
+                          htmlFor={kindId}
+                        >
+                          {EMAIL_KIND_COPY[kind].title}
+                        </Label>
                       </div>
                     );
                   })}
                 </div>
               ) : null}
-            </div>
+            </li>
           );
         })}
-      </div>
 
-      <div className="space-y-3 border-t border-border/70 pt-4">
-        <h3 className="text-sm font-medium text-foreground">Marketing</h3>
-        <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-          <div className="flex items-start gap-3">
-            <Checkbox
-              aria-describedby="email-preference-marketing-description"
-              checked={settings.marketing}
-              className="mt-0.5"
-              disabled={loading || saving}
-              id="email-preference-marketing"
-              onCheckedChange={(checked) =>
-                handleMarketingToggle(checked === true)
-              }
-            />
-            <div className="space-y-1">
-              <Label
-                className="font-medium"
-                htmlFor="email-preference-marketing"
-              >
-                {MARKETING_EMAIL_COPY.title}
-              </Label>
-              <p
-                className="text-sm text-muted-foreground"
-                id="email-preference-marketing-description"
-              >
-                {MARKETING_EMAIL_COPY.description}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        <li className="px-4 py-3">
+          <PreferenceRow
+            checked={settings.marketing}
+            description={MARKETING_EMAIL_COPY.description}
+            disabled={loading || saving}
+            id="email-preference-marketing"
+            onCheckedChange={(checked) =>
+              handleMarketingToggle(checked === true)
+            }
+            title={MARKETING_EMAIL_COPY.title}
+          />
+        </li>
+      </ul>
 
-      <p className="border-t border-border/70 pt-4 text-sm text-muted-foreground">
-        Security emails, such as a password or email address change, are always
-        sent. They are how you would find out if someone else reached your
-        account.
+      <p className="text-xs text-muted-foreground">
+        Security emails, like a password or email change, always send.
       </p>
     </AccountPanel>
+  );
+}
+
+function PreferenceRow({
+  checked,
+  description,
+  disabled,
+  id,
+  onCheckedChange,
+  title,
+}: {
+  checked: boolean | "indeterminate";
+  description: string;
+  disabled: boolean;
+  id: string;
+  onCheckedChange: (checked: boolean | "indeterminate") => void;
+  title: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <Checkbox
+        aria-describedby={`${id}-description`}
+        checked={checked}
+        className="mt-0.5"
+        disabled={disabled}
+        id={id}
+        onCheckedChange={onCheckedChange}
+      />
+      <div className="min-w-0">
+        <Label className="font-medium" htmlFor={id}>
+          {title}
+        </Label>
+        <p className="text-xs text-muted-foreground" id={`${id}-description`}>
+          {description}
+        </p>
+      </div>
+    </div>
   );
 }
