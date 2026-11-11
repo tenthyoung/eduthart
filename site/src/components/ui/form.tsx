@@ -5,6 +5,7 @@ import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import { AlertCircle } from "lucide-react";
 import {
+  get,
   Controller,
   FormProvider,
   useFormContext,
@@ -250,7 +251,10 @@ function FormShell<TFieldValues extends FieldValues>({
   formClassName,
   onSubmit,
   ...props
-}: Omit<React.ComponentProps<"form">, "onSubmit" | "children"> & {
+}: Omit<
+  React.ComponentProps<"form">,
+  "onSubmit" | "children" | "method" | "noValidate"
+> & {
   children: React.ReactNode;
   /** Disable every control for a reason other than this submit. */
   disabled?: boolean;
@@ -265,32 +269,39 @@ function FormShell<TFieldValues extends FieldValues>({
   const describe = useDescribeSubmitError();
   const { isSubmitting } = useFormState({ control: form.control });
 
-  const handleSubmit = form.handleSubmit(async (values) => {
-    if (inFlight.current) {
-      return;
+  const fail = (submitError: unknown) => {
+    if (submitError instanceof ApiError) {
+      for (const [name, message] of Object.entries(submitError.fieldErrors)) {
+        // `get` follows dotted paths ("address.postcode"), and a registered
+        // field counts even when its default value was left out.
+        const path = name as FieldPath<TFieldValues>;
+        if (
+          get(form.getValues(), path) !== undefined ||
+          form.getFieldState(path).isTouched ||
+          form.getFieldState(path).isDirty
+        ) {
+          form.setError(path, { message, type: "server" });
+        }
+      }
     }
 
-    inFlight.current = true;
+    const description = describe(submitError, { fallbackTitle: errorTitle });
+    // Also record it on the form itself, so `formState.isSubmitSuccessful` is
+    // false after a failure and the usual "reset once it succeeded" effect
+    // never empties a form that didn't go through. react-hook-form clears
+    // `root` errors on the next submit.
+    form.setError("root.submit", {
+      message: description.message,
+      type: description.kind,
+    });
+    setError(description);
+  };
 
+  const handleSubmit = form.handleSubmit(async (values) => {
     try {
       await onSubmit(values);
     } catch (submitError) {
-      if (submitError instanceof ApiError) {
-        const known = form.getValues() as Record<string, unknown>;
-
-        for (const [name, message] of Object.entries(submitError.fieldErrors)) {
-          if (name in known) {
-            form.setError(name as FieldPath<TFieldValues>, {
-              message,
-              type: "server",
-            });
-          }
-        }
-      }
-
-      setError(describe(submitError, { fallbackTitle: errorTitle }));
-    } finally {
-      inFlight.current = false;
+      fail(submitError);
     }
   });
 
@@ -298,17 +309,33 @@ function FormShell<TFieldValues extends FieldValues>({
     <FormProvider {...form}>
       <SubmitErrorContext.Provider value={{ error }}>
         <form
+          {...props}
           aria-busy={isSubmitting || undefined}
           className={formClassName}
           // POST, so a submit that beats hydration never writes names, emails
-          // or addresses into the URL as a GET query string would.
+          // or addresses into the URL as a GET query string would. Not
+          // overridable: see the props type.
           method="post"
           noValidate
           onSubmit={(event) => {
+            // Guard here, before react-hook-form flips `isSubmitting`: a
+            // blocked second submit inside handleSubmit would end the first
+            // one's busy state while its request is still running.
+            if (inFlight.current) {
+              event.preventDefault();
+              return;
+            }
+
+            inFlight.current = true;
             setError(null);
-            void handleSubmit(event);
+            // A resolver that throws (not a validation failure) would
+            // otherwise be an unhandled rejection with no callout.
+            handleSubmit(event)
+              .catch(fail)
+              .finally(() => {
+                inFlight.current = false;
+              });
           }}
-          {...props}
         >
           <FormErrorCallout className="mb-4" />
           <fieldset

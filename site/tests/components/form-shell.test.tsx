@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
@@ -27,13 +28,23 @@ type Values = z.infer<typeof schema>;
 
 function TestForm({
   onSubmit,
+  resetOnSuccess = false,
 }: {
   onSubmit: (values: Values) => Promise<unknown>;
+  resetOnSuccess?: boolean;
 }) {
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", email: "" },
   });
+  const { isSubmitSuccessful } = form.formState;
+
+  // react-hook-form's documented "reset after a successful submit" pattern.
+  useEffect(() => {
+    if (resetOnSuccess && isSubmitSuccessful) {
+      form.reset();
+    }
+  }, [form, isSubmitSuccessful, resetOnSuccess]);
 
   return (
     <FormErrorsProvider serviceName="EduthArt" supportEmail="help@example.com">
@@ -132,6 +143,9 @@ describe("FormShell while submitting", () => {
     fireEvent.submit(screen.getByRole("form", { name: "Test form" }));
     await act(async () => {});
     expect(onSubmit).toHaveBeenCalledTimes(1);
+    // ...and the blocked second submit must not end the first one's busy state.
+    expect(screen.getByLabelText("Name").matches(":disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: "Sending..." })).toBeTruthy();
 
     await act(async () => {
       pending.resolve();
@@ -259,6 +273,29 @@ describe("FormShell on an API or network failure", () => {
     expect(callout.textContent).toContain("Sending failed");
     expect(callout.textContent).toContain(
       "That email and password combination is not correct."
+    );
+  });
+
+  it("does not count a failure as a success, so reset-on-success keeps the values", async () => {
+    render(
+      <TestForm
+        resetOnSuccess
+        onSubmit={async () => {
+          throw new TypeError("Failed to fetch");
+        }}
+      />
+    );
+
+    const user = await fillIn("Jordan Avery", "jordan@example.com");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByRole("alert");
+    await act(async () => {});
+
+    expect(screen.getByLabelText<HTMLInputElement>("Name").value).toBe(
+      "Jordan Avery"
+    );
+    expect(screen.getByLabelText<HTMLInputElement>("Email").value).toBe(
+      "jordan@example.com"
     );
   });
 
