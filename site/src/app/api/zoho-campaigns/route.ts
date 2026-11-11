@@ -55,7 +55,10 @@ export async function POST(req: Request) {
           error: "Failed to add contacts to Zoho Campaigns",
           details: result.details,
         },
-        { status: result.status ?? 500 }
+        // Zoho's own status (401 for an expired token, 400 for a bad list
+        // key) describes our setup, not the visitor's request, so answer as a
+        // failed upstream rather than let the form blame them for it.
+        { status: 502 }
       );
     }
 

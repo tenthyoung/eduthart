@@ -5,7 +5,6 @@ import { Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { BusyLabel } from "@/components/account/account-surfaces";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,16 +16,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-export const emailFormSchema = z.object({ nextEmail: z.string() });
+export const emailFormSchema = z.object({
+  nextEmail: z
+    .string()
+    .trim()
+    .min(1, "Enter your new email address.")
+    .email("Enter a valid email address, like name@example.com."),
+});
 
 export type EmailFormData = z.infer<typeof emailFormSchema>;
 
@@ -50,14 +57,32 @@ export function ChangeEmailDialog({
   onSubmit: (values: EmailFormData) => Promise<void>;
   open: boolean;
 }) {
-  const nextEmail = form.watch("nextEmail");
-  const saving = form.formState.isSubmitting;
-  const unchanged =
-    nextEmail.trim().toLowerCase() ===
-    (currentEmail ?? "").trim().toLowerCase();
+  // An unchanged address is a field problem, not a disabled button: say so
+  // beside the field rather than leaving the person to guess why nothing works.
+  const handleSubmit = async (values: EmailFormData) => {
+    const unchanged =
+      values.nextEmail.trim().toLowerCase() ===
+      (currentEmail ?? "").trim().toLowerCase();
+
+    if (unchanged) {
+      form.setError("nextEmail", {
+        message: "That's already your email address. Enter the new one.",
+        type: "validate",
+      });
+      return;
+    }
+
+    await onSubmit(values);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      // Stay open while saving, so a failure has somewhere to show.
+      onOpenChange={(nextOpen) =>
+        nextOpen || !form.formState.isSubmitting ? onOpenChange(nextOpen) : null
+      }
+    >
       <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Email
@@ -80,37 +105,39 @@ export function ChangeEmailDialog({
             before the change takes effect.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="nextEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="account-next-email">
-                    New email address
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="account-next-email"
-                      type="email"
-                      autoComplete="email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button disabled={saving || unchanged} type="submit">
-                <BusyLabel busy={saving} busyLabel="Updating email...">
-                  Continue
-                </BusyLabel>
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <FormShell
+          className="space-y-4"
+          errorTitle="Your email wasn't changed"
+          form={form}
+          onSubmit={handleSubmit}
+        >
+          <FormField
+            control={form.control}
+            name="nextEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="account-next-email">
+                  New email address
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    id="account-next-email"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormErrorCallout />
+          <DialogFooter>
+            <SubmitButton pendingLabel="Updating email...">
+              Continue
+            </SubmitButton>
+          </DialogFooter>
+        </FormShell>
       </DialogContent>
     </Dialog>
   );

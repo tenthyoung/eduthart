@@ -26,7 +26,8 @@ import { UsernameDialog } from "@/components/account/username-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { parseApiError } from "@/lib/api/parse-api-error";
+import { readApiError } from "@/lib/api/api-error";
+import { SubmitError } from "@/lib/forms/describe-submit-error";
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import {
@@ -152,43 +153,48 @@ export function NotificationsPage() {
     }
   };
 
+  // A failed save throws through to the dialog's FormShell, which keeps the
+  // typed username and explains the failure inside the dialog.
   const handleSaveUsername = async (username: string) => {
     if (!user) {
-      return;
+      throw new SubmitError(
+        "You're signed out. Sign in again in a new tab, then save.",
+        { title: "Your sign-in has expired" }
+      );
     }
 
+    const token = await user.getIdToken();
+    const response = await fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ username }),
+    });
+
+    if (!response.ok) {
+      throw await readApiError(response, "Unable to save your username.");
+    }
+
+    const payload = (await response.json()) as { profile: AccountProfile };
+    notifyUsernameUpdated(payload.profile.username ?? null);
+    setSavedUsername(payload.profile.username ?? "");
+    setIsUsernameDialogOpen(false);
+    toast.success("Your username has been updated.");
+
+    // The username is saved by now; a failed refresh of the list is the
+    // page's problem, not the dialog's, so it must not read as a failed save.
     setError(null);
 
     try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/auth/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ username }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          await parseApiError(response, "Unable to save your username.")
-        );
-      }
-
-      const payload = (await response.json()) as { profile: AccountProfile };
-      notifyUsernameUpdated(payload.profile.username ?? null);
-      setSavedUsername(payload.profile.username ?? "");
-      setIsUsernameDialogOpen(false);
       applyPayload(await fetchNotifications(token));
-      toast.success("Your username has been updated.");
-    } catch (saveError) {
-      const message =
-        saveError instanceof Error
-          ? saveError.message
-          : "Unable to save your username.";
-      setError(message);
-      toast.error(message);
+    } catch (refreshError) {
+      setError(
+        refreshError instanceof Error
+          ? refreshError.message
+          : "Unable to refresh your notifications."
+      );
     }
   };
 

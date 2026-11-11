@@ -1,16 +1,18 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { requestJson } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
@@ -58,30 +60,12 @@ export const ContactForm = ({ className }: ContactFormProps) => {
     );
   }, [form]);
 
+  // A failure throws, and FormShell shows it at the top of the form with every
+  // field still filled in. Only a message that was sent clears the form.
   const onSubmit = async (data: FormData) => {
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send message");
-      }
-
-      toast.success("Message sent. We'll reply by email soon.");
-      form.reset();
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to send message. Please try again."
-      );
-    }
+    await requestJson("/api/contact", { method: "POST", body: data });
+    toast.success("Message sent. We'll reply by email soon.");
+    form.reset();
   };
 
   const stylesRequired = {
@@ -89,71 +73,46 @@ export const ContactForm = ({ className }: ContactFormProps) => {
   };
 
   return (
-    <Form {...form}>
-      <form
-        method="post"
-        onSubmit={form.handleSubmit(onSubmit)}
-        className={cn("space-y-6", className)}
-      >
-        <div className="grid md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="name">
-                  Full Name
-                  <span className="text-primary" style={stylesRequired}>
-                    *
-                  </span>
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Jordan Avery" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="email">
-                  Email Address
-                  <span className="text-primary" style={stylesRequired}>
-                    *
-                  </span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="jordan@example.com"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
+    <FormShell
+      form={form}
+      onSubmit={onSubmit}
+      errorTitle="Your message wasn't sent"
+      className={cn("space-y-6", className)}
+    >
+      <div className="grid md:grid-cols-2 gap-4">
         <FormField
           control={form.control}
-          name="message"
+          name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="message">
-                Message
+              <FormLabel>
+                Full Name
                 <span className="text-primary" style={stylesRequired}>
                   *
                 </span>
               </FormLabel>
               <FormControl>
-                <Textarea
-                  rows={5}
-                  placeholder="Tell us about your visit, collecting interest, or the work you would like to discuss."
-                  className="resize-none"
+                <Input placeholder="Jordan Avery" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Email Address
+                <span className="text-primary" style={stylesRequired}>
+                  *
+                </span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="jordan@example.com"
                   {...field}
                 />
               </FormControl>
@@ -161,26 +120,37 @@ export const ContactForm = ({ className }: ContactFormProps) => {
             </FormItem>
           )}
         />
+      </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Sending...
-            </>
-          ) : (
-            <>
-              Send Inquiry
-              <Send className="h-4 w-4 ml-2" />
-            </>
-          )}
-        </Button>
-      </form>
-    </Form>
+      <FormField
+        control={form.control}
+        name="message"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>
+              Message
+              <span className="text-primary" style={stylesRequired}>
+                *
+              </span>
+            </FormLabel>
+            <FormControl>
+              <Textarea
+                rows={5}
+                placeholder="Tell us about your visit, collecting interest, or the work you would like to discuss."
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormErrorCallout />
+      <SubmitButton size="lg" className="w-full" pendingLabel="Sending...">
+        Send Inquiry
+        <Send className="h-4 w-4 ml-2" />
+      </SubmitButton>
+    </FormShell>
   );
 };

@@ -2,8 +2,11 @@
 
 import { FolderPlus, Heart, HeartOff, Scale } from "lucide-react";
 import Link from "next/link";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { AccountShell } from "@/components/account/account-shell";
 import {
@@ -22,13 +25,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormErrorCallout,
+  FormShell,
+  SubmitButton,
+  useDescribeSubmitError,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
 import { collectorRequest } from "@/lib/collectors/client";
 import type { ArtworkCollection } from "@/lib/collectors/collections";
 import type { FavoriteRecord } from "@/lib/collectors/favorites";
 import { addToComparison } from "@/lib/collectors/comparison";
+import {
+  SubmitError,
+  type SubmitErrorDescription,
+} from "@/lib/forms/describe-submit-error";
+
+const newCollectionSchema = z.object({
+  name: z.string().trim().min(1, "Name the new collection."),
+});
+
+type NewCollectionValues = z.infer<typeof newCollectionSchema>;
 
 export function FavoritesPage() {
   const { data, error, loading, mutate, user } = useCollectorResource<
@@ -41,11 +64,20 @@ export function FavoritesPage() {
   });
   const [collections, setCollections] = useState<ArtworkCollection[]>([]);
   const [organizing, setOrganizing] = useState<FavoriteRecord | null>(null);
-  const [newCollectionName, setNewCollectionName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pickError, setPickError] = useState<SubmitErrorDescription | null>(
+    null
+  );
+  const describeSubmitError = useDescribeSubmitError();
+  const newCollectionForm = useForm<NewCollectionValues>({
+    resolver: zodResolver(newCollectionSchema),
+    defaultValues: { name: "" },
+  });
+  const creating = newCollectionForm.formState.isSubmitting;
 
   const openOrganizer = async (favorite: FavoriteRecord) => {
     setOrganizing(favorite);
+    setPickError(null);
 
     if (!user) {
       return;
@@ -61,75 +93,72 @@ export function FavoritesPage() {
     }
   };
 
-  const addToCollection = async (collectionId: string) => {
+  // Throws on failure, so the "create and add" form can show it in its own
+  // callout. A click on an existing collection takes the toast instead.
+  const addToCollectionOrThrow = async (collectionId: string) => {
     if (!organizing || !user) {
       return;
     }
 
+    const payload = await collectorRequest<{
+      collections: ArtworkCollection[];
+    }>("/api/collectors/collections", await user.getIdToken(), {
+      body: {
+        collectionId,
+        itemId: organizing.itemId,
+        username: organizing.artistUsername,
+      },
+      method: "POST",
+    });
+    setCollections(payload.collections);
+    setOrganizing(null);
+    toast.success("Added to your collection.");
+  };
+
+  const addToCollection = async (collectionId: string) => {
     setBusy(true);
+    setPickError(null);
 
     try {
-      const payload = await collectorRequest<{
-        collections: ArtworkCollection[];
-      }>("/api/collectors/collections", await user.getIdToken(), {
-        body: {
-          collectionId,
-          itemId: organizing.itemId,
-          username: organizing.artistUsername,
-        },
-        method: "POST",
-      });
-      setCollections(payload.collections);
-      setOrganizing(null);
-      toast.success("Added to your collection.");
+      await addToCollectionOrThrow(collectionId);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to add that to a collection."
+      // Inline, under the list that was clicked: never a toast that is gone
+      // before anyone can screenshot it.
+      setPickError(
+        describeSubmitError(error, {
+          fallbackTitle: "That wasn't added to the collection",
+        })
       );
     } finally {
       setBusy(false);
     }
   };
 
-  const createAndAdd = async () => {
-    const name = newCollectionName.trim();
-
-    if (!user || !name) {
+  const createAndAdd = async ({ name }: NewCollectionValues) => {
+    if (!user) {
       return;
     }
 
-    setBusy(true);
+    const created = await collectorRequest<{
+      collections: ArtworkCollection[];
+    }>("/api/collectors/collections", await user.getIdToken(), {
+      body: { name },
+      method: "POST",
+    });
+    setCollections(created.collections);
 
-    try {
-      const created = await collectorRequest<{
-        collections: ArtworkCollection[];
-      }>("/api/collectors/collections", await user.getIdToken(), {
-        body: { name },
-        method: "POST",
-      });
-      setCollections(created.collections);
+    const newest = created.collections.find(
+      (collection) => collection.name === name
+    );
 
-      const newest = created.collections.find(
-        (collection) => collection.name === name
+    if (!newest) {
+      throw new SubmitError(
+        "The collection was created, but we couldn't add the artwork to it. Choose it from the list above."
       );
-
-      if (!newest) {
-        throw new Error("The collection was created but could not be opened.");
-      }
-
-      setNewCollectionName("");
-      await addToCollection(newest.id);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to create that collection."
-      );
-    } finally {
-      setBusy(false);
     }
+
+    newCollectionForm.reset({ name: "" });
+    await addToCollectionOrThrow(newest.id);
   };
 
   if (loading) {
@@ -229,7 +258,11 @@ export function FavoritesPage() {
 
       <Dialog
         open={organizing !== null}
-        onOpenChange={(open) => (open ? null : setOrganizing(null))}
+        // Stay open while a save is running, so its result (or its error) has
+        // somewhere to show.
+        onOpenChange={(open) =>
+          open || busy || creating ? null : setOrganizing(null)
+        }
       >
         <DialogContent>
           <DialogHeader>
@@ -250,7 +283,7 @@ export function FavoritesPage() {
                 <Button
                   key={collection.id}
                   className="w-full justify-between"
-                  disabled={busy}
+                  disabled={busy || creating}
                   onClick={() => void addToCollection(collection.id)}
                   type="button"
                   variant="outline"
@@ -264,24 +297,48 @@ export function FavoritesPage() {
             )}
           </div>
 
-          <div className="space-y-2 border-t border-border pt-4">
-            <Label htmlFor="new-collection-name">New collection</Label>
-            <Input
-              id="new-collection-name"
-              onChange={(event) => setNewCollectionName(event.target.value)}
-              placeholder="Large abstracts"
-              value={newCollectionName}
-            />
-          </div>
+          {pickError ? (
+            <Alert variant="destructive">
+              <AlertTitle>{pickError.title}</AlertTitle>
+              <AlertDescription>{pickError.message}</AlertDescription>
+            </Alert>
+          ) : null}
 
-          <DialogFooter>
-            <Button
-              disabled={busy || !newCollectionName.trim()}
-              onClick={() => void createAndAdd()}
-            >
-              Create and add
-            </Button>
-          </DialogFooter>
+          <FormShell
+            form={newCollectionForm}
+            onSubmit={createAndAdd}
+            errorTitle="That collection wasn't added"
+            disabled={busy}
+            formClassName="border-t border-border pt-4"
+            className="space-y-4"
+          >
+            <FormField
+              control={newCollectionForm.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="new-collection-name">
+                    New collection
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="new-collection-name"
+                      placeholder="Large abstracts"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormErrorCallout />
+            <DialogFooter>
+              <SubmitButton pendingLabel="Creating...">
+                Create and add
+              </SubmitButton>
+            </DialogFooter>
+          </FormShell>
         </DialogContent>
       </Dialog>
     </AccountShell>
