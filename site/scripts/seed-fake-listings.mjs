@@ -574,6 +574,9 @@ function buildStudio(artist, now) {
 
 function buildProfile(artist, now) {
   return {
+    artistApproved: true,
+    artistApprovedAt: now,
+    artistApprovedBy: "seed-fake-listings",
     authProviders: [],
     bio: artist.bio,
     createdAt: now,

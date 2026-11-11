@@ -28,6 +28,12 @@ import {
 } from "@/components/ui/select";
 import { parseApiError } from "@/lib/api/parse-api-error";
 import {
+  ARTIST_APPLICATION_PATH,
+  ARTIST_NOT_APPROVED_MESSAGE,
+  isArtistNotApprovedResponse,
+} from "@/lib/artists/artist-approval";
+import { ArtistApprovalRequired } from "@/components/artists/artist-approval-required";
+import {
   createEmptyListingItem,
   createEmptyListingStudio,
   getItemDisplayTitle,
@@ -66,6 +72,7 @@ export function ListingManagerPage({ username }: { username: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notApproved, setNotApproved] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortValue>("newest");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
@@ -87,6 +94,7 @@ export function ListingManagerPage({ username }: { username: string }) {
     const load = async () => {
       setLoading(true);
       setError(null);
+      setNotApproved(false);
 
       try {
         const token = await user.getIdToken();
@@ -105,6 +113,13 @@ export function ListingManagerPage({ username }: { username: string }) {
         if (timeoutId !== null) {
           window.clearTimeout(timeoutId);
           timeoutId = null;
+        }
+
+        if (await isArtistNotApprovedResponse(response)) {
+          if (!cancelled) {
+            setNotApproved(true);
+          }
+          return;
         }
 
         if (!response.ok) {
@@ -379,6 +394,10 @@ export function ListingManagerPage({ username }: { username: string }) {
     );
   }
 
+  if (notApproved) {
+    return <ArtistApprovalRequired />;
+  }
+
   if (status === "unauthenticated" || !profile) {
     return null;
   }
@@ -517,7 +536,17 @@ export function ListingManagerPage({ username }: { username: string }) {
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Listings error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {error === ARTIST_NOT_APPROVED_MESSAGE ? (
+                <Link
+                  className="mt-2 block font-medium underline underline-offset-4"
+                  href={ARTIST_APPLICATION_PATH}
+                >
+                  Apply to be an artist
+                </Link>
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : null}
 
