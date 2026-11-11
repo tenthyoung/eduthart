@@ -32,6 +32,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -132,29 +133,32 @@ export function CollectionsPage() {
         onSubmit={onCreate}
         errorTitle="The collection wasn't created"
         formClassName="rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]"
-        className="flex flex-col gap-3 sm:flex-row sm:items-start"
+        className="space-y-3"
       >
-        <FormField
-          control={createForm.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem className="block flex-1 space-y-2">
-              <FormLabel htmlFor="collection-name">New collection</FormLabel>
-              <FormControl>
-                <Input
-                  id="collection-name"
-                  placeholder="Coastal light"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <SubmitButton className="sm:mt-[1.375rem]" pendingLabel="Creating...">
-          <Plus />
-          Create collection
-        </SubmitButton>
+        <FormErrorCallout />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <FormField
+            control={createForm.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="block flex-1 space-y-2">
+                <FormLabel htmlFor="collection-name">New collection</FormLabel>
+                <FormControl>
+                  <Input
+                    id="collection-name"
+                    placeholder="Coastal light"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <SubmitButton className="sm:mt-[1.375rem]" pendingLabel="Creating...">
+            <Plus />
+            Create collection
+          </SubmitButton>
+        </div>
       </FormShell>
 
       <div className="mt-8 space-y-6">
@@ -177,44 +181,47 @@ export function CollectionsPage() {
                       form={renameForm}
                       onSubmit={onRename}
                       errorTitle="The collection wasn't renamed"
-                      className="flex flex-wrap items-start gap-2"
+                      className="space-y-2"
                     >
-                      <FormField
-                        control={renameForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className="gap-1">
-                            <FormLabel
-                              className="sr-only"
-                              htmlFor={`rename-${collection.id}`}
-                            >
-                              Collection name
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                autoFocus
-                                className="max-w-xs"
-                                id={`rename-${collection.id}`}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <SubmitButton size="sm" pendingLabel="Saving...">
-                        <Check />
-                        Save
-                      </SubmitButton>
-                      <Button
-                        onClick={() => setRenamingId(null)}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <X />
-                        Cancel
-                      </Button>
+                      <FormErrorCallout />
+                      <div className="flex flex-wrap items-start gap-2">
+                        <FormField
+                          control={renameForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem className="gap-1">
+                              <FormLabel
+                                className="sr-only"
+                                htmlFor={`rename-${collection.id}`}
+                              >
+                                Collection name
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  autoFocus
+                                  className="max-w-xs"
+                                  id={`rename-${collection.id}`}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <SubmitButton size="sm" pendingLabel="Saving...">
+                          <Check />
+                          Save
+                        </SubmitButton>
+                        <Button
+                          onClick={() => setRenamingId(null)}
+                          size="sm"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <X />
+                          Cancel
+                        </Button>
+                      </div>
                     </FormShell>
                   ) : (
                     <div className="flex flex-wrap items-center gap-3">

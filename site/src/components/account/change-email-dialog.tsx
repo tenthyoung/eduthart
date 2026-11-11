@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -130,6 +131,7 @@ export function ChangeEmailDialog({
               </FormItem>
             )}
           />
+          <FormErrorCallout />
           <DialogFooter>
             <SubmitButton pendingLabel="Updating email...">
               Continue

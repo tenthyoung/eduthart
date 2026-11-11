@@ -6,6 +6,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -145,6 +146,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
         )}
       />
 
+      <FormErrorCallout />
       <SubmitButton size="lg" className="w-full" pendingLabel="Sending...">
         Send Inquiry
         <Send className="h-4 w-4 ml-2" />

@@ -31,8 +31,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
+  useDescribeSubmitError,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
@@ -40,7 +42,10 @@ import { collectorRequest } from "@/lib/collectors/client";
 import type { ArtworkCollection } from "@/lib/collectors/collections";
 import type { FavoriteRecord } from "@/lib/collectors/favorites";
 import { addToComparison } from "@/lib/collectors/comparison";
-import { SubmitError } from "@/lib/forms/describe-submit-error";
+import {
+  SubmitError,
+  type SubmitErrorDescription,
+} from "@/lib/forms/describe-submit-error";
 
 const newCollectionSchema = z.object({
   name: z.string().trim().min(1, "Name the new collection."),
@@ -60,6 +65,10 @@ export function FavoritesPage() {
   const [collections, setCollections] = useState<ArtworkCollection[]>([]);
   const [organizing, setOrganizing] = useState<FavoriteRecord | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pickError, setPickError] = useState<SubmitErrorDescription | null>(
+    null
+  );
+  const describeSubmitError = useDescribeSubmitError();
   const newCollectionForm = useForm<NewCollectionValues>({
     resolver: zodResolver(newCollectionSchema),
     defaultValues: { name: "" },
@@ -68,6 +77,7 @@ export function FavoritesPage() {
 
   const openOrganizer = async (favorite: FavoriteRecord) => {
     setOrganizing(favorite);
+    setPickError(null);
 
     if (!user) {
       return;
@@ -107,14 +117,17 @@ export function FavoritesPage() {
 
   const addToCollection = async (collectionId: string) => {
     setBusy(true);
+    setPickError(null);
 
     try {
       await addToCollectionOrThrow(collectionId);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to add that to a collection."
+      // Inline, under the list that was clicked: never a toast that is gone
+      // before anyone can screenshot it.
+      setPickError(
+        describeSubmitError(error, {
+          fallbackTitle: "That wasn't added to the collection",
+        })
       );
     } finally {
       setBusy(false);
@@ -284,6 +297,13 @@ export function FavoritesPage() {
             )}
           </div>
 
+          {pickError ? (
+            <Alert variant="destructive">
+              <AlertTitle>{pickError.title}</AlertTitle>
+              <AlertDescription>{pickError.message}</AlertDescription>
+            </Alert>
+          ) : null}
+
           <FormShell
             form={newCollectionForm}
             onSubmit={createAndAdd}
@@ -312,6 +332,7 @@ export function FavoritesPage() {
               )}
             />
 
+            <FormErrorCallout />
             <DialogFooter>
               <SubmitButton pendingLabel="Creating...">
                 Create and add

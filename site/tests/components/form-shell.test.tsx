@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   FormErrorsProvider,
   FormControl,
+  FormErrorCallout,
   FormField,
   FormItem,
   FormLabel,
@@ -28,9 +29,11 @@ type Values = z.infer<typeof schema>;
 
 function TestForm({
   onSubmit,
+  placeCallout = true,
   resetOnSuccess = false,
 }: {
   onSubmit: (values: Values) => Promise<unknown>;
+  placeCallout?: boolean;
   resetOnSuccess?: boolean;
 }) {
   const form = useForm<Values>({
@@ -71,6 +74,7 @@ function TestForm({
             )}
           />
         ))}
+        {placeCallout ? <FormErrorCallout /> : null}
         <SubmitButton pendingLabel="Sending...">Send</SubmitButton>
       </FormShell>
     </FormErrorsProvider>
@@ -329,8 +333,10 @@ describe("FormShell on an API or network failure", () => {
       ?.textContent?.match(/Ref ([A-Z0-9]{6}) · server 503/)?.[1];
     expect(reference).toBeTruthy();
 
-    const note = document.querySelector("[data-slot=form-error-note]");
-    expect(note?.textContent).toContain(`ref ${reference}`);
+    // Right above the submit button, so one screenshot has both.
+    expect(callout.nextElementSibling).toBe(
+      screen.getByRole("button", { name: "Send" })
+    );
 
     const mail = screen.getByRole("link", { name: "Email support" });
     expect(mail.getAttribute("href")).toContain("mailto:help@example.com");
@@ -346,6 +352,28 @@ describe("FormShell on an API or network failure", () => {
     expect(copied).not.toContain("Jordan Avery");
     expect(copied).not.toContain("jordan@example.com");
     expect(screen.getByRole("button", { name: "Details copied" })).toBeTruthy();
+  });
+
+  it("still shows the error after the fields when a form places no callout", async () => {
+    render(
+      <TestForm
+        placeCallout={false}
+        onSubmit={async () => {
+          throw new TypeError("Failed to fetch");
+        }}
+      />
+    );
+
+    const user = await fillIn("Jordan Avery", "jordan@example.com");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    const callouts = await screen.findAllByRole("alert");
+    expect(callouts).toHaveLength(1);
+    expect(callouts[0]?.textContent).toContain("We couldn't reach EduthArt");
+    // After the fieldset, so after the button: still beside it.
+    expect(callouts[0]?.previousElementSibling?.getAttribute("data-slot")).toBe(
+      "form-fieldset"
+    );
   });
 
   it("clears the callout when the person submits again", async () => {

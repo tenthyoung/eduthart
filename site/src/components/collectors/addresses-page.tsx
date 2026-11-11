@@ -25,6 +25,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -390,6 +391,7 @@ export function AddressesPage() {
               />
             ))}
 
+            <FormErrorCallout />
             <DialogFooter>
               <SubmitButton pendingLabel="Saving address...">
                 Save address

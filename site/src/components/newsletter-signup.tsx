@@ -14,6 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -99,6 +100,7 @@ export function NewsletterSignup() {
             <FormLabel className="sr-only" htmlFor={emailId}>
               Email
             </FormLabel>
+            <FormErrorCallout />
             <div className="flex flex-col gap-2 sm:flex-row">
               <FormControl>
                 <Input

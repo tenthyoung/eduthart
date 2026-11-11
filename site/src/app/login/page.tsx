@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
   useDescribeSubmitError,
@@ -205,6 +206,7 @@ function LoginContent() {
                 )}
               />
 
+              <FormErrorCallout />
               <SubmitButton className="w-full" pendingLabel="Checking code...">
                 Verify and sign in
               </SubmitButton>
@@ -281,6 +283,7 @@ function LoginContent() {
               )}
             />
 
+            <FormErrorCallout />
             <SubmitButton
               className="w-full"
               size="lg"

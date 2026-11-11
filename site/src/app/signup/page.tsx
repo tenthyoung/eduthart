@@ -20,6 +20,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
   useDescribeSubmitError,
@@ -310,6 +311,7 @@ export default function SignupPage() {
             />
           </div>
 
+          <FormErrorCallout />
           <SubmitButton
             className="w-full"
             size="lg"

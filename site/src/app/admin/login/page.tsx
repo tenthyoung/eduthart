@@ -18,6 +18,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -124,6 +125,7 @@ export default function AdminLoginPage() {
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
+        <FormErrorCallout />
         <SubmitButton className="w-full" size="lg" pendingLabel="Signing in...">
           Open admin console
         </SubmitButton>

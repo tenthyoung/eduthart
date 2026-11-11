@@ -19,6 +19,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -280,6 +281,7 @@ function AuthActionContent() {
               )}
             />
 
+            <FormErrorCallout />
             <div className="flex flex-col gap-3 sm:flex-row">
               <SubmitButton
                 className="flex-1"

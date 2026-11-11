@@ -24,6 +24,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -131,6 +132,7 @@ export function UsernameDialog({
               </FormItem>
             )}
           />
+          <FormErrorCallout />
           <DialogFooter>
             <SubmitButton pendingLabel="Saving username...">
               Save username

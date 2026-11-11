@@ -14,6 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -306,6 +307,7 @@ export function DmcaReportForm({ initialUrl }: { initialUrl?: string | null }) {
         )}
       />
 
+      <FormErrorCallout />
       <SubmitButton
         size="lg"
         className="w-full md:w-auto"

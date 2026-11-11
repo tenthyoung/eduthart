@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -174,6 +175,7 @@ export function EditProfileDialog({
               {displayNamePreview}
             </p>
           </div>
+          <FormErrorCallout />
           <DialogFooter>
             <SubmitButton pendingLabel="Saving profile...">
               Save profile

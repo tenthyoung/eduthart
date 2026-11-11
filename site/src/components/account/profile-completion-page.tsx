@@ -20,6 +20,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -347,6 +348,7 @@ export function ProfileCompletionPage() {
             )}
           />
 
+          <FormErrorCallout />
           <div className="flex flex-col gap-3 sm:flex-row">
             <SubmitButton
               className="flex-1"

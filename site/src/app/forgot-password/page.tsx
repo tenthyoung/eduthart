@@ -16,6 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -109,6 +110,7 @@ export default function ForgotPasswordPage() {
             )}
           />
 
+          <FormErrorCallout />
           <SubmitButton
             className="w-full"
             size="lg"

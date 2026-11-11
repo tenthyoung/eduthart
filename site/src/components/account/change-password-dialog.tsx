@@ -25,6 +25,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
@@ -278,6 +279,7 @@ export function ChangePasswordDialog({
             </ul>
           </div>
 
+          <FormErrorCallout />
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost">

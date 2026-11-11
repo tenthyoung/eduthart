@@ -226,11 +226,14 @@ type SubmitErrorReport = SubmitErrorDescription & {
 type SubmitErrorContextValue = {
   error: SubmitErrorReport | null;
   calloutRef: React.RefObject<HTMLDivElement | null>;
+  /** A placed `FormErrorCallout` calls this so the shell skips its fallback. */
+  registerCallout: () => () => void;
 };
 
 const SubmitErrorContext = React.createContext<SubmitErrorContextValue>({
   error: null,
   calloutRef: { current: null },
+  registerCallout: () => () => undefined,
 });
 
 /** Six characters someone can read out or type into an email. */
@@ -296,18 +299,6 @@ function useFormSubmitError() {
   return React.useContext(SubmitErrorContext).error;
 }
 
-/** Scroll to and focus the error callout, e.g. from the note by the button. */
-function useShowSubmitError() {
-  const { calloutRef } = React.useContext(SubmitErrorContext);
-  return React.useCallback(() => {
-    calloutRef.current?.scrollIntoView?.({
-      block: "center",
-      behavior: "smooth",
-    });
-    calloutRef.current?.focus({ preventScroll: true });
-  }, [calloutRef]);
-}
-
 /**
  * The one way a form on this site submits.
  *
@@ -316,8 +307,10 @@ function useShowSubmitError() {
  * - While `onSubmit` runs, every control sits inside a disabled `<fieldset>`,
  *   the form is `aria-busy`, and a second submit is ignored. `SubmitButton`
  *   shows the spinner.
- * - If `onSubmit` throws, the error becomes a callout at the top of the form
- *   saying what went wrong and what to do next (see `describeSubmitError`).
+ * - If `onSubmit` throws, the error becomes a callout right above the submit
+ *   button (place `<FormErrorCallout />` there; without one it shows after
+ *   the fields), saying what went wrong and what to do next, with a reference
+ *   to quote. Never a toast: a toast vanishes before anyone can screenshot it.
  *   An `ApiError` that names fields also puts those messages on the fields.
  *   The values are never reset on failure: resetting is only ever the submit
  *   handler's own choice, after it succeeds.
@@ -349,6 +342,11 @@ function FormShell<TFieldValues extends FieldValues>({
 }) {
   const [error, setError] = React.useState<SubmitErrorReport | null>(null);
   const calloutRef = React.useRef<HTMLDivElement>(null);
+  const [placedCallouts, setPlacedCallouts] = React.useState(0);
+  const registerCallout = React.useCallback(() => {
+    setPlacedCallouts((count) => count + 1);
+    return () => setPlacedCallouts((count) => count - 1);
+  }, []);
   const inFlight = React.useRef(false);
   const describe = useDescribeSubmitError();
   const { isSubmitting } = useFormState({ control: form.control });
@@ -397,7 +395,9 @@ function FormShell<TFieldValues extends FieldValues>({
 
   return (
     <FormProvider {...form}>
-      <SubmitErrorContext.Provider value={{ calloutRef, error }}>
+      <SubmitErrorContext.Provider
+        value={{ calloutRef, error, registerCallout }}
+      >
         <form
           {...props}
           aria-busy={isSubmitting || undefined}
@@ -427,7 +427,6 @@ function FormShell<TFieldValues extends FieldValues>({
               });
           }}
         >
-          <FormErrorCallout className="mb-4" />
           <fieldset
             className={cn("m-0 min-w-0 border-0 p-0", className)}
             data-slot="form-fieldset"
@@ -435,7 +434,11 @@ function FormShell<TFieldValues extends FieldValues>({
           >
             {children}
           </fieldset>
-          <FormErrorNote className="mt-3" />
+          {/* A form places <FormErrorCallout /> right above its submit
+              button. If one forgets, the error still shows beside it. */}
+          {placedCallouts === 0 ? (
+            <FormErrorCallout className="mt-4" fallback />
+          ) : null}
         </form>
       </SubmitErrorContext.Provider>
     </FormProvider>
@@ -443,13 +446,26 @@ function FormShell<TFieldValues extends FieldValues>({
 }
 
 /**
- * The failure callout at the top of a `FormShell`. It takes focus and scrolls
- * into view when it appears, so a long form's submit button is never the last
- * thing the person sees.
+ * The failure callout for a `FormShell`. Put it right above the submit button,
+ * so the error, what was typed and the button fit in one screenshot. It takes
+ * focus and scrolls into view when it appears.
  */
-function FormErrorCallout({ className }: { className?: string }) {
+function FormErrorCallout({
+  className,
+  fallback = false,
+}: {
+  className?: string;
+  /** Used by FormShell itself when a form placed no callout. */
+  fallback?: boolean;
+}) {
   const error = useFormSubmitError();
-  const { calloutRef: ref } = React.useContext(SubmitErrorContext);
+  const { calloutRef: ref, registerCallout } =
+    React.useContext(SubmitErrorContext);
+
+  React.useEffect(
+    () => (fallback ? undefined : registerCallout()),
+    [fallback, registerCallout]
+  );
   const { supportEmail } = React.useContext(FormErrorsContext);
   const [copied, setCopied] = React.useState(false);
 
@@ -526,35 +542,6 @@ function FormErrorCallout({ className }: { className?: string }) {
 }
 
 /**
- * One line under the fields, by the submit button, so a screenshot of the
- * bottom of a long form still shows that it failed and its reference.
- */
-function FormErrorNote({ className }: { className?: string }) {
-  const error = useFormSubmitError();
-  const showError = useShowSubmitError();
-
-  if (!error) {
-    return null;
-  }
-
-  return (
-    <p
-      className={cn("text-sm text-destructive", className)}
-      data-slot="form-error-note"
-    >
-      Not sent: {error.title} (ref {error.reference}).{" "}
-      <button
-        className="cursor-pointer underline underline-offset-2"
-        onClick={showError}
-        type="button"
-      >
-        See details
-      </button>
-    </p>
-  );
-}
-
-/**
  * The submit button for a `FormShell`: disabled until hydration, then a
  * spinner and `pendingLabel` while the form is submitting.
  */
@@ -589,10 +576,8 @@ export {
   useFormField,
   FormErrorsProvider,
   useFormSubmitError,
-  useShowSubmitError,
   FormShell,
   FormErrorCallout,
-  FormErrorNote,
   SubmitButton,
   Form,
   FormItem,
