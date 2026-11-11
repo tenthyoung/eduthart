@@ -69,9 +69,10 @@ function Button({
       data-slot="button"
       data-loading={loading || undefined}
       aria-busy={loading || undefined}
+      // The busy opacity sits before the caller's className so theirs wins.
       className={cn(
-        buttonVariants({ variant, size, className }),
-        "aria-busy:disabled:opacity-100"
+        "aria-busy:disabled:opacity-100",
+        buttonVariants({ variant, size, className })
       )}
       disabled={asChild ? disabled : disabled || loading}
       {...props}
@@ -79,7 +80,8 @@ function Button({
       {loading && !asChild ? (
         <>
           <Loader2 aria-hidden="true" className="animate-spin" />
-          {loadingText ?? children}
+          {/* An icon-only button has room for one glyph: the spinner. */}
+          {size === "icon" ? null : (loadingText ?? children)}
         </>
       ) : (
         children
