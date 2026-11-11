@@ -4,9 +4,10 @@ import type { AccountProfile } from "@/lib/auth/account-profile";
  * Only approved artists can list artwork (EDUTHA-122, decision 1).
  *
  * Approval lives on the `users` profile document as `artistApproved`. It is
- * written only by the server: the admin console (approve / revoke) and the
+ * written only by the server: the admin console's "Approve as artist" and the
  * one-off `scripts/approve-existing-artists.mjs` that grandfathered everyone
  * who was already selling. The profile API never copies it from a request.
+ * There is no revoke yet: EDUTHA-138 decides what removing an artist means.
  */
 
 export const ARTIST_NOT_APPROVED_CODE = "artist-not-approved";
