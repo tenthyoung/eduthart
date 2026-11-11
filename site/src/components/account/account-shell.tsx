@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
 export const ACCOUNT_SECTIONS = [
   { href: "/account", icon: Settings, label: "Settings" },
   { href: "/account/favorites", icon: Heart, label: "Favorites" },
-  { href: "/account/collections", icon: Images, label: "Collections" },
+  { href: "/account/collections", icon: Images, label: "Saved" },
   { href: "/account/following", icon: UserRound, label: "Following" },
   { href: "/account/recommendations", icon: Sparkles, label: "For you" },
   { href: "/account/recently-viewed", icon: History, label: "Recently viewed" },

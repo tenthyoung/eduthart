@@ -379,22 +379,28 @@ export function AccountPage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
-          <ProfileSection
-            displayNamePreview={displayNamePreview}
-            form={profileForm}
-            isProfileDialogOpen={isProfileDialogOpen}
-            isUsernameDialogOpen={isUsernameDialogOpen}
-            onEditPicture={() => setIsPictureDialogOpen(true)}
-            onImageError={handleImageError}
-            onProfileDialogChange={setIsProfileDialogOpen}
-            onRemoveBanner={() => void handleRemoveBanner()}
-            onSaveProfile={handleSaveProfile}
-            onSaveUsername={handleSaveUsername}
-            onSelectBanner={setPendingBanner}
-            onUsernameDialogChange={setIsUsernameDialogOpen}
-            profile={profile}
-            uploadingBanner={uploadingBanner}
-          />
+          <div className="space-y-6">
+            <ProfileSection
+              displayNamePreview={displayNamePreview}
+              form={profileForm}
+              isProfileDialogOpen={isProfileDialogOpen}
+              isUsernameDialogOpen={isUsernameDialogOpen}
+              onEditPicture={() => setIsPictureDialogOpen(true)}
+              onImageError={handleImageError}
+              onProfileDialogChange={setIsProfileDialogOpen}
+              onRemoveBanner={() => void handleRemoveBanner()}
+              onSaveProfile={handleSaveProfile}
+              onSaveUsername={handleSaveUsername}
+              onSelectBanner={setPendingBanner}
+              onUsernameDialogChange={setIsUsernameDialogOpen}
+              profile={profile}
+              uploadingBanner={uploadingBanner}
+            />
+
+            {/* In the main column: the side column already carries security,
+                two-factor and email, and ran far below the profile card. */}
+            <AccountDetailsSection profile={profile} />
+          </div>
 
           <div className="space-y-6">
             <SecuritySection
@@ -420,8 +426,6 @@ export function AccountPage() {
             <TwoFactorSection />
 
             <EmailPreferencesSection />
-
-            <AccountDetailsSection profile={profile} />
           </div>
         </div>
 

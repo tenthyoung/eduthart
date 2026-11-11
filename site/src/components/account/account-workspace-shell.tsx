@@ -1,9 +1,9 @@
 "use client";
 
-import { Bell, Loader2, LogOut, Palette } from "lucide-react";
+import { Bell, Loader2, LogOut, Palette, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import {
   ACCOUNT_SECTIONS,
@@ -16,6 +16,9 @@ import {
   WorkspaceShell,
   type WorkspaceNavItem,
 } from "@/components/workspace-shell";
+import type { AccountProfile } from "@/lib/auth/account-profile";
+import { subscribeToUsernameUpdates } from "@/lib/auth/username-events";
+import { isArtistCapableUsername } from "@/lib/navigation";
 
 const ACCOUNT_NAV_ITEMS: WorkspaceNavItem[] = ACCOUNT_SECTIONS.map(
   (section) => ({
@@ -38,6 +41,54 @@ export function AccountWorkspaceShell({ children }: { children: ReactNode }) {
   const activeSection = ACCOUNT_SECTIONS.find((section) =>
     isAccountSectionActive(section.href, pathname)
   );
+  const [username, setUsername] = useState<string | null>(null);
+
+  // Same lookup as the navbar's Studio link: an account with a username can
+  // list straight away, anyone else is sent to the Sell page to apply.
+  useEffect(() => {
+    if (status !== "authenticated" || !user) {
+      setUsername(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadUsername = async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/auth/profile", {
+          headers: { authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { profile: AccountProfile };
+
+        if (!cancelled) {
+          setUsername(payload.profile.username ?? null);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsername(null);
+        }
+      }
+    };
+
+    void loadUsername();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, user]);
+
+  useEffect(() => subscribeToUsernameUpdates(setUsername), []);
+
+  const listArtHref =
+    isArtistCapableUsername(username) && username
+      ? `/artists/${username}/listings/new`
+      : "/for-artists";
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,6 +108,12 @@ export function AccountWorkspaceShell({ children }: { children: ReactNode }) {
             <Link href="/browse">
               <Palette className="size-4" />
               Browse art
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href={listArtHref}>
+              <Plus className="size-4" />
+              List your art
             </Link>
           </Button>
         </>
