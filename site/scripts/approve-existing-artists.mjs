@@ -10,7 +10,10 @@ import {
 } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
-import { planApproval } from "./approve-existing-artists-plan.mjs";
+import {
+  describeRealListings,
+  planApproval,
+} from "./approve-existing-artists-plan.mjs";
 
 /**
  * Approve every artist who is already selling (EDUTHA-137).
@@ -91,8 +94,9 @@ const now = new Date().toISOString();
 for (const doc of snapshot.docs) {
   const user = doc.data();
   const flowSnap = await doc.ref.collection("seller").doc("listing_flow").get();
+  const flow = flowSnap.exists ? flowSnap.data() : null;
   const decision = planApproval({
-    flow: flowSnap.exists ? flowSnap.data() : null,
+    flow,
     uid: doc.id,
     user,
   });
@@ -114,7 +118,7 @@ for (const doc of snapshot.docs) {
   }
 
   console.log(
-    `${write ? "approved" : "would approve"} users/${doc.id} (@${user.username ?? "no-username"})`
+    `${write ? "approved" : "would approve"} users/${doc.id} (@${user.username ?? "no-username"}): ${describeRealListings(flow)}`
   );
 }
 

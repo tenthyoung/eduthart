@@ -27,7 +27,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { parseApiError } from "@/lib/api/parse-api-error";
-import { isArtistNotApprovedResponse } from "@/lib/artists/artist-approval";
+import {
+  ARTIST_APPLICATION_PATH,
+  ARTIST_NOT_APPROVED_MESSAGE,
+  isArtistNotApprovedResponse,
+} from "@/lib/artists/artist-approval";
 import { ArtistApprovalRequired } from "@/components/artists/artist-approval-required";
 import {
   createEmptyListingItem,
@@ -532,7 +536,17 @@ export function ListingManagerPage({ username }: { username: string }) {
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Listings error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {error === ARTIST_NOT_APPROVED_MESSAGE ? (
+                <Link
+                  className="mt-2 block font-medium underline underline-offset-4"
+                  href={ARTIST_APPLICATION_PATH}
+                >
+                  Apply to be an artist
+                </Link>
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : null}
 

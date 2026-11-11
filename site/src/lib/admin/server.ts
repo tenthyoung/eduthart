@@ -623,6 +623,22 @@ export async function updateUserModerationState(
   }
 
   const userRef = db().collection("users").doc(targetUid);
+
+  // Approval is not moderation: keep it off the shared moderation record so
+  // approving a suspended artist doesn't wipe the suspension reason.
+  if (action === "approve_artist") {
+    await userRef.set(
+      {
+        artistApproved: true,
+        artistApprovedAt: Timestamp.now(),
+        artistApprovedBy: moderatorUid,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+    return { success: true };
+  }
+
   const updates: Record<string, unknown> = {
     moderatedBy: moderatorUid,
     moderatedAt: Timestamp.now(),
@@ -653,16 +669,7 @@ export async function updateUserModerationState(
     case "enable_publishing":
       updates.publishingDisabled = false;
       break;
-    case "approve_artist":
-      updates.artistApproved = true;
-      updates.artistApprovedAt = Timestamp.now();
-      updates.artistApprovedBy = moderatorUid;
-      break;
-    case "revoke_artist_approval":
-      updates.artistApproved = false;
-      updates.artistApprovedAt = null;
-      updates.artistApprovedBy = null;
-      break;
+
     default:
       throw new AdminRouteError(
         "invalid-argument",

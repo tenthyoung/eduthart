@@ -55,7 +55,11 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { parseApiError } from "@/lib/api/parse-api-error";
-import { isArtistNotApprovedResponse } from "@/lib/artists/artist-approval";
+import {
+  ARTIST_APPLICATION_PATH,
+  ARTIST_NOT_APPROVED_MESSAGE,
+  isArtistNotApprovedResponse,
+} from "@/lib/artists/artist-approval";
 import { ArtistApprovalRequired } from "@/components/artists/artist-approval-required";
 import {
   createEmptyListingItem,
@@ -1534,7 +1538,17 @@ export function ListingFlowPage({
           <Alert variant="destructive">
             <AlertTriangle className="size-4" />
             <AlertTitle>Listing studio error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {error}
+              {error === ARTIST_NOT_APPROVED_MESSAGE ? (
+                <Link
+                  className="mt-2 block font-medium underline underline-offset-4"
+                  href={ARTIST_APPLICATION_PATH}
+                >
+                  Apply to be an artist
+                </Link>
+              ) : null}
+            </AlertDescription>
           </Alert>
         ) : null}
 

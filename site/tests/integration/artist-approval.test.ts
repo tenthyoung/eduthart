@@ -180,6 +180,17 @@ describe("grandfathering script plan", () => {
     );
   });
 
+  test("does not count a listing that moderation took down", () => {
+    const removed = createEmptyListingStudio();
+    removed.items[0].artworkDetails.title = "Infringing Piece";
+    removed.items[0].moderation = {
+      status: "removed",
+    } as (typeof removed.items)[0]["moderation"];
+    expect(planApproval({ flow: removed, uid: "g", user: {} })).toBe(
+      "no-listings"
+    );
+  });
+
   test("handles the legacy single-listing flow", () => {
     const legacy = { artworkDetails: { title: "Old Piece" } };
     expect(planApproval({ flow: legacy, uid: "e", user: {} })).toBe("approve");
