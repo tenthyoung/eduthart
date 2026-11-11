@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MotionFade } from "@/components/motion/motion-fade";
 import { Disclosure } from "@/components/ui/disclosure";
@@ -67,9 +67,27 @@ export default function ApplyToBeAnArtistPage() {
     ((stepIndex + 1) / artistApplicationSteps.length) * 100
   );
 
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const hasChangedStep = useRef(false);
+
+  // After Next or Back the button that was pressed is hidden with its panel,
+  // so move focus to the step heading instead of letting it drop to <body>.
+  // This also announces the new step. Skip the first render.
+  useEffect(() => {
+    if (!hasChangedStep.current) return;
+    stepHeadingRef.current?.focus({ preventScroll: true });
+  }, [stepIndex]);
+
   const goToStep = (index: number) => {
+    hasChangedStep.current = true;
     setStepIndex(index);
-    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    progressRef.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -111,7 +129,11 @@ export default function ApplyToBeAnArtistPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary/80">
                   Progress
                 </p>
-                <h2 className="mt-2 text-2xl text-foreground">
+                <h2
+                  ref={stepHeadingRef}
+                  tabIndex={-1}
+                  className="mt-2 text-2xl text-foreground outline-none"
+                >
                   Step {stepIndex + 1} of {artistApplicationSteps.length}:{" "}
                   {currentStep.title}
                 </h2>
