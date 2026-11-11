@@ -96,6 +96,11 @@ export type ProfileLocationInput = {
    * person removes it.
    */
   legacyText: string;
+  /**
+   * Text typed into the city search but not yet picked from the list. Kept
+   * in the form so a save can't silently drop it.
+   */
+  pendingQuery: string;
 };
 
 export const EMPTY_PROFILE_LOCATION_INPUT: ProfileLocationInput = {
@@ -105,6 +110,7 @@ export const EMPTY_PROFILE_LOCATION_INPUT: ProfileLocationInput = {
   countryCode: "",
   placeId: "",
   legacyText: "",
+  pendingQuery: "",
 };
 
 export function toProfileLocationInput(profile: {
@@ -119,6 +125,7 @@ export function toProfileLocationInput(profile: {
       countryCode: profile.locationPlace.countryCode ?? "",
       placeId: profile.locationPlace.placeId ?? "",
       legacyText: "",
+      pendingQuery: "",
     };
   }
 
@@ -143,8 +150,18 @@ export const profileLocationInputSchema = z
     countryCode: z.string(),
     placeId: z.string(),
     legacyText: z.string(),
+    pendingQuery: z.string(),
   })
   .superRefine((value, context) => {
+    if (value.pendingQuery.trim()) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Pick your city from the list, or choose \u201cType it in instead\u201d.",
+      });
+      return;
+    }
+
     const started = Boolean(
       value.city.trim() || value.region.trim() || value.country.trim()
     );

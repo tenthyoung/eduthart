@@ -310,12 +310,10 @@ export function ProfileCompletionPage() {
           <FormField
             control={form.control}
             name="location"
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="welcome-location">Location</FormLabel>
+                <FormLabel>Location</FormLabel>
                 <LocationField
-                  idPrefix="welcome-location"
-                  invalid={Boolean(fieldState.error)}
                   onChange={field.onChange}
                   value={field.value}
                 />

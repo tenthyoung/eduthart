@@ -134,12 +134,10 @@ export function EditProfileDialog({
           <FormField
             control={form.control}
             name="location"
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="account-location">Location</FormLabel>
+                <FormLabel>Location</FormLabel>
                 <LocationField
-                  idPrefix="account-location"
-                  invalid={Boolean(fieldState.error)}
                   onChange={field.onChange}
                   value={field.value}
                 />

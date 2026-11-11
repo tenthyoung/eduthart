@@ -8,6 +8,8 @@ import { GET as placesStatusRoute, POST as placesRoute } from "@/app/api/places/
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { toProfileLocationFromComponents } from "@/lib/places/google-places";
 import {
+  EMPTY_PROFILE_LOCATION_INPUT,
+  profileLocationInputSchema,
   describeProfileLocationInput,
   formatProfileLocation,
   toProfileLocationInput,
@@ -92,6 +94,35 @@ describe("profile location", () => {
     });
   });
 
+  test("free text alone clears a picked city, so the two never disagree", async () => {
+    const artist = await createAccount({ uid: "location-text-only-user" });
+
+    await patchProfile(artist.uid, { locationPlace: BROOKLYN });
+    await patchProfile(artist.uid, { location: "Somewhere new" });
+
+    expect(await readProfile(artist.uid)).toMatchObject({
+      location: "Somewhere new",
+      locationPlace: null,
+    });
+
+    await patchProfile(artist.uid, { locationPlace: BROOKLYN });
+    await patchProfile(artist.uid, { locationPlace: null });
+
+    expect(await readProfile(artist.uid)).toMatchObject({
+      location: null,
+      locationPlace: null,
+    });
+  });
+
+  test("a city typed but not picked blocks the form", () => {
+    expect(
+      profileLocationInputSchema.safeParse({
+        ...EMPTY_PROFILE_LOCATION_INPUT,
+        pendingQuery: "Londo",
+      }).success
+    ).toBe(false);
+  });
+
   test("removing the location clears both", async () => {
     const artist = await createAccount({ uid: "location-remove-user" });
 
@@ -160,6 +191,7 @@ describe("formatting a location", () => {
         countryCode: "",
         placeId: "",
         legacyText: "Portland, OR",
+        pendingQuery: "",
       })
     ).toBe("Portland, OR");
   });

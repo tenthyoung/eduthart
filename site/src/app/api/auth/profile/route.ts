@@ -384,8 +384,16 @@ export async function PATCH(request: Request) {
       ...(email ? { email } : {}),
       ...(body.firstName !== undefined ? { firstName } : {}),
       ...(body.lastName !== undefined ? { lastName } : {}),
-      ...(locationPlace || body.location !== undefined ? { location } : {}),
-      ...(locationPlace !== undefined ? { locationPlace } : {}),
+      // The two location fields always move together: free text alone
+      // clears the structured city, and clearing the city clears its text.
+      ...(locationPlace !== undefined || body.location !== undefined
+        ? {
+            location: locationPlace === null && body.location === undefined
+              ? null
+              : location,
+            locationPlace: locationPlace ?? null,
+          }
+        : {}),
       ...(body.photoURL !== undefined
         ? { photoURL, photoURLManagedByUser: true }
         : {}),

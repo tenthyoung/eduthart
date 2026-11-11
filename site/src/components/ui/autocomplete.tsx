@@ -18,12 +18,17 @@ export type AutocompleteOption = {
  * It holds no data of its own: the caller passes the query, the options it
  * fetched for that query and a loading flag, and gets told when one is picked.
  * Arrow keys move through the list, Enter picks, Escape closes.
+ *
+ * The list is positioned under the input, not portalled: inside a dialog
+ * whose body scrolls, it scrolls with the body (and is cut off at the
+ * dialog's bottom edge if the input sits right at the end).
  */
 export function Autocomplete({
   className,
   emptyText = "No matches",
   id,
   loading = false,
+  minQueryLength = 1,
   onQueryChange,
   onSelect,
   options,
@@ -37,6 +42,8 @@ export function Autocomplete({
   emptyText?: string;
   id: string;
   loading?: boolean;
+  /** The list stays closed until the query is at least this long. */
+  minQueryLength?: number;
   onQueryChange: (query: string) => void;
   onSelect: (option: AutocompleteOption) => void;
   options: AutocompleteOption[];
@@ -45,7 +52,7 @@ export function Autocomplete({
   const [open, setOpen] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(-1);
   const listId = `${id}-listbox`;
-  const showList = open && query.trim().length > 0;
+  const showList = open && query.trim().length >= Math.max(1, minQueryLength);
 
   React.useEffect(() => {
     setActiveIndex(options.length > 0 ? 0 : -1);
@@ -70,10 +77,14 @@ export function Autocomplete({
           ? -1
           : (index - 1 + options.length) % options.length
       );
-    } else if (event.key === "Enter" && showList && options[activeIndex]) {
-      // Enter picks the highlighted option instead of submitting the form.
+    } else if (event.key === "Enter" && showList) {
+      // While the list is open, Enter never submits the form: it picks the
+      // highlighted option, or does nothing while results are loading.
       event.preventDefault();
-      pick(options[activeIndex]);
+
+      if (options[activeIndex]) {
+        pick(options[activeIndex]);
+      }
     } else if (event.key === "Escape" && showList) {
       event.preventDefault();
       setOpen(false);
@@ -97,6 +108,8 @@ export function Autocomplete({
             : undefined
         }
         autoComplete="off"
+        // Room for the spinner, so typed text never runs under it.
+        className={cn(loading && "pr-9")}
         placeholder={placeholder}
         value={query}
         onBlur={(event) => {
@@ -126,7 +139,7 @@ export function Autocomplete({
           className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
         >
           {options.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-muted-foreground">
+            <li className="flex min-h-11 items-center px-3 py-2 text-sm text-muted-foreground">
               {loading ? "Searching…" : emptyText}
             </li>
           ) : (
@@ -137,7 +150,8 @@ export function Autocomplete({
                 role="option"
                 aria-selected={index === activeIndex}
                 className={cn(
-                  "cursor-pointer rounded-sm px-3 py-2 text-sm",
+                  // min-h-11: a 44px row, big enough to tap on a phone.
+                  "flex min-h-11 cursor-pointer items-center rounded-sm px-3 py-2 text-sm",
                   index === activeIndex && "bg-accent text-accent-foreground"
                 )}
                 // mousedown, not click: the input's blur would close the
