@@ -16,12 +16,15 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormErrorCallout,
+  FormShell,
+  SubmitButton,
+  useDescribeSubmitError,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -37,20 +40,27 @@ const loginFormSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginFormSchema>;
 
+const twoFactorFormSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, "Enter the six-digit code from your app."),
+});
+
+type TwoFactorFormData = z.infer<typeof twoFactorFormSchema>;
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isHydrated = useHydrated();
   const { resolveTwoFactorSignIn, signInWithEmail, signInWithGoogle, status } =
     useAuth();
+  const describeSubmitError = useDescribeSubmitError();
   const [isFederatedSubmitting, setIsFederatedSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Only the Google button's failures live here: the password and code forms
+  // show theirs in their own FormShell callout.
+  const [federatedError, setFederatedError] = useState<string | null>(null);
   // Set when sign-in stopped for a second factor. It holds the half-finished
   // sign-in, so it has to be the object the original failure produced.
   const [twoFactorResolver, setTwoFactorResolver] =
     useState<MultiFactorResolver | null>(null);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [verifyingCode, setVerifyingCode] = useState(false);
   const passwordResetSucceeded = searchParams.get("reset") === "success";
 
   const form = useForm<LoginFormData>({
@@ -59,6 +69,11 @@ function LoginContent() {
       email: "",
       password: "",
     },
+  });
+
+  const twoFactorForm = useForm<TwoFactorFormData>({
+    resolver: zodResolver(twoFactorFormSchema),
+    defaultValues: { code: "" },
   });
 
   const isSubmitting = form.formState.isSubmitting || isFederatedSubmitting;
@@ -70,12 +85,10 @@ function LoginContent() {
   }, [router, status]);
 
   const onSubmit = async ({ email, password }: LoginFormData) => {
-    setError(null);
+    setFederatedError(null);
 
     try {
       await signInWithEmail(email, password);
-      toast.success("Welcome back.");
-      router.replace("/");
     } catch (error) {
       // Not a failure: the password was right and the account wants its code.
       if (isTwoFactorRequiredError(error)) {
@@ -83,46 +96,33 @@ function LoginContent() {
         return;
       }
 
-      const message =
-        error instanceof Error ? error.message : "Unable to sign you in.";
-      setError(message);
-      toast.error(message);
+      throw error;
     }
+
+    toast.success("Welcome back.");
+    router.replace("/");
   };
 
-  const handleTwoFactorSubmit = async () => {
+  const handleTwoFactorSubmit = async ({ code }: TwoFactorFormData) => {
     if (!twoFactorResolver) {
       return;
     }
 
-    setVerifyingCode(true);
-    setError(null);
-
-    try {
-      await resolveTwoFactorSignIn(twoFactorResolver, twoFactorCode);
-      toast.success("Welcome back.");
-      router.replace("/");
-    } catch (verifyError) {
-      const message =
-        verifyError instanceof Error
-          ? verifyError.message
-          : "That code was not accepted.";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setVerifyingCode(false);
-    }
+    await resolveTwoFactorSignIn(twoFactorResolver, code);
+    toast.success("Welcome back.");
+    router.replace("/");
   };
 
   const cancelTwoFactor = () => {
     setTwoFactorResolver(null);
-    setTwoFactorCode("");
-    setError(null);
+    twoFactorForm.reset();
+    // A different account needs a different password; keep only the email.
+    form.resetField("password");
   };
 
   const handleGoogleSignIn = async () => {
     setIsFederatedSubmitting(true);
-    setError(null);
+    setFederatedError(null);
 
     try {
       await signInWithGoogle("login");
@@ -134,12 +134,11 @@ function LoginContent() {
         return;
       }
 
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to sign in with Google.";
-      setError(message);
-      toast.error(message);
+      setFederatedError(
+        describeSubmitError(error, {
+          fallbackTitle: "Google sign-in failed",
+        }).message
+      );
     } finally {
       setIsFederatedSubmitting(false);
     }
@@ -176,130 +175,124 @@ function LoginContent() {
               </AlertDescription>
             </Alert>
 
-            {error ? (
-              <Alert variant="destructive">
-                <AlertTitle>That did not work</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <form
+            <FormShell
+              form={twoFactorForm}
+              onSubmit={handleTwoFactorSubmit}
+              errorTitle="That code did not work"
               className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void handleTwoFactorSubmit();
-              }}
             >
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="login-totp">
-                  Six-digit code
-                </label>
-                <Input
-                  autoComplete="one-time-code"
-                  autoFocus
-                  id="login-totp"
-                  inputMode="numeric"
-                  maxLength={6}
-                  onChange={(event) =>
-                    setTwoFactorCode(event.target.value.replace(/\D/g, ""))
-                  }
-                  placeholder="123456"
-                  value={twoFactorCode}
-                />
-              </div>
+              <FormField
+                control={twoFactorForm.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="login-totp">Six-digit code</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="one-time-code"
+                        autoFocus
+                        id="login-totp"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="123456"
+                        {...field}
+                        onChange={(event) =>
+                          field.onChange(event.target.value.replace(/\D/g, ""))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormErrorCallout />
+              <SubmitButton className="w-full" pendingLabel="Checking code...">
+                Verify and sign in
+              </SubmitButton>
               <Button
                 className="w-full"
-                disabled={verifyingCode || twoFactorCode.length !== 6}
-                type="submit"
-              >
-                {verifyingCode ? "Checking code..." : "Verify and sign in"}
-              </Button>
-              <Button
-                className="w-full"
-                disabled={verifyingCode}
                 onClick={cancelTwoFactor}
                 type="button"
                 variant="outline"
               >
                 Use a different account
               </Button>
-            </form>
+            </FormShell>
           </div>
         ) : (
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              {passwordResetSucceeded ? (
-                <Alert>
-                  <AlertTitle>Password updated</AlertTitle>
-                  <AlertDescription>
-                    Your password has been reset. Sign in with your new password
-                    below.
-                  </AlertDescription>
-                </Alert>
-              ) : null}
+          <FormShell
+            form={form}
+            onSubmit={onSubmit}
+            errorTitle="Sign-in failed"
+            disabled={isFederatedSubmitting}
+            className="space-y-4"
+          >
+            {passwordResetSucceeded ? (
+              <Alert>
+                <AlertTitle>Password updated</AlertTitle>
+                <AlertDescription>
+                  Your password has been reset. Sign in with your new password
+                  below.
+                </AlertDescription>
+              </Alert>
+            ) : null}
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="email">Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="email">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between gap-4">
-                      <FormLabel htmlFor="password">Password</FormLabel>
-                      <Link
-                        className="text-sm font-medium text-primary hover:underline"
-                        href="/forgot-password"
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <FormControl>
-                      <PasswordInput
-                        id="password"
-                        autoComplete="current-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between gap-4">
+                    <FormLabel htmlFor="password">Password</FormLabel>
+                    <Link
+                      className="text-sm font-medium text-primary hover:underline"
+                      href="/forgot-password"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <FormControl>
+                    <PasswordInput
+                      id="password"
+                      autoComplete="current-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {error ? (
-                <Alert variant="destructive">
-                  <AlertTitle>Sign-in failed</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              <Button
-                className="w-full"
-                size="lg"
-                disabled={!isHydrated || isSubmitting}
-              >
-                {isSubmitting ? "Signing in..." : "Log in"}
-              </Button>
-            </form>
-          </Form>
+            <FormErrorCallout />
+            <SubmitButton
+              className="w-full"
+              size="lg"
+              disabled={!isHydrated}
+              pendingLabel="Signing in..."
+            >
+              Log in
+            </SubmitButton>
+          </FormShell>
         )}
 
         <div className="relative">
@@ -310,6 +303,13 @@ function LoginContent() {
             <span className="bg-background px-3">or</span>
           </div>
         </div>
+
+        {federatedError ? (
+          <Alert variant="destructive">
+            <AlertTitle>Google sign-in failed</AlertTitle>
+            <AlertDescription>{federatedError}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <GoogleAuthButton
           disabled={isSubmitting}

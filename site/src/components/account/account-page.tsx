@@ -96,6 +96,7 @@ export function AccountPage() {
   const {
     error,
     loading,
+    patchProfile,
     profile,
     reportError,
     runProfileUpdate,
@@ -140,35 +141,33 @@ export function AccountPage() {
       .join(", ");
   }, [profile?.authProviders, user?.providerIds]);
 
+  // The dialog forms below throw on failure rather than reporting it here:
+  // their FormShell shows the error inside the dialog, beside what was typed.
   const handleSaveProfile = async (values: ProfileFormData) => {
-    const updated = await runProfileUpdate(
+    const updated = await patchProfile(
       {
         bio: values.bio,
         firstName: values.firstName,
         lastName: values.lastName,
         location: values.location,
       },
-      "Your account profile has been updated.",
-      "Unable to save your profile."
+      "Your account profile has been updated."
     );
 
-    if (updated) {
-      syncForms(updated);
-      setIsProfileDialogOpen(false);
-    }
+    setError(null);
+    syncForms(updated);
+    setIsProfileDialogOpen(false);
   };
 
   const handleSaveUsername = async (username: string) => {
-    const updated = await runProfileUpdate(
+    const updated = await patchProfile(
       { username },
-      "Your username has been updated.",
-      "Unable to save your username."
+      "Your username has been updated."
     );
 
-    if (updated) {
-      notifyUsernameUpdated(updated.username ?? null);
-      setIsUsernameDialogOpen(false);
-    }
+    setError(null);
+    notifyUsernameUpdated(updated.username ?? null);
+    setIsUsernameDialogOpen(false);
   };
 
   const handleCroppedBanner = async (file: File) => {
@@ -244,27 +243,21 @@ export function AccountPage() {
   };
 
   const handleEmailChange = async (values: EmailFormData) => {
-    setError(null);
+    const result = await requestEmailChange(values.nextEmail.trim());
+    setIsEmailDialogOpen(false);
 
-    try {
-      const result = await requestEmailChange(values.nextEmail);
-      setIsEmailDialogOpen(false);
-
-      if (result.requiresVerification) {
-        toast.success(
-          `We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`
-        );
-        return;
-      }
-
-      setProfile((current) =>
-        current ? { ...current, email: result.email } : current
+    if (result.requiresVerification) {
+      toast.success(
+        `We sent a confirmation link to ${result.email}. Verify it, then refresh your account status here.`
       );
-      emailForm.reset({ nextEmail: result.email });
-      toast.success("Your email address has been updated.");
-    } catch (emailError) {
-      reportError(emailError, "Unable to change your email address.");
+      return;
     }
+
+    setProfile((current) =>
+      current ? { ...current, email: result.email } : current
+    );
+    emailForm.reset({ nextEmail: result.email });
+    toast.success("Your email address has been updated.");
   };
 
   const handleSendVerificationEmail = async () => {
@@ -379,22 +372,28 @@ export function AccountPage() {
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
-          <ProfileSection
-            displayNamePreview={displayNamePreview}
-            form={profileForm}
-            isProfileDialogOpen={isProfileDialogOpen}
-            isUsernameDialogOpen={isUsernameDialogOpen}
-            onEditPicture={() => setIsPictureDialogOpen(true)}
-            onImageError={handleImageError}
-            onProfileDialogChange={setIsProfileDialogOpen}
-            onRemoveBanner={() => void handleRemoveBanner()}
-            onSaveProfile={handleSaveProfile}
-            onSaveUsername={handleSaveUsername}
-            onSelectBanner={setPendingBanner}
-            onUsernameDialogChange={setIsUsernameDialogOpen}
-            profile={profile}
-            uploadingBanner={uploadingBanner}
-          />
+          <div className="space-y-6">
+            <ProfileSection
+              displayNamePreview={displayNamePreview}
+              form={profileForm}
+              isProfileDialogOpen={isProfileDialogOpen}
+              isUsernameDialogOpen={isUsernameDialogOpen}
+              onEditPicture={() => setIsPictureDialogOpen(true)}
+              onImageError={handleImageError}
+              onProfileDialogChange={setIsProfileDialogOpen}
+              onRemoveBanner={() => void handleRemoveBanner()}
+              onSaveProfile={handleSaveProfile}
+              onSaveUsername={handleSaveUsername}
+              onSelectBanner={setPendingBanner}
+              onUsernameDialogChange={setIsUsernameDialogOpen}
+              profile={profile}
+              uploadingBanner={uploadingBanner}
+            />
+
+            {/* In the main column: the side column already carries security,
+                two-factor and email, and ran far below the profile card. */}
+            <AccountDetailsSection profile={profile} />
+          </div>
 
           <div className="space-y-6">
             <SecuritySection
@@ -420,8 +419,6 @@ export function AccountPage() {
             <TwoFactorSection />
 
             <EmailPreferencesSection />
-
-            <AccountDetailsSection profile={profile} />
           </div>
         </div>
 

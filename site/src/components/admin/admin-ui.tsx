@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { BrandLogo } from "@/components/brand-mark";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,18 @@ const navItems = [
   { href: "/admin/roles", label: "Roles", icon: Users },
   { href: "/admin/docs", label: "Documentation", icon: BookOpen },
 ];
+
+/** The logo with an "Internal" tag, at the top of every admin screen. */
+function AdminBrand() {
+  return (
+    <div className="flex items-center gap-3">
+      <BrandLogo className="text-xl" />
+      <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+        Internal
+      </span>
+    </div>
+  );
+}
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -88,9 +101,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-6 px-4 py-4 lg:px-6">
         <aside className="hidden w-72 shrink-0 rounded-[28px] border border-white/70 bg-white/85 dark:border-border dark:bg-card/85 p-5 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:flex lg:flex-col">
           <div className="mb-8">
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
-              EduthArt Internal
-            </p>
+            <AdminBrand />
             <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em]">
               Admin Console
             </h1>
@@ -149,9 +160,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="rounded-[28px] border border-white/70 bg-white/85 dark:border-border dark:bg-card/85 px-5 py-4 shadow-[0_18px_80px_rgba(91,64,182,0.10)] backdrop-blur lg:hidden">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-primary">
-                  EduthArt Internal
-                </p>
+                <AdminBrand />
                 <h1 className="mt-2 text-xl font-semibold tracking-[-0.04em]">
                   Admin Console
                 </h1>
@@ -311,9 +320,7 @@ export function AdminCenteredState({
   return (
     <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#faf8ff_0%,#f3f4f6_100%)] px-6">
       <div className="w-full max-w-xl rounded-[32px] border border-white/70 bg-white/90 dark:border-border dark:bg-card/90 p-8 shadow-[0_18px_60px_rgba(91,64,182,0.10)]">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">
-          EduthArt Internal
-        </p>
+        <AdminBrand />
         <h1 className="mt-4 text-3xl font-semibold tracking-[-0.05em]">
           {title}
         </h1>

@@ -12,7 +12,7 @@ export default function ContactPage() {
       title: "Email",
       details: [SUPPORT_EMAIL],
       description:
-        "For private viewings, collecting inquiries, press, and general gallery correspondence.",
+        "For questions about an artwork, an order, selling on EduthArt, press, or anything else.",
     },
   ];
 
@@ -25,9 +25,8 @@ export default function ContactPage() {
             <span className="text-primary">Contact</span> EduthArt
           </Heading>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            To schedule a visit, ask about available works, or start a
-            collecting conversation, send a message and the gallery will reply
-            by email.
+            To ask about an artwork, an order, or selling on EduthArt, send a
+            message and we&apos;ll reply by email.
           </p>
         </MotionStaggerFade>
 
@@ -44,10 +43,10 @@ export default function ContactPage() {
           {/* Contact Information */}
           <div className="space-y-8">
             <div>
-              <h2 className="text-2xl font-bold mb-6">Email the Gallery</h2>
+              <h2 className="text-2xl font-bold mb-6">Email EduthArt</h2>
               <p className="text-muted-foreground mb-8">
-                We handle appointments and inquiries over email so each reply
-                can be tailored to your visit, project, or collecting interest.
+                We answer every question over email, so each reply can speak to
+                your order, your collection, or your own work.
               </p>
             </div>
 

@@ -2,6 +2,7 @@ import { GhostBanner } from "@/components/admin/ghost-banner";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { FormErrorsProvider } from "@/components/ui/form";
 import { LocomotiveScrollProvider } from "@/components/locomotive-scroll-provider";
 import { SiteShell } from "@/components/site-shell";
 import { SITE_URL } from "@/lib/site-url";
@@ -52,7 +53,12 @@ export default function RootLayout({
           <AuthProvider>
             <ThemeProvider defaultTheme="light">
               <LocomotiveScrollProvider>
-                <SiteShell>{children}</SiteShell>
+                <FormErrorsProvider
+                  serviceName="EduthArt"
+                  supportEmail="support@eduthart.com"
+                >
+                  <SiteShell>{children}</SiteShell>
+                </FormErrorsProvider>
                 <GhostBanner />
               </LocomotiveScrollProvider>
             </ThemeProvider>

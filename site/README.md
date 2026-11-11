@@ -103,7 +103,7 @@ email template:
 1. Open Firebase Console -> Authentication -> Templates.
 2. Edit the password reset template.
 3. Enable the custom action URL and set it to
-   `https://www.eduthart.com/auth/action` in production, or your local/dev
+   `https://eduthart.com/auth/action` in production, or your local/dev
    domain while testing.
 
 The handler expects Firebase's standard `mode`, `oobCode`, `apiKey`, `lang`,

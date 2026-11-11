@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 
+import { BrandLogo } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -76,17 +77,9 @@ export function WorkspaceShell({
               isSidebarCollapsed ? "lg:justify-center lg:px-2" : "px-6"
             )}
           >
-            <Link
-              href="/"
-              className={cn(
-                "flex shrink-0 items-center gap-3",
-                isSidebarCollapsed && "lg:hidden"
-              )}
-            >
-              <span className="font-display text-2xl font-normal text-foreground">
-                EduthArt
-              </span>
-            </Link>
+            <BrandLogo
+              className={cn("text-xl", isSidebarCollapsed && "lg:hidden")}
+            />
             <Button
               aria-label="Close sidebar"
               aria-controls={sidebarId}
@@ -149,26 +142,14 @@ export function WorkspaceShell({
                 >
                   <Menu className="size-5" />
                 </Button>
-                <Link
-                  href="/"
+                <BrandLogo
                   className={cn(
-                    "shrink-0 items-center gap-3",
-                    isSidebarCollapsed ? "hidden lg:flex" : "hidden"
+                    "text-xl",
+                    isSidebarCollapsed ? "hidden lg:inline-flex" : "hidden"
                   )}
-                >
-                  <span className="font-display text-2xl font-normal text-foreground">
-                    EduthArt
-                  </span>
-                </Link>
+                />
                 <div>
-                  <Link
-                    href="/"
-                    className="mb-1 flex shrink-0 items-center gap-3 lg:hidden"
-                  >
-                    <span className="font-display text-2xl font-normal text-foreground">
-                      EduthArt
-                    </span>
-                  </Link>
+                  <BrandLogo className="mb-2 flex text-xl lg:hidden" />
                   <h1 className="text-lg font-semibold tracking-tight text-foreground">
                     {headerTitle}
                   </h1>

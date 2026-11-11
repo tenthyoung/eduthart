@@ -6,7 +6,7 @@ import { recordMarketingConsent } from "@/lib/notifications/preferences";
 import { addSubscribersInBulk } from "@/lib/marketing/zoho";
 
 /**
- * The newsletter signup behind the footer and journal pages.
+ * The newsletter signup behind the footer.
  *
  * Anyone may post here; a signed-in caller who subscribes their own account
  * address also has it recorded against the account, so the marketing toggle in
@@ -55,7 +55,10 @@ export async function POST(req: Request) {
           error: "Failed to add contacts to Zoho Campaigns",
           details: result.details,
         },
-        { status: result.status ?? 500 }
+        // Zoho's own status (401 for an expired token, 400 for a bad list
+        // key) describes our setup, not the visitor's request, so answer as a
+        // failed upstream rather than let the form blame them for it.
+        { status: 502 }
       );
     }
 

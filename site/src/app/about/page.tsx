@@ -48,19 +48,17 @@ export default function AboutPage() {
         {/* Call to Action */}
         <div className="text-center bg-gradient-to-r from-primary/10 to-transparent p-8 rounded-lg border border-primary/20">
           <MotionStaggerFade>
-            <h3 className="text-2xl font-bold mb-4">
-              Ready to experience the gallery in person?
-            </h3>
+            <h3 className="text-2xl font-bold mb-4">Find a piece you love</h3>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Explore exhibitions, request a private viewing, or learn more
-              about membership and collecting through EduthArt.
+              Browse original work from independent artists, or apply to sell
+              your own on EduthArt.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
-                <Link href="/contact">Plan a Visit</Link>
+                <Link href="/browse">Browse art</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link href="/services">View Exhibitions</Link>
+                <Link href="/for-artists">Sell on EduthArt</Link>
               </Button>
             </div>
           </MotionStaggerFade>

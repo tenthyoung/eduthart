@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { ApiError } from "@/lib/api/api-error";
 import { collectorRequest } from "@/lib/collectors/client";
 
 /**
@@ -79,9 +80,19 @@ export function useCollectorResource<T>({
   const mutate = useCallback(
     async (
       init: { body?: unknown; method: string; path?: string },
-      successMessage?: string
+      successMessage?: string,
+      // A form passes `throwOnError` so its FormShell can show the failure
+      // beside the fields it belongs to; a one-click action takes the toast.
+      { throwOnError = false }: { throwOnError?: boolean } = {}
     ) => {
       if (!user) {
+        if (throwOnError) {
+          throw new ApiError({
+            message: "You need to be signed in.",
+            status: 401,
+          });
+        }
+
         return false;
       }
 
@@ -108,6 +119,10 @@ export function useCollectorResource<T>({
 
         return true;
       } catch (mutateError) {
+        if (throwOnError) {
+          throw mutateError;
+        }
+
         toast.error(
           mutateError instanceof Error
             ? mutateError.message
