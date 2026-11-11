@@ -20,12 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
@@ -135,15 +136,15 @@ export function AddressesPage() {
     setOpen(true);
   };
 
+  // A failure throws, so the dialog stays open with the address still filled
+  // in and FormShell's callout says why.
   const onSubmit = async (values: AddressFormValues) => {
-    const saved = await mutate(
+    await mutate(
       { body: values, method: "POST" },
-      values.id ? "Address updated." : "Address saved."
+      values.id ? "Address updated." : "Address saved.",
+      { throwOnError: true }
     );
-
-    if (saved) {
-      setOpen(false);
-    }
+    setOpen(false);
   };
 
   if (loading) {
@@ -302,41 +303,68 @@ export function AddressesPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <FormField
-                control={form.control}
-                name="kind"
-                render={({ field }) => (
-                  <FormItem className="block space-y-2">
-                    <FormLabel htmlFor="address-kind">Address type</FormLabel>
-                    <FormControl>
-                      <select
-                        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-                        id="address-kind"
-                        {...field}
-                      >
-                        <option value="shipping">Shipping</option>
-                        <option value="billing">Billing</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <FormShell
+            form={form}
+            onSubmit={onSubmit}
+            errorTitle="Your address wasn't saved"
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <FormItem className="block space-y-2">
+                  <FormLabel htmlFor="address-kind">Address type</FormLabel>
+                  <FormControl>
+                    <select
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
+                      id="address-kind"
+                      {...field}
+                    >
+                      <option value="shipping">Shipping</option>
+                      <option value="billing">Billing</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
+            <FormField
+              control={form.control}
+              name="label"
+              render={({ field }) => (
+                <FormItem className="block space-y-2">
+                  <FormLabel htmlFor="address-label">
+                    Label (optional)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="address-label"
+                      placeholder="Home studio"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {FIELDS.map((fieldConfig) => (
               <FormField
+                key={fieldConfig.key}
                 control={form.control}
-                name="label"
+                name={fieldConfig.key}
                 render={({ field }) => (
                   <FormItem className="block space-y-2">
-                    <FormLabel htmlFor="address-label">
-                      Label (optional)
+                    <FormLabel htmlFor={`address-${fieldConfig.key}`}>
+                      {fieldConfig.label}
                     </FormLabel>
                     <FormControl>
                       <Input
-                        id="address-label"
-                        placeholder="Home studio"
+                        autoComplete={fieldConfig.autoComplete}
+                        id={`address-${fieldConfig.key}`}
+                        required={fieldConfig.required}
                         {...field}
                       />
                     </FormControl>
@@ -344,40 +372,14 @@ export function AddressesPage() {
                   </FormItem>
                 )}
               />
+            ))}
 
-              {FIELDS.map((fieldConfig) => (
-                <FormField
-                  key={fieldConfig.key}
-                  control={form.control}
-                  name={fieldConfig.key}
-                  render={({ field }) => (
-                    <FormItem className="block space-y-2">
-                      <FormLabel htmlFor={`address-${fieldConfig.key}`}>
-                        {fieldConfig.label}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete={fieldConfig.autoComplete}
-                          id={`address-${fieldConfig.key}`}
-                          required={fieldConfig.required}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-
-              <DialogFooter>
-                <Button disabled={form.formState.isSubmitting} type="submit">
-                  {form.formState.isSubmitting
-                    ? "Saving address..."
-                    : "Save address"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+            <DialogFooter>
+              <SubmitButton pendingLabel="Saving address...">
+                Save address
+              </SubmitButton>
+            </DialogFooter>
+          </FormShell>
         </DialogContent>
       </Dialog>
     </AccountShell>

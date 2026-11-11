@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import {
+  FormErrorsProvider,
   FormControl,
   FormField,
   FormItem,
@@ -35,31 +36,33 @@ function TestForm({
   });
 
   return (
-    <FormShell
-      aria-label="Test form"
-      className="space-y-4"
-      errorTitle="Sending failed"
-      form={form}
-      onSubmit={onSubmit}
-    >
-      {(["name", "email"] as const).map((name) => (
-        <FormField
-          key={name}
-          control={form.control}
-          name={name}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{name === "name" ? "Name" : "Email"}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
-      <SubmitButton pendingLabel="Sending...">Send</SubmitButton>
-    </FormShell>
+    <FormErrorsProvider serviceName="EduthArt" supportEmail="help@example.com">
+      <FormShell
+        aria-label="Test form"
+        className="space-y-4"
+        errorTitle="Sending failed"
+        form={form}
+        onSubmit={onSubmit}
+      >
+        {(["name", "email"] as const).map((name) => (
+          <FormField
+            key={name}
+            control={form.control}
+            name={name}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{name === "name" ? "Name" : "Email"}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ))}
+        <SubmitButton pendingLabel="Sending...">Send</SubmitButton>
+      </FormShell>
+    </FormErrorsProvider>
   );
 }
 
@@ -101,9 +104,9 @@ describe("FormShell validation", () => {
     expect(screen.getByLabelText<HTMLInputElement>("Email").value).toBe(
       "jordan@"
     );
-    expect(
-      screen.getByLabelText("Email").getAttribute("aria-invalid")
-    ).toBe("true");
+    expect(screen.getByLabelText("Email").getAttribute("aria-invalid")).toBe(
+      "true"
+    );
   });
 });
 
@@ -163,8 +166,9 @@ describe("FormShell on an API or network failure", () => {
     await user.click(screen.getByRole("button", { name: "Send" }));
 
     const callout = await screen.findByRole("alert");
-    expect(callout.textContent).toContain("EduthArt had a problem on our side");
+    expect(callout.textContent).toContain("EduthArt had a problem on its side");
     expect(callout.textContent).toContain("Try again in a minute");
+    expect(callout.textContent).toContain("email help@example.com");
     expect(callout.textContent).not.toMatch(/something went wrong/i);
     expect(screen.getByLabelText<HTMLInputElement>("Name").value).toBe(
       "Jordan Avery"
@@ -229,9 +233,9 @@ describe("FormShell on an API or network failure", () => {
 
     const callout = await screen.findByRole("alert");
     expect(callout.textContent).toContain("Please check the form");
-    expect(
-      screen.getByLabelText("Email").getAttribute("aria-invalid")
-    ).toBe("true");
+    expect(screen.getByLabelText("Email").getAttribute("aria-invalid")).toBe(
+      "true"
+    );
     expect(
       screen.getAllByText("That email is already on the list.").length
     ).toBeGreaterThan(0);
@@ -241,7 +245,9 @@ describe("FormShell on an API or network failure", () => {
     render(
       <TestForm
         onSubmit={async () => {
-          throw new Error("That email and password combination is not correct.");
+          throw new Error(
+            "That email and password combination is not correct."
+          );
         }}
       />
     );

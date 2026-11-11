@@ -14,16 +14,18 @@ import { PasswordInput } from "@/components/auth/password-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { getFirebaseAuth } from "@/lib/firebase/client";
+import { SubmitError } from "@/lib/forms/describe-submit-error";
 
-type ResetStatus = "checking" | "ready" | "submitting" | "success" | "invalid";
+type ResetStatus = "checking" | "ready" | "success" | "invalid";
 
 const LOGIN_ROUTE = "/login";
 const DEFAULT_SUCCESS_ROUTE = "/login?reset=success";
@@ -85,11 +87,21 @@ function formatResetError(error: unknown) {
     return "Choose a stronger password with at least 8 characters.";
   }
 
-  if (error instanceof Error && error.message) {
+  if (code === "auth/network-request-failed") {
+    return "We couldn't reach the sign-in service, so your password wasn't changed. Check your connection and try again.";
+  }
+
+  if (code === "auth/too-many-requests") {
+    return "Too many attempts. Wait a few minutes, then try again.";
+  }
+
+  // An unmapped Firebase code reads "Firebase: Error (auth/...)", which tells
+  // the person nothing they can act on.
+  if (code === null && error instanceof Error && error.message) {
     return error.message;
   }
 
-  return "We could not reset your password. Please try again.";
+  return "We couldn't reset your password just now. Try again in a minute, or request a new reset email.";
 }
 
 function AuthActionContent() {
@@ -153,39 +165,33 @@ function AuthActionContent() {
     };
   }, [actionCode, mode]);
 
+  // A failure throws, and FormShell shows it above the fields with both
+  // passwords still typed in.
   const onSubmit = async ({ password }: ResetPasswordFormData) => {
     if (!actionCode) {
-      setError("This reset link is missing required information.");
-      setStatus("invalid");
-      return;
+      throw new SubmitError(
+        "This reset link is missing part of its address. Open the link from the email again, or request a new one."
+      );
     }
-
-    setStatus("submitting");
-    setError(null);
 
     try {
       const auth = await getFirebaseAuth();
       await confirmPasswordReset(auth, actionCode, password);
-
-      // The reset finishes signed out, so the server verifies the change
-      // really happened before it notifies the account owner.
-      await fetch("/api/auth/security-event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: accountEmail, type: "password_changed" }),
-      }).catch(() => undefined);
-
-      setStatus("success");
-      toast.success("Password updated. You can sign in now.");
     } catch (resetError) {
-      const message = formatResetError(resetError);
-      setError(message);
-      setStatus("ready");
-      toast.error(message);
+      throw new SubmitError(formatResetError(resetError));
     }
-  };
 
-  const isBusy = status === "checking" || status === "submitting";
+    // The reset finishes signed out, so the server verifies the change
+    // really happened before it notifies the account owner.
+    await fetch("/api/auth/security-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: accountEmail, type: "password_changed" }),
+    }).catch(() => undefined);
+
+    setStatus("success");
+    toast.success("Password updated. You can sign in now.");
+  };
 
   return (
     <AuthShell
@@ -229,65 +235,70 @@ function AuthActionContent() {
           </Alert>
         ) : null}
 
-        {status === "ready" || status === "submitting" ? (
-          <Form {...form}>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="new-password">New password</FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        id="new-password"
-                        autoComplete="new-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        {status === "ready" ? (
+          <FormShell
+            form={form}
+            onSubmit={onSubmit}
+            errorTitle="Your password wasn't changed"
+            className="space-y-4"
+          >
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="new-password">New password</FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      id="new-password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="confirm-password">
-                      Confirm new password
-                    </FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        id="confirm-password"
-                        autoComplete="new-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="confirm-password">
+                    Confirm new password
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      id="confirm-password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button className="flex-1" disabled={isBusy} size="lg">
-                  {status === "submitting"
-                    ? "Updating password..."
-                    : "Save new password"}
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => router.push(LOGIN_ROUTE)}
-                  size="lg"
-                  type="button"
-                  variant="outline"
-                >
-                  Back to login
-                </Button>
-              </div>
-            </form>
-          </Form>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <SubmitButton
+                className="flex-1"
+                size="lg"
+                pendingLabel="Updating password..."
+              >
+                Save new password
+              </SubmitButton>
+              <Button
+                className="flex-1"
+                onClick={() => router.push(LOGIN_ROUTE)}
+                size="lg"
+                type="button"
+                variant="outline"
+              >
+                Back to login
+              </Button>
+            </div>
+          </FormShell>
         ) : null}
 
         {status === "success" ? (

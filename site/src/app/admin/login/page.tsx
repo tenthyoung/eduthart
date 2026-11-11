@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import {
@@ -13,14 +12,14 @@ import {
 } from "@/components/admin/admin-ui";
 import { useAdminAuth } from "@/components/admin/admin-auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
@@ -56,13 +55,10 @@ export default function AdminLoginPage() {
     return <AdminLoadingState label="Preparing admin sign-in..." />;
   }
 
+  // A failed sign-in throws, and FormShell shows it above the fields.
   const onSubmit = async ({ email, password }: AdminLoginFormData) => {
-    try {
-      await signIn(email, password);
-      router.replace("/admin");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sign in failed.");
-    }
+    await signIn(email, password);
+    router.replace("/admin");
   };
 
   return (
@@ -70,65 +66,64 @@ export default function AdminLoginPage() {
       title="Sign in to the admin console"
       description="Use your Firebase account for the live EduthArt project. Admin access is verified server-side before the console is opened."
     >
-      <Form {...form}>
-        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium" htmlFor="email">
-                  Email
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium" htmlFor="password">
-                  Password
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {error ? (
-            <Alert variant="destructive">
-              <AlertTitle>Sign-in failed</AlertTitle>
-              <AlertDescription>{error.message}</AlertDescription>
-            </Alert>
-          ) : null}
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting
-              ? "Signing in..."
-              : "Open admin console"}
-          </Button>
-        </form>
-      </Form>
+      <FormShell
+        form={form}
+        onSubmit={onSubmit}
+        errorTitle="Sign-in failed"
+        className="space-y-4"
+      >
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-medium" htmlFor="email">
+                Email
+              </FormLabel>
+              <FormControl>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-medium" htmlFor="password">
+                Password
+              </FormLabel>
+              <FormControl>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* A session that failed to restore on load. Once the form has been
+              submitted, its own callout reports the attempt instead. */}
+        {error && !form.formState.isSubmitted ? (
+          <Alert variant="destructive">
+            <AlertTitle>Sign-in failed</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
+        ) : null}
+        <SubmitButton className="w-full" size="lg" pendingLabel="Signing in...">
+          Open admin console
+        </SubmitButton>
+      </FormShell>
     </AdminCenteredState>
   );
 }

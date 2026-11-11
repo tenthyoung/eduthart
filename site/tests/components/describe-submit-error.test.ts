@@ -41,8 +41,12 @@ describe("describeSubmitError", () => {
     const error = await readApiError(
       new Response("<html>Bad gateway</html>", { status: 502 })
     );
-    const result = describeSubmitError(error);
+    const result = describeSubmitError(error, {
+      serviceName: "EduthArt",
+      supportEmail: "support@eduthart.com",
+    });
     expect(result.kind).toBe("server");
+    expect(result.title).toBe("EduthArt had a problem on its side");
     expect(result.message).toContain("support@eduthart.com");
   });
 
@@ -73,6 +77,14 @@ describe("describeSubmitError", () => {
       new ApiError({ message: "x", status: 500 })
     );
     expect(result.kind).toBe("offline");
+  });
+
+  it("names no service and no inbox when none is configured", () => {
+    const result = describeSubmitError(new TypeError("Failed to fetch"));
+    expect(result.title).toBe("We couldn't reach the server");
+    expect(
+      describeSubmitError(new ApiError({ message: "x", status: 500 })).message
+    ).not.toContain("email");
   });
 
   it("recognises a timeout", () => {

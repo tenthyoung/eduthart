@@ -40,7 +40,32 @@ export class SubmitError extends Error {
 }
 
 const KEPT = "Everything you typed is still here.";
-const CONTACT = "If it keeps happening, email support@eduthart.com.";
+
+/**
+ * Who the person is talking to, for the messages that name the service or say
+ * where to get help. A project sets these once (`FormErrorsProvider`).
+ */
+export type SubmitErrorOptions = {
+  /** Heads errors whose message is already fit to show, e.g. "Sign-in failed". */
+  fallbackTitle?: string;
+  /** The product's name, e.g. "EduthArt". Defaults to "the server". */
+  serviceName?: string;
+  /** Where to write when a failure keeps happening. */
+  supportEmail?: string;
+};
+
+type Wording = { service: string; Service: string; contact: string };
+
+function wording({ serviceName, supportEmail }: SubmitErrorOptions): Wording {
+  const service = serviceName ?? "the server";
+  return {
+    service,
+    Service: service.charAt(0).toUpperCase() + service.slice(1),
+    contact: supportEmail
+      ? ` If it keeps happening, email ${supportEmail}.`
+      : "",
+  };
+}
 
 function isOffline() {
   return typeof navigator !== "undefined" && navigator.onLine === false;
@@ -61,7 +86,10 @@ function isTimeout(error: unknown) {
   return name === "AbortError" || name === "TimeoutError";
 }
 
-function fromStatus(error: ApiError): SubmitErrorDescription {
+function fromStatus(
+  error: ApiError,
+  { Service, contact }: Wording
+): SubmitErrorDescription {
   const serverSaid = error.readable ? error.message : null;
 
   if (error.status === 401) {
@@ -76,7 +104,7 @@ function fromStatus(error: ApiError): SubmitErrorDescription {
     return {
       kind: "forbidden",
       title: "This account can't do that",
-      message: `${serverSaid ?? "Your account doesn't have permission to make this change."} If you think that's wrong, email support@eduthart.com.`,
+      message: `${serverSaid ?? "Your account doesn't have permission to make this change."}${contact ? contact.replace("If it keeps happening", "If you think that's wrong") : ""}`,
     };
   }
 
@@ -122,23 +150,22 @@ function fromStatus(error: ApiError): SubmitErrorDescription {
 
   return {
     kind: "server",
-    title: "EduthArt had a problem on our side",
-    message: `Nothing was saved, but ${KEPT.toLowerCase()} Try again in a minute. ${CONTACT}`,
+    title: `${Service} had a problem on its side`,
+    message: `Nothing was saved, but ${KEPT.toLowerCase()} Try again in a minute.${contact}`,
   };
 }
 
 /**
  * Turn whatever a submit handler threw into a title and a message that say
  * what went wrong and what to do next. Never "Something went wrong".
- *
- * `fallbackTitle` heads errors whose message is already fit to show (a
- * `SubmitError`, or the friendly `Error`s the auth provider throws) — for
- * example "Sign-in failed".
  */
 export function describeSubmitError(
   error: unknown,
-  { fallbackTitle = "That didn't go through" }: { fallbackTitle?: string } = {}
+  options: SubmitErrorOptions = {}
 ): SubmitErrorDescription {
+  const { fallbackTitle = "That didn't go through" } = options;
+  const words = wording(options);
+
   if (isOffline()) {
     return {
       kind: "offline",
@@ -148,13 +175,13 @@ export function describeSubmitError(
   }
 
   if (error instanceof ApiError) {
-    return fromStatus(error);
+    return fromStatus(error, words);
   }
 
   if (isTimeout(error)) {
     return {
       kind: "timeout",
-      title: "EduthArt took too long to answer",
+      title: `${words.Service} took too long to answer`,
       message: `We can't tell whether it was saved. Wait a moment, then try again. ${KEPT}`,
     };
   }
@@ -162,7 +189,7 @@ export function describeSubmitError(
   if (isNetworkFailure(error)) {
     return {
       kind: "network",
-      title: "We couldn't reach EduthArt",
+      title: `We couldn't reach ${words.service}`,
       message: `Nothing was sent. Check your connection and try again. ${KEPT}`,
     };
   }
@@ -182,6 +209,6 @@ export function describeSubmitError(
   return {
     kind: "server",
     title: fallbackTitle,
-    message: `We couldn't finish this just now. Try again in a minute. ${CONTACT}`,
+    message: `We couldn't finish this just now. Try again in a minute.${words.contact}`,
   };
 }

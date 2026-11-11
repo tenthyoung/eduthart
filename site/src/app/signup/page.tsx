@@ -13,20 +13,24 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { MIN_PASSWORD_LENGTH, useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
+  useDescribeSubmitError,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useHydrated } from "@/hooks/useHydrated";
 
 const PROFILE_COMPLETION_PATH = "/welcome";
+
+const LEGAL_REQUIRED =
+  "Please agree to the Terms of Service and Privacy Policy before creating an account.";
 
 const signupFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -42,7 +46,9 @@ const signupFormSchema = z.object({
       MIN_PASSWORD_LENGTH,
       `Use at least ${MIN_PASSWORD_LENGTH} characters for your password.`
     ),
-  legalAccepted: z.boolean(),
+  legalAccepted: z.boolean().refine((value) => value, {
+    message: LEGAL_REQUIRED,
+  }),
 });
 
 type SignupFormData = z.infer<typeof signupFormSchema>;
@@ -51,8 +57,11 @@ export default function SignupPage() {
   const router = useRouter();
   const isHydrated = useHydrated();
   const { signInWithGoogle, signUpWithEmail, status } = useAuth();
+  const describeSubmitError = useDescribeSubmitError();
   const [isFederatedSubmitting, setIsFederatedSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Only the Google button's failures live here: the email form shows its own
+  // in the FormShell callout.
+  const [federatedError, setFederatedError] = useState<string | null>(null);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupFormSchema),
@@ -73,15 +82,18 @@ export default function SignupPage() {
     }
   }, [isSubmitting, router, status]);
 
+  // Google sign-up skips the form's own validation, so check the one field it
+  // depends on here and put the message beside the checkbox.
   const requireLegalAcceptance = () => {
     if (form.getValues("legalAccepted")) {
       return true;
     }
 
-    const message =
-      "Please agree to the Terms of Service and Privacy Policy before creating an account.";
-    setError(message);
-    toast.error(message);
+    form.setError(
+      "legalAccepted",
+      { message: LEGAL_REQUIRED, type: "validate" },
+      { shouldFocus: true }
+    );
     return false;
   };
 
@@ -91,29 +103,15 @@ export default function SignupPage() {
     lastName,
     password,
   }: SignupFormData) => {
-    if (!requireLegalAcceptance()) {
-      return;
-    }
-
-    setError(null);
-
-    try {
-      await signUpWithEmail({
-        email,
-        firstName,
-        lastName,
-        password,
-      });
-      toast.success("Your account is ready.");
-      router.replace("/");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to create your account.";
-      setError(message);
-      toast.error(message);
-    }
+    setFederatedError(null);
+    await signUpWithEmail({
+      email,
+      firstName,
+      lastName,
+      password,
+    });
+    toast.success("Your account is ready.");
+    router.replace("/");
   };
 
   const handleGoogleSignUp = async () => {
@@ -122,7 +120,7 @@ export default function SignupPage() {
     }
 
     setIsFederatedSubmitting(true);
-    setError(null);
+    setFederatedError(null);
 
     try {
       await signInWithGoogle("signup");
@@ -131,12 +129,10 @@ export default function SignupPage() {
       // federated sign-up always lands on the completion step.
       router.replace(PROFILE_COMPLETION_PATH);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to continue with Google.";
-      setError(message);
-      toast.error(message);
+      setFederatedError(
+        describeSubmitError(error, { fallbackTitle: "Google sign-up failed" })
+          .message
+      );
     } finally {
       setIsFederatedSubmitting(false);
     }
@@ -163,58 +159,25 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="first-name">First name</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="first-name"
-                        autoComplete="given-name"
-                        placeholder="First name"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="last-name">Last name</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="last-name"
-                        autoComplete="family-name"
-                        placeholder="Last name"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+        <FormShell
+          form={form}
+          onSubmit={onSubmit}
+          errorTitle="Sign-up failed"
+          disabled={isFederatedSubmitting}
+          className="space-y-4"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
-              name="email"
+              name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="email">Email</FormLabel>
+                  <FormLabel htmlFor="first-name">First name</FormLabel>
                   <FormControl>
                     <Input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
+                      id="first-name"
+                      autoComplete="given-name"
+                      placeholder="First name"
                       {...field}
                     />
                   </FormControl>
@@ -222,34 +185,73 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="password"
+              name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="password">Password</FormLabel>
+                  <FormLabel htmlFor="last-name">Last name</FormLabel>
                   <FormControl>
-                    <PasswordInput
-                      id="password"
-                      autoComplete="new-password"
+                    <Input
+                      id="last-name"
+                      autoComplete="family-name"
+                      placeholder="Last name"
                       {...field}
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Use at least 8 characters for your password.
-                  </p>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
-            <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
-              <FormField
-                control={form.control}
-                name="legalAccepted"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-3">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="email">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="password">Password</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    id="password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Use at least 8 characters for your password.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="rounded-2xl border border-border/80 bg-muted/45 p-4">
+            <FormField
+              control={form.control}
+              name="legalAccepted"
+              render={({ field }) => (
+                <FormItem className="gap-2">
+                  <div className="flex items-center gap-3">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -283,27 +285,22 @@ export default function SignupPage() {
                       </Link>
                       .
                     </FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-            {error ? (
-              <Alert variant="destructive">
-                <AlertTitle>Sign-up failed</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={!isHydrated || isSubmitting}
-            >
-              {isSubmitting ? "Creating account..." : "Create account"}
-            </Button>
-          </form>
-        </Form>
+          <SubmitButton
+            className="w-full"
+            size="lg"
+            disabled={!isHydrated}
+            pendingLabel="Creating account..."
+          >
+            Create account
+          </SubmitButton>
+        </FormShell>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -313,6 +310,13 @@ export default function SignupPage() {
             <span className="bg-background px-3">or</span>
           </div>
         </div>
+
+        {federatedError ? (
+          <Alert variant="destructive">
+            <AlertTitle>Google sign-up failed</AlertTitle>
+            <AlertDescription>{federatedError}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <GoogleAuthButton
           disabled={isSubmitting}

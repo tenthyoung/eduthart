@@ -19,6 +19,7 @@ import { ApiError } from "@/lib/api/api-error";
 import {
   describeSubmitError,
   type SubmitErrorDescription,
+  type SubmitErrorOptions,
 } from "@/lib/forms/describe-submit-error";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -165,6 +166,48 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
+type FormErrorsConfig = Pick<
+  SubmitErrorOptions,
+  "serviceName" | "supportEmail"
+>;
+
+const FormErrorsContext = React.createContext<FormErrorsConfig>({});
+
+/**
+ * Names the product and its support address in every form's error callout
+ * ("We couldn't reach EduthArt", "email support@…"). Set once near the root.
+ */
+function FormErrorsProvider({
+  children,
+  serviceName,
+  supportEmail,
+}: FormErrorsConfig & { children: React.ReactNode }) {
+  const value = React.useMemo(
+    () => ({ serviceName, supportEmail }),
+    [serviceName, supportEmail]
+  );
+
+  return (
+    <FormErrorsContext.Provider value={value}>
+      {children}
+    </FormErrorsContext.Provider>
+  );
+}
+
+/**
+ * `describeSubmitError` with this project's name and support address filled
+ * in, for a failure outside a `FormShell` (a "Continue with Google" button).
+ */
+function useDescribeSubmitError() {
+  const config = React.useContext(FormErrorsContext);
+
+  return React.useCallback(
+    (error: unknown, options: Pick<SubmitErrorOptions, "fallbackTitle"> = {}) =>
+      describeSubmitError(error, { ...config, ...options }),
+    [config]
+  );
+}
+
 type SubmitErrorContextValue = {
   error: SubmitErrorDescription | null;
 };
@@ -214,10 +257,9 @@ function FormShell<TFieldValues extends FieldValues>({
   formClassName?: string;
   onSubmit: (values: TFieldValues) => Promise<unknown> | unknown;
 }) {
-  const [error, setError] = React.useState<SubmitErrorDescription | null>(
-    null
-  );
+  const [error, setError] = React.useState<SubmitErrorDescription | null>(null);
   const inFlight = React.useRef(false);
+  const describe = useDescribeSubmitError();
   const { isSubmitting } = useFormState({ control: form.control });
 
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -233,9 +275,7 @@ function FormShell<TFieldValues extends FieldValues>({
       if (submitError instanceof ApiError) {
         const known = form.getValues() as Record<string, unknown>;
 
-        for (const [name, message] of Object.entries(
-          submitError.fieldErrors
-        )) {
+        for (const [name, message] of Object.entries(submitError.fieldErrors)) {
           if (name in known) {
             form.setError(name as FieldPath<TFieldValues>, {
               message,
@@ -245,7 +285,7 @@ function FormShell<TFieldValues extends FieldValues>({
         }
       }
 
-      setError(describeSubmitError(submitError, { fallbackTitle: errorTitle }));
+      setError(describe(submitError, { fallbackTitle: errorTitle }));
     } finally {
       inFlight.current = false;
     }
@@ -257,6 +297,9 @@ function FormShell<TFieldValues extends FieldValues>({
         <form
           aria-busy={isSubmitting || undefined}
           className={formClassName}
+          // POST, so a submit that beats hydration never writes names, emails
+          // or addresses into the URL as a GET query string would.
+          method="post"
           noValidate
           onSubmit={(event) => {
             setError(null);
@@ -342,7 +385,9 @@ function SubmitButton({
 }
 
 export {
+  useDescribeSubmitError,
   useFormField,
+  FormErrorsProvider,
   useFormSubmitError,
   FormShell,
   FormErrorCallout,

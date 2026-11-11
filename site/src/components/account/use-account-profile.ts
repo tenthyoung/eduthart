@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { AuthUser } from "@/components/auth/auth-provider";
+import { readApiError } from "@/lib/api/api-error";
 import { parseApiError } from "@/lib/api/parse-api-error";
+import { SubmitError } from "@/lib/forms/describe-submit-error";
 import type { AccountProfile } from "@/lib/auth/account-profile";
 
 type Status = "authenticated" | "loading" | "unauthenticated";
@@ -90,10 +92,17 @@ export function useAccountProfile({
     };
   }, [status, user]);
 
+  /**
+   * Save profile fields. Throws on failure (an `ApiError` for a rejected
+   * request) so a form can show the failure in its own callout.
+   */
   const patchProfile = useCallback(
     async (body: Record<string, unknown>, successMessage: string) => {
       if (!user) {
-        return null;
+        throw new SubmitError(
+          "You're signed out. Sign in again in a new tab, then save.",
+          { title: "Your sign-in has expired" }
+        );
       }
 
       const token = await user.getIdToken();
@@ -107,9 +116,7 @@ export function useAccountProfile({
       });
 
       if (!response.ok) {
-        throw new Error(
-          await parseApiError(response, "Unable to update your profile.")
-        );
+        throw await readApiError(response, "Unable to update your profile.");
       }
 
       const payload = (await response.json()) as { profile: AccountProfile };
@@ -152,6 +159,7 @@ export function useAccountProfile({
   return {
     error,
     loading,
+    patchProfile,
     profile,
     reportError,
     runProfileUpdate,

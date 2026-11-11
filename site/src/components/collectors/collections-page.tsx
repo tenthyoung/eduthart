@@ -27,12 +27,13 @@ import { CollectorLoadingPanel } from "@/components/collectors/loading-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useCollectorResource } from "@/hooks/useCollectorResource";
@@ -66,19 +67,21 @@ export function CollectionsPage() {
     resolver: zodResolver(collectionNameSchema),
     defaultValues: { name: "" },
   });
-  const newName = createForm.watch("name");
-  const renameDraft = renameForm.watch("name");
   const [renamingId, setRenamingId] = useState<string | null>(null);
 
-  const onCreate = (values: CollectionNameValues) => {
-    void mutate(
+  // Both forms throw on failure, so FormShell keeps the typed name and shows
+  // why. Only a saved name clears the field or closes the rename row.
+  const onCreate = async (values: CollectionNameValues) => {
+    await mutate(
       { body: { name: values.name }, method: "POST" },
-      "Collection created."
-    ).then((ok) => ok && createForm.reset({ name: "" }));
+      "Collection created.",
+      { throwOnError: true }
+    );
+    createForm.reset({ name: "" });
   };
 
-  const onRename = (values: CollectionNameValues) => {
-    void mutate(
+  const onRename = async (values: CollectionNameValues) => {
+    await mutate(
       {
         body: {
           collectionId: renamingId,
@@ -86,8 +89,10 @@ export function CollectionsPage() {
         },
         method: "PATCH",
       },
-      "Collection renamed."
-    ).then((ok) => ok && setRenamingId(null));
+      "Collection renamed.",
+      { throwOnError: true }
+    );
+    setRenamingId(null);
   };
 
   const copyShareLink = async (shareId: string) => {
@@ -122,34 +127,35 @@ export function CollectionsPage() {
         </Alert>
       ) : null}
 
-      <Form {...createForm}>
-        <form
-          className="flex flex-col gap-3 rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] sm:flex-row sm:items-end"
-          onSubmit={createForm.handleSubmit(onCreate)}
-        >
-          <FormField
-            control={createForm.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem className="block flex-1 space-y-2">
-                <FormLabel htmlFor="collection-name">New collection</FormLabel>
-                <FormControl>
-                  <Input
-                    id="collection-name"
-                    placeholder="Coastal light"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button disabled={!newName.trim()} type="submit">
-            <Plus />
-            Create collection
-          </Button>
-        </form>
-      </Form>
+      <FormShell
+        form={createForm}
+        onSubmit={onCreate}
+        errorTitle="The collection wasn't created"
+        formClassName="rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]"
+        className="flex flex-col gap-3 sm:flex-row sm:items-start"
+      >
+        <FormField
+          control={createForm.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem className="block flex-1 space-y-2">
+              <FormLabel htmlFor="collection-name">New collection</FormLabel>
+              <FormControl>
+                <Input
+                  id="collection-name"
+                  placeholder="Coastal light"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <SubmitButton className="sm:mt-[1.375rem]" pendingLabel="Creating...">
+          <Plus />
+          Create collection
+        </SubmitButton>
+      </FormShell>
 
       <div className="mt-8 space-y-6">
         {data.length === 0 ? (
@@ -167,53 +173,49 @@ export function CollectionsPage() {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 space-y-2">
                   {renamingId === collection.id ? (
-                    <Form {...renameForm}>
-                      <form
-                        className="flex flex-wrap items-center gap-2"
-                        onSubmit={renameForm.handleSubmit(onRename)}
+                    <FormShell
+                      form={renameForm}
+                      onSubmit={onRename}
+                      errorTitle="The collection wasn't renamed"
+                      className="flex flex-wrap items-start gap-2"
+                    >
+                      <FormField
+                        control={renameForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="gap-1">
+                            <FormLabel
+                              className="sr-only"
+                              htmlFor={`rename-${collection.id}`}
+                            >
+                              Collection name
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                autoFocus
+                                className="max-w-xs"
+                                id={`rename-${collection.id}`}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <SubmitButton size="sm" pendingLabel="Saving...">
+                        <Check />
+                        Save
+                      </SubmitButton>
+                      <Button
+                        onClick={() => setRenamingId(null)}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
                       >
-                        <FormField
-                          control={renameForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem className="contents">
-                              <FormLabel
-                                className="sr-only"
-                                htmlFor={`rename-${collection.id}`}
-                              >
-                                Collection name
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  autoFocus
-                                  className="max-w-xs"
-                                  id={`rename-${collection.id}`}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          disabled={!renameDraft.trim()}
-                          size="sm"
-                          type="submit"
-                        >
-                          <Check />
-                          Save
-                        </Button>
-                        <Button
-                          onClick={() => setRenamingId(null)}
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <X />
-                          Cancel
-                        </Button>
-                      </form>
-                    </Form>
+                        <X />
+                        Cancel
+                      </Button>
+                    </FormShell>
                   ) : (
                     <div className="flex flex-wrap items-center gap-3">
                       <h2 className="text-2xl text-foreground">

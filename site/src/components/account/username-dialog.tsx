@@ -1,13 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { buildArtistPageHref } from "@/lib/auth/account-profile";
-import { Button } from "@/components/ui/button";
+import {
+  buildArtistPageHref,
+  isValidUsername,
+  normalizeUsername,
+} from "@/lib/auth/account-profile";
 import {
   Dialog,
   DialogContent,
@@ -17,17 +19,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+/** Shared with the profile completion page, where the username is optional. */
+export const USERNAME_RULE_MESSAGE =
+  "Use 3-24 lowercase letters, numbers, hyphens or underscores, starting and ending with a letter or number.";
+
+export function isAcceptableUsername(value: string) {
+  return isValidUsername(normalizeUsername(value) ?? "");
+}
+
 const usernameFormSchema = z.object({
-  username: z.string(),
+  username: z
+    .string()
+    .refine((value) => value.trim().replace(/^@+/, "").length > 0, {
+      message: "Choose a username.",
+    })
+    .refine(
+      (value) =>
+        value.trim().replace(/^@+/, "").length === 0 ||
+        isAcceptableUsername(value),
+      { message: USERNAME_RULE_MESSAGE }
+    ),
 });
 
 type UsernameFormData = z.infer<typeof usernameFormSchema>;
@@ -75,48 +96,41 @@ export function UsernameDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form
-            className="space-y-4"
-            onSubmit={form.handleSubmit(handleSubmit)}
-          >
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="account-username">Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="account-username"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      placeholder="@yourname"
-                      {...field}
-                    />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    This creates your public page at {previewHref}. Use 3-24
-                    letters, numbers, hyphens, or underscores.
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button disabled={form.formState.isSubmitting} type="submit">
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    Saving username...
-                  </>
-                ) : (
-                  "Save username"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <FormShell
+          className="space-y-4"
+          errorTitle="Your username wasn't saved"
+          form={form}
+          onSubmit={handleSubmit}
+        >
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="account-username">Username</FormLabel>
+                <FormControl>
+                  <Input
+                    id="account-username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    placeholder="@yourname"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  This creates your public page at {previewHref}. Use 3-24
+                  letters, numbers, hyphens, or underscores.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <DialogFooter>
+            <SubmitButton pendingLabel="Saving username...">
+              Save username
+            </SubmitButton>
+          </DialogFooter>
+        </FormShell>
       </DialogContent>
     </Dialog>
   );

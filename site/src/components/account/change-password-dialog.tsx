@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { BusyLabel } from "@/components/account/account-surfaces";
 import { MIN_PASSWORD_LENGTH } from "@/components/auth/auth-provider";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
@@ -21,25 +20,34 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Enter your current password."),
+    // The same three rules the live checklist shows, so a submit that fails
+    // them says which one beside the field.
     nextPassword: z
       .string()
       .min(
         MIN_PASSWORD_LENGTH,
         `Choose a password with at least ${MIN_PASSWORD_LENGTH} characters.`
-      ),
-    confirmPassword: z.string(),
+      )
+      .refine((value) => /[a-z]/.test(value) && /[A-Z]/.test(value), {
+        message: "Include one lowercase and one uppercase letter.",
+      })
+      .refine((value) => /[^A-Za-z]/.test(value), {
+        message: "Include one number or symbol.",
+      }),
+    confirmPassword: z.string().min(1, "Enter the new password again."),
   })
   .refine((values) => values.nextPassword === values.confirmPassword, {
     message: "Those passwords do not match yet.",
@@ -112,8 +120,7 @@ export function ChangePasswordDialog({
     },
   });
 
-  const [currentPassword, nextPassword, confirmPassword] = form.watch([
-    "currentPassword",
+  const [nextPassword, confirmPassword] = form.watch([
     "nextPassword",
     "confirmPassword",
   ]);
@@ -150,27 +157,13 @@ export function ChangePasswordDialog({
     ];
   }, [confirmPassword, nextPassword]);
 
-  const canSubmit =
-    currentPassword.length > 0 &&
-    requirements.every((requirement) => requirement.state === "met") &&
-    !saving;
-
+  // A failure throws through to FormShell, which keeps all three fields and
+  // shows why at the top of the dialog. Only a success clears them.
   const handleSubmit = async (values: ChangePasswordFormData) => {
-    try {
-      await onSubmit(values.currentPassword, values.nextPassword);
-      form.reset();
-      setOpen(false);
-    } catch (submitError) {
-      form.setError("root", {
-        message:
-          submitError instanceof Error
-            ? submitError.message
-            : "Unable to change your password.",
-      });
-    }
+    await onSubmit(values.currentPassword, values.nextPassword);
+    form.reset();
+    setOpen(false);
   };
-
-  const rootError = form.formState.errors.root?.message;
 
   return (
     <Dialog
@@ -200,23 +193,49 @@ export function ChangePasswordDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form
-            className="space-y-5"
-            onSubmit={form.handleSubmit(handleSubmit)}
-          >
+        <FormShell
+          className="space-y-5"
+          errorTitle="Your password wasn't changed"
+          form={form}
+          onSubmit={handleSubmit}
+        >
+          <FormField
+            control={form.control}
+            name="currentPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="current-password">
+                  Current password
+                </FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    id="current-password"
+                    autoComplete="current-password"
+                    required
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* The two new-password fields belong together, so the checklist
+                that judges both sits under the pair rather than between them. */}
+          <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/35 p-4">
             <FormField
               control={form.control}
-              name="currentPassword"
+              name="nextPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="current-password">
-                    Current password
+                  <FormLabel htmlFor="account-new-password">
+                    New password
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
-                      id="current-password"
-                      autoComplete="current-password"
+                      id="account-new-password"
+                      autoComplete="new-password"
+                      minLength={MIN_PASSWORD_LENGTH}
                       required
                       {...field}
                     />
@@ -226,81 +245,50 @@ export function ChangePasswordDialog({
               )}
             />
 
-            {/* The two new-password fields belong together, so the checklist
-                that judges both sits under the pair rather than between them. */}
-            <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/35 p-4">
-              <FormField
-                control={form.control}
-                name="nextPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="account-new-password">
-                      New password
-                    </FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        id="account-new-password"
-                        autoComplete="new-password"
-                        minLength={MIN_PASSWORD_LENGTH}
-                        required
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="account-confirm-password">
+                    Confirm new password
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      id="account-confirm-password"
+                      autoComplete="new-password"
+                      minLength={MIN_PASSWORD_LENGTH}
+                      required
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="account-confirm-password">
-                      Confirm new password
-                    </FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        id="account-confirm-password"
-                        autoComplete="new-password"
-                        minLength={MIN_PASSWORD_LENGTH}
-                        required
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+            <ul className="space-y-1.5 border-t border-border/70 pt-4">
+              {requirements.map((requirement) => (
+                <RequirementRow
+                  key={requirement.label}
+                  label={requirement.label}
+                  state={requirement.state}
+                />
+              ))}
+            </ul>
+          </div>
 
-              <ul className="space-y-1.5 border-t border-border/70 pt-4">
-                {requirements.map((requirement) => (
-                  <RequirementRow
-                    key={requirement.label}
-                    label={requirement.label}
-                    state={requirement.state}
-                  />
-                ))}
-              </ul>
-            </div>
-
-            {rootError ? (
-              <p className="text-sm text-destructive">{rootError}</p>
-            ) : null}
-
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button disabled={saving} type="button" variant="ghost">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button disabled={!canSubmit} type="submit">
-                <BusyLabel busy={saving} busyLabel="Updating password...">
-                  Update password
-                </BusyLabel>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost">
+                Cancel
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </DialogClose>
+            <SubmitButton pendingLabel="Updating password...">
+              Update password
+            </SubmitButton>
+          </DialogFooter>
+        </FormShell>
       </DialogContent>
     </Dialog>
   );

@@ -10,14 +10,14 @@ import { z } from "zod";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormShell,
+  SubmitButton,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -35,7 +35,6 @@ export default function ForgotPasswordPage() {
   const isHydrated = useHydrated();
   const { sendResetLink } = useAuth();
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordFormSchema),
@@ -46,21 +45,12 @@ export default function ForgotPasswordPage() {
 
   const email = form.watch("email");
 
+  // A failure throws, and FormShell shows it above the field.
   const onSubmit = async ({ email }: ForgotPasswordFormData) => {
-    setError(null);
-
-    try {
-      await sendResetLink(email);
-      setSubmitted(true);
-      toast.success("Password reset email sent.");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to send the password reset email.";
-      setError(message);
-      toast.error(message);
-    }
+    setSubmitted(false);
+    await sendResetLink(email);
+    setSubmitted(true);
+    toast.success("Password reset email sent.");
   };
 
   return (
@@ -94,45 +84,40 @@ export default function ForgotPasswordPage() {
           </Alert>
         ) : null}
 
-        {error ? (
-          <Alert variant="destructive">
-            <AlertTitle>Reset failed</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
+        <FormShell
+          form={form}
+          onSubmit={onSubmit}
+          errorTitle="Reset link not sent"
+          className="space-y-4"
+        >
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="email">Email</FormLabel>
+                <FormControl>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="email">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={!isHydrated || form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting
-                ? "Sending link..."
-                : "Send reset link"}
-            </Button>
-          </form>
-        </Form>
+          <SubmitButton
+            className="w-full"
+            size="lg"
+            disabled={!isHydrated}
+            pendingLabel="Sending link..."
+          >
+            Send reset link
+          </SubmitButton>
+        </FormShell>
       </div>
     </AuthShell>
   );
