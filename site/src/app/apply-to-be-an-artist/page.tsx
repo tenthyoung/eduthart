@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRef, useState } from "react";
 
 import { MotionFade } from "@/components/motion/motion-fade";
-import { MotionStaggerFade } from "@/components/motion/motion-stagger-fade";
+import { Disclosure } from "@/components/ui/disclosure";
 import { Heading } from "@/components/text/heading";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,27 +16,22 @@ const artistApplicationSteps = [
     title: "Preparation",
     summary:
       "Review the requirements and gather everything you need before you begin.",
-    status: "current",
   },
   {
     title: "Artist Profile",
     summary: "Share your name, location, website, and background.",
-    status: "upcoming",
   },
   {
     title: "Artwork Submission",
     summary: "Upload 10 artworks with dimensions, medium, and year created.",
-    status: "upcoming",
   },
   {
     title: "Statement and Review",
     summary: "Add your artist statement and confirm your submission details.",
-    status: "upcoming",
   },
   {
     title: "Payment and Submit",
     summary: "Complete the application fee and send everything for review.",
-    status: "upcoming",
   },
 ] as const;
 
@@ -62,9 +58,20 @@ const applicationFields = [
   },
 ] as const;
 
-const progressPercentage = 20;
-
 export default function ApplyToBeAnArtistPage() {
+  const [stepIndex, setStepIndex] = useState(0);
+  const progressRef = useRef<HTMLElement>(null);
+
+  const currentStep = artistApplicationSteps[stepIndex];
+  const progressPercentage = Math.round(
+    ((stepIndex + 1) / artistApplicationSteps.length) * 100
+  );
+
+  const goToStep = (index: number) => {
+    setStepIndex(index);
+    progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="min-h-screen bg-background pt-24 text-foreground">
       <section className="border-b border-border/70 bg-white dark:bg-background">
@@ -93,7 +100,10 @@ export default function ApplyToBeAnArtistPage() {
         </div>
       </section>
 
-      <section className="container mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <section
+        ref={progressRef}
+        className="container mx-auto max-w-7xl scroll-mt-20 px-4 py-12 sm:px-6 lg:px-8"
+      >
         <MotionFade>
           <div className="rounded-[2rem] border border-border/70 bg-card p-6 shadow-[0_24px_70px_-46px_rgba(47,36,28,0.4)] sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -102,11 +112,11 @@ export default function ApplyToBeAnArtistPage() {
                   Progress
                 </p>
                 <h2 className="mt-2 text-2xl text-foreground">
-                  Step 1 of {artistApplicationSteps.length}: Preparation
+                  Step {stepIndex + 1} of {artistApplicationSteps.length}:{" "}
+                  {currentStep.title}
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Confirm your materials before you start entering application
-                  details.
+                  {currentStep.summary}
                 </p>
               </div>
               <div className="min-w-[8rem] text-left lg:text-right">
@@ -120,55 +130,66 @@ export default function ApplyToBeAnArtistPage() {
             <div className="mt-6 h-3 overflow-hidden rounded-full bg-muted">
               <div
                 aria-hidden="true"
-                className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light"
+                className="h-full rounded-full bg-primary-light transition-[width] duration-500 ease-out"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
+
+            <Disclosure
+              summary="Show all steps"
+              openSummary="Hide steps"
+              className="mt-5 border-t border-border/70 pt-1"
+              summaryClassName="w-fit"
+              contentClassName="pt-1 pb-0"
+            >
+              <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                {artistApplicationSteps.map((step, index) => {
+                  const isCurrent = index === stepIndex;
+
+                  return (
+                    <li
+                      key={step.title}
+                      aria-current={isCurrent ? "step" : undefined}
+                      className={[
+                        "flex items-start gap-3 rounded-xl border px-4 py-3",
+                        isCurrent
+                          ? "border-primary/30 bg-primary/8"
+                          : "border-border/70 bg-card",
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                          isCurrent
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
+                        ].join(" ")}
+                      >
+                        {index + 1}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-medium leading-6 text-foreground">
+                          {step.title}
+                        </span>
+                        <span className="block text-xs leading-5 text-muted-foreground">
+                          {step.summary}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </Disclosure>
           </div>
         </MotionFade>
       </section>
 
       <section className="container mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-          <MotionStaggerFade className="space-y-4">
-            {artistApplicationSteps.map((step, index) => {
-              const isCurrent = step.status === "current";
-
-              return (
-                <div
-                  key={step.title}
-                  className={[
-                    "rounded-[1.5rem] border p-5 transition-colors",
-                    isCurrent
-                      ? "border-primary/30 bg-primary/8 shadow-[0_20px_50px_-40px_rgba(47,36,28,0.45)]"
-                      : "border-border/70 bg-card",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={[
-                        "inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold",
-                        isCurrent
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground",
-                      ].join(" ")}
-                    >
-                      {index + 1}
-                    </div>
-                    <div>
-                      <h3 className="text-xl text-foreground">{step.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {step.summary}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </MotionStaggerFade>
-
-          <MotionFade delay={0.4}>
-            <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
+        <MotionFade delay={0.1}>
+          <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8 lg:p-10">
+            {/* Panels stay mounted and are hidden instead, so anything typed
+                survives going Back and Next. */}
+            <div hidden={stepIndex !== 0}>
               <Heading variant="h2" className="mb-3 text-foreground">
                 Have these ready before you begin
               </Heading>
@@ -179,7 +200,7 @@ export default function ApplyToBeAnArtistPage() {
               </p>
 
               <div className="mt-6 rounded-[1.5rem] border border-border/70 bg-muted/35 p-5">
-                <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {preparationChecklist.map((item) => (
                     <div key={item} className="flex items-center gap-3">
                       <Checkbox checked id={item} />
@@ -194,15 +215,26 @@ export default function ApplyToBeAnArtistPage() {
                 </div>
               </div>
 
-              <div className="mt-8">
-                <h3 className="text-xl text-foreground">Application preview</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Next, the artist will fill out profile details before moving
-                  into artwork uploads and final review.
-                </p>
+              <div className="mt-8 flex sm:justify-end">
+                <Button
+                  className="w-full sm:w-auto sm:min-w-40"
+                  size="lg"
+                  onClick={() => goToStep(1)}
+                >
+                  Next
+                </Button>
               </div>
+            </div>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div hidden={stepIndex !== 1}>
+              <Heading variant="h2" className="mb-3 text-foreground">
+                Artist profile
+              </Heading>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Tell us who you are and where we can see more of your work.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {applicationFields.map((field) => (
                   <div key={field.id} className="space-y-2">
                     <Label htmlFor={field.id}>{field.label}</Label>
@@ -215,17 +247,19 @@ export default function ApplyToBeAnArtistPage() {
                 ))}
               </div>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button className="flex-1" size="lg">
-                  Continue to Artist Profile
-                </Button>
-                <Button asChild className="flex-1" size="lg" variant="outline">
-                  <Link href="/for-artists">Review Requirements Again</Link>
+              <div className="mt-8 flex">
+                <Button
+                  className="w-full sm:w-auto sm:min-w-40"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => goToStep(0)}
+                >
+                  Back
                 </Button>
               </div>
             </div>
-          </MotionFade>
-        </div>
+          </div>
+        </MotionFade>
       </section>
     </div>
   );

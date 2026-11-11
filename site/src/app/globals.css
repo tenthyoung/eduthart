@@ -345,3 +345,32 @@
     animation: none;
   }
 }
+
+/* Disclosure (from hendeca-design-systems): a native <details> that eases open
+   by animating ::details-content from zero to its own height. A browser that
+   doesn't know the pseudo-element drops these rules and opens instantly. */
+.disclosure {
+  interpolate-size: allow-keywords;
+}
+
+.disclosure::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size 0.38s cubic-bezier(0.33, 1, 0.68, 1),
+    content-visibility 0.38s cubic-bezier(0.33, 1, 0.68, 1),
+    opacity 0.26s ease-out;
+  transition-behavior: allow-discrete;
+}
+
+.disclosure[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure::details-content {
+    transition: none;
+  }
+}
