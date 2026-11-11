@@ -154,6 +154,7 @@ export function AccountPage() {
       "Your account profile has been updated."
     );
 
+    setError(null);
     syncForms(updated);
     setIsProfileDialogOpen(false);
   };
@@ -164,6 +165,7 @@ export function AccountPage() {
       "Your username has been updated."
     );
 
+    setError(null);
     notifyUsernameUpdated(updated.username ?? null);
     setIsUsernameDialogOpen(false);
   };

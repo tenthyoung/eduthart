@@ -37,6 +37,18 @@ describe("describeSubmitError", () => {
     );
   });
 
+  it("adds the full stop a route message left off", () => {
+    const result = describeSubmitError(
+      new ApiError({
+        message: "Please provide a valid email address",
+        status: 400,
+      })
+    );
+    expect(result.message).toBe(
+      "Please provide a valid email address. Fix that and submit again."
+    );
+  });
+
   it("does not blame the person for a response that was not JSON", async () => {
     const error = await readApiError(
       new Response("<html>Bad gateway</html>", { status: 502 })

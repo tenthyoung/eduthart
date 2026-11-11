@@ -86,11 +86,17 @@ function isTimeout(error: unknown) {
   return name === "AbortError" || name === "TimeoutError";
 }
 
+/** Route messages often lack a full stop; the next sentence needs one. */
+function sentence(text: string) {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 function fromStatus(
   error: ApiError,
   { Service, contact }: Wording
 ): SubmitErrorDescription {
-  const serverSaid = error.readable ? error.message : null;
+  const serverSaid = error.readable ? sentence(error.message) : null;
 
   if (error.status === 401) {
     return {

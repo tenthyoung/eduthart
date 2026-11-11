@@ -51,7 +51,11 @@ export default function AdminLoginPage() {
     }
   }, [router, status]);
 
-  if (status === "loading") {
+  // `signIn` puts the provider back into "loading" while it checks the
+  // account. Only show the loading screen for the first session check: swapping
+  // the form out mid-submit would throw away its error callout.
+  const { isSubmitted, isSubmitting } = form.formState;
+  if (status === "loading" && !isSubmitting && !isSubmitted) {
     return <AdminLoadingState label="Preparing admin sign-in..." />;
   }
 
@@ -114,7 +118,7 @@ export default function AdminLoginPage() {
         />
         {/* A session that failed to restore on load. Once the form has been
               submitted, its own callout reports the attempt instead. */}
-        {error && !form.formState.isSubmitted ? (
+        {error && !isSubmitted ? (
           <Alert variant="destructive">
             <AlertTitle>Sign-in failed</AlertTitle>
             <AlertDescription>{error.message}</AlertDescription>

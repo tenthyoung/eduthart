@@ -256,9 +256,14 @@ export default function SignupPage() {
                       <Checkbox
                         checked={field.value}
                         id="legal"
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked === true)
-                        }
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked === true);
+                          // The Google button sets this error without a
+                          // submit, so nothing would re-validate it otherwise.
+                          if (checked === true) {
+                            form.clearErrors("legalAccepted");
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormLabel
