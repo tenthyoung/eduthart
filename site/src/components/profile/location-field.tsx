@@ -200,7 +200,9 @@ export function LocationField({
     onChange({ ...value, [part]: next, placeId: "", countryCode: "" });
 
   return (
-    <div className="space-y-2">
+    // min-w-0: inside the form's grid, a long city name must truncate
+    // rather than push the dialog wider than a phone screen.
+    <div className="min-w-0 space-y-2">
       {picked && mode !== "manual" ? (
         <div className="flex items-center justify-between gap-3 rounded-md border border-input px-3 py-2">
           <span className="flex min-w-0 items-center gap-2 text-sm">
@@ -249,9 +251,9 @@ export function LocationField({
         <div className="grid gap-3 sm:grid-cols-3">
           {(
             [
-              ["city", "City", "Brooklyn", "address-level2"],
-              ["region", "State or region", "New York", "address-level1"],
-              ["country", "Country", "United States", "country-name"],
+              ["city", "City", "e.g. Brooklyn", "address-level2"],
+              ["region", "State or region", "e.g. New York", "address-level1"],
+              ["country", "Country", "e.g. United States", "country-name"],
             ] as const
           ).map(([part, label, placeholder, autoComplete]) => (
             <div key={part} className="space-y-1.5">
