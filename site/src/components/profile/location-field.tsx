@@ -144,7 +144,7 @@ export function LocationField({
       setNotice(
         [
           reason,
-          `Your saved city is below. To change it to \u201c${carried}\u201d, edit the fields.`,
+          `Your saved city is still in the fields. To change it to \u201c${carried}\u201d, edit the fields.`,
         ]
           .filter(Boolean)
           .join(" ")
@@ -360,7 +360,7 @@ export function LocationField({
         />
       ) : null}
 
-      {mode === "loading" && !picked ? (
+      {mode === "loading" && (!picked || replacing) ? (
         <Input id={formItemId} disabled placeholder="Search for your city" />
       ) : null}
 
