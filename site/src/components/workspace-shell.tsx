@@ -149,7 +149,7 @@ export function WorkspaceShell({
                   )}
                 />
                 <div>
-                  <BrandLogo className="mb-1 flex text-xl lg:hidden" />
+                  <BrandLogo className="mb-2 flex text-xl lg:hidden" />
                   <h1 className="text-lg font-semibold tracking-tight text-foreground">
                     {headerTitle}
                   </h1>
