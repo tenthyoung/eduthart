@@ -120,6 +120,24 @@ endpoint, and how a purchase is recorded.
 Without Stripe keys the rest of the site runs normally; checkout reports that
 payments are not configured.
 
+## City search (Google Places)
+
+The profile's location field (account settings and /welcome) searches for a
+city through Google Places; the artist application is meant to reuse the same
+`LocationField` (EDUTHA-123). Search goes via the server route `/api/places`, so the key never
+reaches the browser. Set `GOOGLE_PLACES_API_KEY` (enable "Places API (New)" in
+Google Cloud and restrict the key to it). Without the key the same fields are
+plain city / region / country inputs, and everything else works.
+
+Set a daily request quota on "Places API (New)" in Google Cloud (Quotas page)
+before going live. The route only needs a signed-in account and has no
+per-account rate limit yet, and Worker IPs change, so the API restriction and
+that quota are what stop a runaway bill.
+
+Only city, region and country are stored and shown, never a street address.
+Profiles saved before this keep their old free-text location until the person
+picks a city.
+
 ## Sign in with Apple
 
 The sign-in and sign-up pages offer Google and Apple. Apple has to be enabled in

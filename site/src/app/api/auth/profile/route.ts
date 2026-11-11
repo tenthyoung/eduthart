@@ -18,6 +18,10 @@ import {
 } from "@/lib/auth/profile-store";
 import { getAuthenticatedSession } from "@/lib/auth/server-session";
 import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
+import {
+  formatProfileLocation,
+  normalizeProfileLocation,
+} from "@/lib/profile/location";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
 
 type AuthProfileBody = {
@@ -40,6 +44,8 @@ type AccountProfileUpdateBody = {
   firstName?: string | null;
   lastName?: string | null;
   location?: string | null;
+  /** City, region and country. Null clears it. */
+  locationPlace?: unknown;
   photoURL?: string | null;
   username?: string | null;
 };
@@ -140,6 +146,7 @@ function buildEmptyProfile(
     lastName: null,
     legal: null,
     location: null,
+    locationPlace: null,
     photoURL: session.user.photoURL ?? null,
     photoURLManagedByUser: false,
     shippingOriginAddress: null,
@@ -328,11 +335,25 @@ export async function PATCH(request: Request) {
         ? (normalizeOptionalUrl(body.photoURL) ?? null)
         : existingProfile.photoURL;
     const bio = normalizeFreeText(body.bio, MAX_BIO_LENGTH, "biography");
-    const location = normalizeFreeText(
-      body.location,
-      MAX_LOCATION_LENGTH,
-      "location"
-    );
+    // A picked city wins: its display text replaces whatever free text was
+    // there. Without one, `location` is the free text saved before EDUTHA-130,
+    // kept or cleared as sent.
+    const locationPlace =
+      body.locationPlace !== undefined
+        ? normalizeProfileLocation(body.locationPlace)
+        : undefined;
+
+    if (
+      body.locationPlace !== undefined &&
+      body.locationPlace !== null &&
+      !locationPlace
+    ) {
+      throw new Error("Your location needs at least a city and a country.");
+    }
+
+    const location = locationPlace
+      ? formatProfileLocation(locationPlace)
+      : normalizeFreeText(body.location, MAX_LOCATION_LENGTH, "location");
     const username =
       body.username !== undefined
         ? await resolveUsername(body.username, session.uid, isE2E)
@@ -363,7 +384,16 @@ export async function PATCH(request: Request) {
       ...(email ? { email } : {}),
       ...(body.firstName !== undefined ? { firstName } : {}),
       ...(body.lastName !== undefined ? { lastName } : {}),
-      ...(body.location !== undefined ? { location } : {}),
+      // The two location fields always move together: free text alone
+      // clears the structured city, and clearing the city clears its text.
+      ...(locationPlace !== undefined || body.location !== undefined
+        ? {
+            location: locationPlace === null && body.location === undefined
+              ? null
+              : location,
+            locationPlace: locationPlace ?? null,
+          }
+        : {}),
       ...(body.photoURL !== undefined
         ? { photoURL, photoURLManagedByUser: true }
         : {}),
