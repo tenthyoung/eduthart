@@ -24,6 +24,7 @@ type SeedProfileArgs = {
   lastName?: string | null;
   legal?: AccountProfile["legal"];
   location?: string | null;
+  locationPlace?: AccountProfile["locationPlace"];
   photoURL?: string | null;
   photoURLManagedByUser?: boolean;
   shippingOriginAddress?: ShippingOriginAddress | null;
@@ -60,6 +61,7 @@ export async function seedE2EAccountProfile({
   lastName,
   legal,
   location,
+  locationPlace,
   photoURL,
   photoURLManagedByUser,
   shippingOriginAddress,
@@ -98,6 +100,7 @@ export async function seedE2EAccountProfile({
         termsOfServicePath: "/legal/terms-of-service",
       } satisfies NonNullable<AccountProfile["legal"]>),
     location: location?.trim() || null,
+    locationPlace: locationPlace ?? null,
     photoURL: photoURL ?? null,
     photoURLManagedByUser: photoURLManagedByUser ?? false,
     shippingOriginAddress: shippingOriginAddress ?? null,

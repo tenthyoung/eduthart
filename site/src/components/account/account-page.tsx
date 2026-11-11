@@ -33,6 +33,10 @@ import {
 } from "@/lib/auth/account-profile";
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { BANNER_CROP_SPEC } from "@/lib/profile/images";
+import {
+  toProfileLocationInput,
+  toProfileLocationPatch,
+} from "@/lib/profile/location";
 import { uploadProfileImage } from "@/lib/profile/upload";
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -86,7 +90,7 @@ export function AccountPage() {
         bio: next.bio ?? "",
         firstName: next.firstName ?? "",
         lastName: next.lastName ?? "",
-        location: next.location ?? "",
+        location: toProfileLocationInput(next),
       });
       emailForm.reset({ nextEmail: next.email ?? user?.email ?? "" });
     },
@@ -149,7 +153,7 @@ export function AccountPage() {
         bio: values.bio,
         firstName: values.firstName,
         lastName: values.lastName,
-        location: values.location,
+        ...toProfileLocationPatch(values.location),
       },
       "Your account profile has been updated."
     );

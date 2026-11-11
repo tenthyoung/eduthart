@@ -24,6 +24,7 @@ import {
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
+import { LocationField } from "@/components/profile/location-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,7 +35,13 @@ import {
 import { notifyUsernameUpdated } from "@/lib/auth/username-events";
 import { readApiError } from "@/lib/api/api-error";
 import { SubmitError } from "@/lib/forms/describe-submit-error";
-import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
+import { MAX_BIO_LENGTH } from "@/lib/profile/details";
+import {
+  EMPTY_PROFILE_LOCATION_INPUT,
+  profileLocationInputSchema,
+  toProfileLocationInput,
+  toProfileLocationPatch,
+} from "@/lib/profile/location";
 
 const profileCompletionSchema = z.object({
   firstName: z.string().trim().min(1, "Enter your first name."),
@@ -48,12 +55,7 @@ const profileCompletionSchema = z.object({
         isAcceptableUsername(value),
       { message: USERNAME_RULE_MESSAGE }
     ),
-  location: z
-    .string()
-    .max(
-      MAX_LOCATION_LENGTH,
-      `Keep your location under ${MAX_LOCATION_LENGTH} characters.`
-    ),
+  location: profileLocationInputSchema,
   bio: z
     .string()
     .max(
@@ -82,7 +84,7 @@ export function ProfileCompletionPage() {
       firstName: "",
       lastName: "",
       username: "",
-      location: "",
+      location: EMPTY_PROFILE_LOCATION_INPUT,
       bio: "",
     },
   });
@@ -124,7 +126,7 @@ export function ProfileCompletionPage() {
             firstName: payload.profile.firstName ?? fallback.firstName,
             lastName: payload.profile.lastName ?? fallback.lastName,
             username: payload.profile.username ?? "",
-            location: payload.profile.location ?? "",
+            location: toProfileLocationInput(payload.profile),
             bio: payload.profile.bio ?? "",
           },
           { keepDirtyValues: true }
@@ -136,7 +138,7 @@ export function ProfileCompletionPage() {
               firstName: fallback.firstName,
               lastName: fallback.lastName,
               username: "",
-              location: "",
+              location: EMPTY_PROFILE_LOCATION_INPUT,
               bio: "",
             },
             { keepDirtyValues: true }
@@ -179,7 +181,7 @@ export function ProfileCompletionPage() {
         bio: values.bio,
         firstName: values.firstName,
         lastName: values.lastName,
-        location: values.location,
+        ...toProfileLocationPatch(values.location),
         // An empty username stays unset rather than failing validation.
         ...(values.username.trim() ? { username: values.username } : {}),
       }),
@@ -308,18 +310,15 @@ export function ProfileCompletionPage() {
           <FormField
             control={form.control}
             name="location"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel htmlFor="welcome-location">Location</FormLabel>
-                <FormControl>
-                  <Input
-                    id="welcome-location"
-                    autoComplete="address-level2"
-                    maxLength={MAX_LOCATION_LENGTH}
-                    placeholder="Brooklyn, New York"
-                    {...field}
-                  />
-                </FormControl>
+                <LocationField
+                  idPrefix="welcome-location"
+                  invalid={Boolean(fieldState.error)}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
                 <FormMessage />
               </FormItem>
             )}

@@ -25,9 +25,14 @@ import {
   FormShell,
   SubmitButton,
 } from "@/components/ui/form";
+import { LocationField } from "@/components/profile/location-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MAX_BIO_LENGTH, MAX_LOCATION_LENGTH } from "@/lib/profile/details";
+import { MAX_BIO_LENGTH } from "@/lib/profile/details";
+import {
+  EMPTY_PROFILE_LOCATION_INPUT,
+  profileLocationInputSchema,
+} from "@/lib/profile/location";
 
 export const profileFormSchema = z.object({
   bio: z
@@ -38,12 +43,7 @@ export const profileFormSchema = z.object({
     ),
   firstName: z.string(),
   lastName: z.string(),
-  location: z
-    .string()
-    .max(
-      MAX_LOCATION_LENGTH,
-      `Keep your location under ${MAX_LOCATION_LENGTH} characters.`
-    ),
+  location: profileLocationInputSchema,
 });
 
 export type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -51,7 +51,12 @@ export type ProfileFormData = z.infer<typeof profileFormSchema>;
 export function useProfileForm() {
   return useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: { bio: "", firstName: "", lastName: "", location: "" },
+    defaultValues: {
+      bio: "",
+      firstName: "",
+      lastName: "",
+      location: EMPTY_PROFILE_LOCATION_INPUT,
+    },
   });
 }
 
@@ -129,18 +134,15 @@ export function EditProfileDialog({
           <FormField
             control={form.control}
             name="location"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel htmlFor="account-location">Location</FormLabel>
-                <FormControl>
-                  <Input
-                    id="account-location"
-                    autoComplete="address-level2"
-                    maxLength={MAX_LOCATION_LENGTH}
-                    placeholder="Brooklyn, New York"
-                    {...field}
-                  />
-                </FormControl>
+                <LocationField
+                  idPrefix="account-location"
+                  invalid={Boolean(fieldState.error)}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
                 <FormMessage />
               </FormItem>
             )}
