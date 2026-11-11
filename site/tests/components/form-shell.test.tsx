@@ -299,6 +299,55 @@ describe("FormShell on an API or network failure", () => {
     );
   });
 
+  it("gives a reference to report, by the button too, and copies details without what was typed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({ error: { message: "Upstream down" } }, { status: 503 })
+      )
+    );
+    render(
+      <TestForm
+        onSubmit={(values) =>
+          requestJson("/api/contact", { method: "POST", body: values })
+        }
+      />
+    );
+
+    const user = await fillIn("Jordan Avery", "jordan@example.com");
+    // After userEvent.setup(), which installs its own clipboard.
+    const writeText = vi.fn<(text: string) => Promise<void>>(async () => {});
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    const callout = await screen.findByRole("alert");
+    const reference = callout
+      .querySelector("[data-slot=form-error-reference]")
+      ?.textContent?.match(/Ref ([A-Z0-9]{6}) · server 503/)?.[1];
+    expect(reference).toBeTruthy();
+
+    const note = document.querySelector("[data-slot=form-error-note]");
+    expect(note?.textContent).toContain(`ref ${reference}`);
+
+    const mail = screen.getByRole("link", { name: "Email support" });
+    expect(mail.getAttribute("href")).toContain("mailto:help@example.com");
+    expect(decodeURIComponent(mail.getAttribute("href") ?? "")).not.toContain(
+      "jordan@example.com"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Copy details" }));
+    expect(writeText).toHaveBeenCalledTimes(1);
+    const copied = writeText.mock.calls[0]?.[0] ?? "";
+    expect(copied).toContain(`Reference: ${reference} (server, HTTP 503)`);
+    expect(copied).toContain("Detail: Upstream down");
+    expect(copied).not.toContain("Jordan Avery");
+    expect(copied).not.toContain("jordan@example.com");
+    expect(screen.getByRole("button", { name: "Details copied" })).toBeTruthy();
+  });
+
   it("clears the callout when the person submits again", async () => {
     const onSubmit = vi
       .fn<(values: Values) => Promise<void>>()

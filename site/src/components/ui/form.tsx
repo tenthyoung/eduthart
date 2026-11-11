@@ -212,17 +212,100 @@ function useDescribeSubmitError() {
   );
 }
 
+/**
+ * What a person needs to report a failed submit: the words they saw, plus a
+ * short reference, the time, and what the server said. Never field values.
+ */
+type SubmitErrorReport = SubmitErrorDescription & {
+  reference: string;
+  occurredAt: Date;
+  status: number | null;
+  detail: string | null;
+};
+
 type SubmitErrorContextValue = {
-  error: SubmitErrorDescription | null;
+  error: SubmitErrorReport | null;
+  calloutRef: React.RefObject<HTMLDivElement | null>;
 };
 
 const SubmitErrorContext = React.createContext<SubmitErrorContextValue>({
   error: null,
+  calloutRef: { current: null },
 });
+
+/** Six characters someone can read out or type into an email. */
+function newReference() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let reference = "";
+  for (let index = 0; index < 6; index += 1) {
+    reference += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return reference;
+}
+
+function technicalDetail(error: unknown): string | null {
+  if (error instanceof ApiError) {
+    return (
+      [error.code, error.readable ? error.message : "unreadable response"]
+        .filter(Boolean)
+        .join(": ") || null
+    );
+  }
+
+  if (error && typeof error === "object") {
+    const { code, message, name } = error as {
+      code?: unknown;
+      message?: unknown;
+      name?: unknown;
+    };
+    return (
+      [name, code, message]
+        .filter((part) => typeof part === "string" && part.length > 0)
+        .join(": ") || null
+    );
+  }
+
+  return null;
+}
+
+function formatTime(date: Date) {
+  return date.toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Plain text for the clipboard or an email: what failed, never what was typed. */
+function reportText(error: SubmitErrorReport) {
+  const lines = [
+    `What failed: ${error.title}`,
+    `Message shown: ${error.message}`,
+    `Reference: ${error.reference} (${error.kind}${error.status ? `, HTTP ${error.status}` : ""})`,
+    error.detail ? `Detail: ${error.detail}` : null,
+    typeof window === "undefined" ? null : `Page: ${window.location.pathname}`,
+    `Time: ${error.occurredAt.toISOString()}`,
+    typeof navigator === "undefined" ? null : `Browser: ${navigator.userAgent}`,
+  ];
+  return lines.filter(Boolean).join("\n");
+}
 
 /** The error callout's contents for the nearest `FormShell`, if any. */
 function useFormSubmitError() {
   return React.useContext(SubmitErrorContext).error;
+}
+
+/** Scroll to and focus the error callout, e.g. from the note by the button. */
+function useShowSubmitError() {
+  const { calloutRef } = React.useContext(SubmitErrorContext);
+  return React.useCallback(() => {
+    calloutRef.current?.scrollIntoView?.({
+      block: "center",
+      behavior: "smooth",
+    });
+    calloutRef.current?.focus({ preventScroll: true });
+  }, [calloutRef]);
 }
 
 /**
@@ -264,7 +347,8 @@ function FormShell<TFieldValues extends FieldValues>({
   formClassName?: string;
   onSubmit: (values: TFieldValues) => Promise<unknown> | unknown;
 }) {
-  const [error, setError] = React.useState<SubmitErrorDescription | null>(null);
+  const [error, setError] = React.useState<SubmitErrorReport | null>(null);
+  const calloutRef = React.useRef<HTMLDivElement>(null);
   const inFlight = React.useRef(false);
   const describe = useDescribeSubmitError();
   const { isSubmitting } = useFormState({ control: form.control });
@@ -294,7 +378,13 @@ function FormShell<TFieldValues extends FieldValues>({
       message: description.message,
       type: description.kind,
     });
-    setError(description);
+    setError({
+      ...description,
+      detail: technicalDetail(submitError),
+      occurredAt: new Date(),
+      reference: newReference(),
+      status: submitError instanceof ApiError ? submitError.status : null,
+    });
   };
 
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -307,7 +397,7 @@ function FormShell<TFieldValues extends FieldValues>({
 
   return (
     <FormProvider {...form}>
-      <SubmitErrorContext.Provider value={{ error }}>
+      <SubmitErrorContext.Provider value={{ calloutRef, error }}>
         <form
           {...props}
           aria-busy={isSubmitting || undefined}
@@ -345,6 +435,7 @@ function FormShell<TFieldValues extends FieldValues>({
           >
             {children}
           </fieldset>
+          <FormErrorNote className="mt-3" />
         </form>
       </SubmitErrorContext.Provider>
     </FormProvider>
@@ -358,20 +449,40 @@ function FormShell<TFieldValues extends FieldValues>({
  */
 function FormErrorCallout({ className }: { className?: string }) {
   const error = useFormSubmitError();
-  const ref = React.useRef<HTMLDivElement>(null);
+  const { calloutRef: ref } = React.useContext(SubmitErrorContext);
+  const { supportEmail } = React.useContext(FormErrorsContext);
+  const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
+    setCopied(false);
+
     if (!error || !ref.current) {
       return;
     }
 
     ref.current.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
     ref.current.focus({ preventScroll: true });
-  }, [error]);
+  }, [error, ref]);
 
   if (!error) {
     return null;
   }
+
+  const copyDetails = async () => {
+    try {
+      await navigator.clipboard.writeText(reportText(error));
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  // The body carries only what failed and when, never what was typed.
+  const mailto = supportEmail
+    ? `mailto:${supportEmail}?subject=${encodeURIComponent(
+        `Problem submitting a form (ref ${error.reference})`
+      )}&body=${encodeURIComponent(`${reportText(error)}\n\n`)}`
+    : null;
 
   return (
     <Alert
@@ -384,8 +495,62 @@ function FormErrorCallout({ className }: { className?: string }) {
     >
       <AlertCircle aria-hidden="true" className="size-4" />
       <AlertTitle>{error.title}</AlertTitle>
-      <AlertDescription>{error.message}</AlertDescription>
+      <AlertDescription>
+        <p>{error.message}</p>
+        {/* A reference and the time make a screenshot or an email traceable. */}
+        <p
+          className="mt-2 text-xs tabular-nums opacity-80"
+          data-slot="form-error-reference"
+        >
+          Ref {error.reference} · {error.kind}
+          {error.status ? ` ${error.status}` : ""} ·{" "}
+          {formatTime(error.occurredAt)}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          <button
+            className="cursor-pointer underline underline-offset-2"
+            onClick={() => void copyDetails()}
+            type="button"
+          >
+            {copied ? "Details copied" : "Copy details"}
+          </button>
+          {mailto ? (
+            <a className="underline underline-offset-2" href={mailto}>
+              Email support
+            </a>
+          ) : null}
+        </div>
+      </AlertDescription>
     </Alert>
+  );
+}
+
+/**
+ * One line under the fields, by the submit button, so a screenshot of the
+ * bottom of a long form still shows that it failed and its reference.
+ */
+function FormErrorNote({ className }: { className?: string }) {
+  const error = useFormSubmitError();
+  const showError = useShowSubmitError();
+
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <p
+      className={cn("text-sm text-destructive", className)}
+      data-slot="form-error-note"
+    >
+      Not sent: {error.title} (ref {error.reference}).{" "}
+      <button
+        className="cursor-pointer underline underline-offset-2"
+        onClick={showError}
+        type="button"
+      >
+        See details
+      </button>
+    </p>
   );
 }
 
@@ -424,8 +589,10 @@ export {
   useFormField,
   FormErrorsProvider,
   useFormSubmitError,
+  useShowSubmitError,
   FormShell,
   FormErrorCallout,
+  FormErrorNote,
   SubmitButton,
   Form,
   FormItem,
