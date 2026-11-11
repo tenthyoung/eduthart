@@ -70,7 +70,13 @@ export function EditProfileDialog({
   const bio = form.watch("bio");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      // Stay open while saving, so a failure has somewhere to show.
+      onOpenChange={(nextOpen) =>
+        nextOpen || !form.formState.isSubmitting ? onOpenChange(nextOpen) : null
+      }
+    >
       <DialogTrigger asChild>
         <Button type="button" variant="outline">
           <UserRound />

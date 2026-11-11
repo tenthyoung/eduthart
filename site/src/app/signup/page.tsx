@@ -76,11 +76,16 @@ export default function SignupPage() {
 
   const isSubmitting = form.formState.isSubmitting || isFederatedSubmitting;
 
+  // Firebase signs the person in before the profile is saved. If that later
+  // step fails, stay here so the callout is read, rather than redirecting
+  // past it to a half-made account.
+  const [emailSignupFailed, setEmailSignupFailed] = useState(false);
+
   useEffect(() => {
-    if (status === "authenticated" && !isSubmitting) {
+    if (status === "authenticated" && !isSubmitting && !emailSignupFailed) {
       router.replace("/");
     }
-  }, [isSubmitting, router, status]);
+  }, [emailSignupFailed, isSubmitting, router, status]);
 
   // Google sign-up skips the form's own validation, so check the one field it
   // depends on here and put the message beside the checkbox.
@@ -104,12 +109,20 @@ export default function SignupPage() {
     password,
   }: SignupFormData) => {
     setFederatedError(null);
-    await signUpWithEmail({
-      email,
-      firstName,
-      lastName,
-      password,
-    });
+    setEmailSignupFailed(false);
+
+    try {
+      await signUpWithEmail({
+        email,
+        firstName,
+        lastName,
+        password,
+      });
+    } catch (error) {
+      setEmailSignupFailed(true);
+      throw error;
+    }
+
     toast.success("Your account is ready.");
     router.replace("/");
   };

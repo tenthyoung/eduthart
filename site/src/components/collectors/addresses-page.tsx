@@ -132,7 +132,20 @@ export function AddressesPage() {
   const editingId = form.watch("id");
 
   const openDraft = (values: AddressFormValues) => {
-    form.reset(values);
+    // Reopening "Add address" brings back an unsaved new address (say, one
+    // whose save failed) instead of wiping it. Editing a saved one, or a
+    // different kind, starts from that address.
+    const current = form.getValues();
+    const keepDraft =
+      !values.id &&
+      !current.id &&
+      current.kind === values.kind &&
+      form.formState.isDirty;
+
+    if (!keepDraft) {
+      form.reset(values);
+    }
+
     setOpen(true);
   };
 
@@ -291,7 +304,10 @@ export function AddressesPage() {
 
       <Dialog
         open={open}
-        onOpenChange={(nextOpen) => (nextOpen ? null : setOpen(false))}
+        // Stay open while saving, so a failure has somewhere to show.
+        onOpenChange={(nextOpen) =>
+          nextOpen || form.formState.isSubmitting ? null : setOpen(false)
+        }
       >
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>

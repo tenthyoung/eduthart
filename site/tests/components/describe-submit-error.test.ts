@@ -99,6 +99,14 @@ describe("describeSubmitError", () => {
     ).not.toContain("email");
   });
 
+  it("treats Firebase's network failure as a network failure", () => {
+    const error = Object.assign(
+      new Error("Firebase: Error (auth/network-request-failed)."),
+      { code: "auth/network-request-failed" }
+    );
+    expect(describeSubmitError(error).kind).toBe("network");
+  });
+
   it("recognises a timeout", () => {
     const error = new DOMException("The operation was aborted.", "AbortError");
     expect(describeSubmitError(error).kind).toBe("timeout");

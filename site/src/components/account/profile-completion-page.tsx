@@ -116,22 +116,30 @@ export function ProfileCompletionPage() {
           return;
         }
 
-        form.reset({
-          firstName: payload.profile.firstName ?? fallback.firstName,
-          lastName: payload.profile.lastName ?? fallback.lastName,
-          username: payload.profile.username ?? "",
-          location: payload.profile.location ?? "",
-          bio: payload.profile.bio ?? "",
-        });
+        // A reload (the auth user object changing) must not overwrite what
+        // the person has already typed.
+        form.reset(
+          {
+            firstName: payload.profile.firstName ?? fallback.firstName,
+            lastName: payload.profile.lastName ?? fallback.lastName,
+            username: payload.profile.username ?? "",
+            location: payload.profile.location ?? "",
+            bio: payload.profile.bio ?? "",
+          },
+          { keepDirtyValues: true }
+        );
       } catch {
         if (!cancelled) {
-          form.reset({
-            firstName: fallback.firstName,
-            lastName: fallback.lastName,
-            username: "",
-            location: "",
-            bio: "",
-          });
+          form.reset(
+            {
+              firstName: fallback.firstName,
+              lastName: fallback.lastName,
+              username: "",
+              location: "",
+              bio: "",
+            },
+            { keepDirtyValues: true }
+          );
         }
       } finally {
         if (!cancelled) {

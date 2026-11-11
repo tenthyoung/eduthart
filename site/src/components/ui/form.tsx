@@ -21,6 +21,7 @@ import {
   type SubmitErrorDescription,
   type SubmitErrorOptions,
 } from "@/lib/forms/describe-submit-error";
+import { useHydrated } from "@/hooks/useHydrated";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -57,11 +58,13 @@ const useFormField = () => {
   const itemContext = React.useContext(FormItemContext);
   const { getFieldState } = useFormContext();
   const formState = useFormState({ name: fieldContext.name });
-  const fieldState = getFieldState(fieldContext.name, formState);
 
-  if (!fieldContext) {
+  // The context defaults to `{}`, so check for a name rather than the object.
+  if (!fieldContext.name) {
     throw new Error("useFormField should be used within <FormField>");
   }
+
+  const fieldState = getFieldState(fieldContext.name, formState);
 
   const { id } = itemContext;
 
@@ -360,20 +363,25 @@ function FormErrorCallout({ className }: { className?: string }) {
 }
 
 /**
- * The submit button for a `FormShell`: a spinner and `pendingLabel` while the
- * form is submitting.
+ * The submit button for a `FormShell`: disabled until hydration, then a
+ * spinner and `pendingLabel` while the form is submitting.
  */
 function SubmitButton({
   children,
+  disabled,
   pendingLabel,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "loading" | "loadingText"> & {
   pendingLabel?: React.ReactNode;
 }) {
   const { isSubmitting } = useFormState();
+  const hydrated = useHydrated();
 
   return (
     <Button
+      // Until hydration the form has no submit handler, so a click would post
+      // the page natively and come back with every field empty.
+      disabled={!hydrated || disabled}
       loading={isSubmitting}
       loadingText={pendingLabel}
       type="submit"

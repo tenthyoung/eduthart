@@ -71,8 +71,16 @@ function isOffline() {
   return typeof navigator !== "undefined" && navigator.onLine === false;
 }
 
-/** `fetch` rejects with a bare TypeError when the request never got an answer. */
+/**
+ * `fetch` rejects with a bare TypeError when the request never got an answer;
+ * Firebase's SDK says `auth/network-request-failed` (from `getIdToken()` too).
+ */
 function isNetworkFailure(error: unknown) {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (typeof code === "string" && code.endsWith("/network-request-failed")) {
+    return true;
+  }
+
   if (!(error instanceof TypeError)) {
     return false;
   }

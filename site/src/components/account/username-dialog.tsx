@@ -76,7 +76,7 @@ export function UsernameDialog({
   });
 
   useEffect(() => {
-    form.reset({ username: defaultUsername });
+    form.reset({ username: defaultUsername }, { keepDirtyValues: true });
   }, [defaultUsername, form]);
 
   const username = form.watch("username");
@@ -90,7 +90,13 @@ export function UsernameDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      // Stay open while saving, so a failure has somewhere to show.
+      onOpenChange={(nextOpen) =>
+        nextOpen || !form.formState.isSubmitting ? onOpenChange(nextOpen) : null
+      }
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

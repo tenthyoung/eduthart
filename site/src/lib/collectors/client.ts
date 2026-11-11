@@ -1,6 +1,7 @@
 "use client";
 
-import { ApiError, readApiError } from "@/lib/api/api-error";
+import { readApiError } from "@/lib/api/api-error";
+import { SubmitError } from "@/lib/forms/describe-submit-error";
 
 /**
  * Authenticated fetch helper for the collector APIs.
@@ -30,14 +31,13 @@ export async function collectorRequest<T>(
 
   const payload = (await response.json().catch(() => null)) as T | null;
 
-  // A broken server answers with an HTML page rather than JSON. Say so instead
-  // of blaming the request, or a failed build reads as a rejected action.
+  // A 2xx we cannot read may still have saved, so don't say it didn't. A
+  // SubmitError carries the honest message into a form's callout.
   if (!payload) {
-    throw new ApiError({
-      message: `The server sent a response we could not read (HTTP ${response.status}). It may need to be restarted.`,
-      readable: false,
-      status: 502,
-    });
+    throw new SubmitError(
+      `The server answered, but not in a way we could read (HTTP ${response.status}), so we can't tell whether that saved. Reload the page to check before trying again.`,
+      { title: "We couldn't confirm that" }
+    );
   }
 
   return payload;

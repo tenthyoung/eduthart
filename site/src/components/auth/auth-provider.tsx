@@ -670,10 +670,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    await reportSecurityEvent(
-      { nextEmail: normalizedEmail, type: "email_changed" },
-      await auth.currentUser.getIdToken()
-    );
+    // The change has started; a failed notification must not read as a
+    // failed change, or the person retries something that already worked.
+    try {
+      await reportSecurityEvent(
+        { nextEmail: normalizedEmail, type: "email_changed" },
+        await auth.currentUser.getIdToken()
+      );
+    } catch (reportError) {
+      console.error("Could not record the email change event", reportError);
+    }
 
     return {
       email: normalizedEmail,
@@ -726,10 +732,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      await reportSecurityEvent(
-        { type: "password_changed" },
-        await currentUser.getIdToken(true)
-      );
+      // The password has changed; a failed notification must not read as a
+      // failed change, or a retry with the old password fails as "wrong".
+      try {
+        await reportSecurityEvent(
+          { type: "password_changed" },
+          await currentUser.getIdToken(true)
+        );
+      } catch (reportError) {
+        console.error(
+          "Could not record the password change event",
+          reportError
+        );
+      }
       setUser(mapFirebaseUser(currentUser));
       setTwoFactor(readEnrolledFactors(currentUser));
     },

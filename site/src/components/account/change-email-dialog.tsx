@@ -75,7 +75,13 @@ export function ChangeEmailDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      // Stay open while saving, so a failure has somewhere to show.
+      onOpenChange={(nextOpen) =>
+        nextOpen || !form.formState.isSubmitting ? onOpenChange(nextOpen) : null
+      }
+    >
       <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Email

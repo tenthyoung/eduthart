@@ -115,6 +115,8 @@ function LoginContent() {
   const cancelTwoFactor = () => {
     setTwoFactorResolver(null);
     twoFactorForm.reset();
+    // A different account needs a different password; keep only the email.
+    form.resetField("password");
   };
 
   const handleGoogleSignIn = async () => {

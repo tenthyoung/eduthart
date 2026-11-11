@@ -84,7 +84,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="name">
+              <FormLabel>
                 Full Name
                 <span className="text-primary" style={stylesRequired}>
                   *
@@ -102,7 +102,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="email">
+              <FormLabel>
                 Email Address
                 <span className="text-primary" style={stylesRequired}>
                   *
@@ -126,7 +126,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
         name="message"
         render={({ field }) => (
           <FormItem>
-            <FormLabel htmlFor="message">
+            <FormLabel>
               Message
               <span className="text-primary" style={stylesRequired}>
                 *
