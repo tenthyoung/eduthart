@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
+import { AlertCircle } from "lucide-react";
 import {
   Controller,
   FormProvider,
@@ -11,9 +12,17 @@ import {
   type ControllerProps,
   type FieldPath,
   type FieldValues,
+  type UseFormReturn,
 } from "react-hook-form";
 
+import { ApiError } from "@/lib/api/api-error";
+import {
+  describeSubmitError,
+  type SubmitErrorDescription,
+} from "@/lib/forms/describe-submit-error";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 const Form = FormProvider;
@@ -156,8 +165,188 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
+type SubmitErrorContextValue = {
+  error: SubmitErrorDescription | null;
+};
+
+const SubmitErrorContext = React.createContext<SubmitErrorContextValue>({
+  error: null,
+});
+
+/** The error callout's contents for the nearest `FormShell`, if any. */
+function useFormSubmitError() {
+  return React.useContext(SubmitErrorContext).error;
+}
+
+/**
+ * The one way a form on this site submits.
+ *
+ * - Validation runs first (react-hook-form + the form's zod resolver). A bad
+ *   field gets its message beside it and focus; nothing is cleared.
+ * - While `onSubmit` runs, every control sits inside a disabled `<fieldset>`,
+ *   the form is `aria-busy`, and a second submit is ignored. `SubmitButton`
+ *   shows the spinner.
+ * - If `onSubmit` throws, the error becomes a callout at the top of the form
+ *   saying what went wrong and what to do next (see `describeSubmitError`).
+ *   An `ApiError` that names fields also puts those messages on the fields.
+ *   The values are never reset on failure: resetting is only ever the submit
+ *   handler's own choice, after it succeeds.
+ *
+ * `className` lays out the fields (it lands on the fieldset); `formClassName`
+ * styles the `<form>` box around the callout and the fields.
+ */
+function FormShell<TFieldValues extends FieldValues>({
+  children,
+  className,
+  disabled = false,
+  errorTitle,
+  form,
+  formClassName,
+  onSubmit,
+  ...props
+}: Omit<React.ComponentProps<"form">, "onSubmit" | "children"> & {
+  children: React.ReactNode;
+  /** Disable every control for a reason other than this submit. */
+  disabled?: boolean;
+  /** Heads errors whose message is already fit to show, e.g. "Sign-in failed". */
+  errorTitle?: string;
+  form: UseFormReturn<TFieldValues>;
+  formClassName?: string;
+  onSubmit: (values: TFieldValues) => Promise<unknown> | unknown;
+}) {
+  const [error, setError] = React.useState<SubmitErrorDescription | null>(
+    null
+  );
+  const inFlight = React.useRef(false);
+  const { isSubmitting } = useFormState({ control: form.control });
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    if (inFlight.current) {
+      return;
+    }
+
+    inFlight.current = true;
+
+    try {
+      await onSubmit(values);
+    } catch (submitError) {
+      if (submitError instanceof ApiError) {
+        const known = form.getValues() as Record<string, unknown>;
+
+        for (const [name, message] of Object.entries(
+          submitError.fieldErrors
+        )) {
+          if (name in known) {
+            form.setError(name as FieldPath<TFieldValues>, {
+              message,
+              type: "server",
+            });
+          }
+        }
+      }
+
+      setError(describeSubmitError(submitError, { fallbackTitle: errorTitle }));
+    } finally {
+      inFlight.current = false;
+    }
+  });
+
+  return (
+    <FormProvider {...form}>
+      <SubmitErrorContext.Provider value={{ error }}>
+        <form
+          aria-busy={isSubmitting || undefined}
+          className={formClassName}
+          noValidate
+          onSubmit={(event) => {
+            setError(null);
+            void handleSubmit(event);
+          }}
+          {...props}
+        >
+          <FormErrorCallout className="mb-4" />
+          <fieldset
+            className={cn("m-0 min-w-0 border-0 p-0", className)}
+            data-slot="form-fieldset"
+            disabled={disabled || isSubmitting}
+          >
+            {children}
+          </fieldset>
+        </form>
+      </SubmitErrorContext.Provider>
+    </FormProvider>
+  );
+}
+
+/**
+ * The failure callout at the top of a `FormShell`. It takes focus and scrolls
+ * into view when it appears, so a long form's submit button is never the last
+ * thing the person sees.
+ */
+function FormErrorCallout({ className }: { className?: string }) {
+  const error = useFormSubmitError();
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!error || !ref.current) {
+      return;
+    }
+
+    ref.current.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    ref.current.focus({ preventScroll: true });
+  }, [error]);
+
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <Alert
+      ref={ref}
+      className={cn("outline-none", className)}
+      data-kind={error.kind}
+      data-slot="form-error-callout"
+      tabIndex={-1}
+      variant="destructive"
+    >
+      <AlertCircle aria-hidden="true" className="size-4" />
+      <AlertTitle>{error.title}</AlertTitle>
+      <AlertDescription>{error.message}</AlertDescription>
+    </Alert>
+  );
+}
+
+/**
+ * The submit button for a `FormShell`: a spinner and `pendingLabel` while the
+ * form is submitting.
+ */
+function SubmitButton({
+  children,
+  pendingLabel,
+  ...props
+}: Omit<React.ComponentProps<typeof Button>, "loading" | "loadingText"> & {
+  pendingLabel?: React.ReactNode;
+}) {
+  const { isSubmitting } = useFormState();
+
+  return (
+    <Button
+      loading={isSubmitting}
+      loadingText={pendingLabel}
+      type="submit"
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+
 export {
   useFormField,
+  useFormSubmitError,
+  FormShell,
+  FormErrorCallout,
+  SubmitButton,
   Form,
   FormItem,
   FormLabel,
