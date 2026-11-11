@@ -42,12 +42,19 @@ export function AccountWorkspaceShell({ children }: { children: ReactNode }) {
     isAccountSectionActive(section.href, pathname)
   );
   const [username, setUsername] = useState<string | null>(null);
+  // Until the lookup answers we cannot tell an artist from a collector, so the
+  // button waits rather than sending an artist to the Sell page.
+  const [profileChecked, setProfileChecked] = useState(false);
 
   // Same lookup as the navbar's Studio link: an account with a username can
   // list straight away, anyone else is sent to the Sell page to apply.
   useEffect(() => {
+    // Clear the last account's answer first, so a switch never links to the
+    // previous user's studio.
+    setUsername(null);
+    setProfileChecked(false);
+
     if (status !== "authenticated" || !user) {
-      setUsername(null);
       return;
     }
 
@@ -70,8 +77,10 @@ export function AccountWorkspaceShell({ children }: { children: ReactNode }) {
           setUsername(payload.profile.username ?? null);
         }
       } catch {
+        // Falls through to the Sell page link below.
+      } finally {
         if (!cancelled) {
-          setUsername(null);
+          setProfileChecked(true);
         }
       }
     };
@@ -110,8 +119,18 @@ export function AccountWorkspaceShell({ children }: { children: ReactNode }) {
               Browse art
             </Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href={listArtHref}>
+          <Button
+            asChild
+            className={
+              profileChecked ? undefined : "pointer-events-none opacity-60"
+            }
+            size="sm"
+          >
+            <Link
+              aria-disabled={!profileChecked}
+              href={listArtHref}
+              tabIndex={profileChecked ? undefined : -1}
+            >
               <Plus className="size-4" />
               List your art
             </Link>
