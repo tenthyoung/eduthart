@@ -10,6 +10,7 @@
     "db:seed-fake": "node ./scripts/seed-fake-listings.mjs",
     "db:delete-fake": "node ./scripts/seed-fake-listings.mjs --delete",
     "db:backfill-users": "node ./scripts/backfill-user-identity.mjs",
+    "db:approve-existing-artists": "node ./scripts/approve-existing-artists.mjs",
     "dev": "npm run check:node && next dev",
     "dev:turbo": "npm run check:node && next dev --turbopack",
     "build": "npm run check:node && next build",

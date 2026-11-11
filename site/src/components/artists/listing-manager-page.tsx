@@ -27,6 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { parseApiError } from "@/lib/api/parse-api-error";
+import { isArtistNotApprovedResponse } from "@/lib/artists/artist-approval";
+import { ArtistApprovalRequired } from "@/components/artists/artist-approval-required";
 import {
   createEmptyListingItem,
   createEmptyListingStudio,
@@ -66,6 +68,7 @@ export function ListingManagerPage({ username }: { username: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notApproved, setNotApproved] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortValue>("newest");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
@@ -87,6 +90,7 @@ export function ListingManagerPage({ username }: { username: string }) {
     const load = async () => {
       setLoading(true);
       setError(null);
+      setNotApproved(false);
 
       try {
         const token = await user.getIdToken();
@@ -105,6 +109,13 @@ export function ListingManagerPage({ username }: { username: string }) {
         if (timeoutId !== null) {
           window.clearTimeout(timeoutId);
           timeoutId = null;
+        }
+
+        if (await isArtistNotApprovedResponse(response)) {
+          if (!cancelled) {
+            setNotApproved(true);
+          }
+          return;
         }
 
         if (!response.ok) {
@@ -377,6 +388,10 @@ export function ListingManagerPage({ username }: { username: string }) {
         </div>
       </section>
     );
+  }
+
+  if (notApproved) {
+    return <ArtistApprovalRequired />;
   }
 
   if (status === "unauthenticated" || !profile) {

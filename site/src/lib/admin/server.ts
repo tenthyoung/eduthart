@@ -495,6 +495,12 @@ export async function getAdminUserDetails(targetUid: string) {
       updatedAt: timestampToIsoString(userData.updatedAt),
       accountStatus: userData.accountStatus ?? "active",
       publishingDisabled: userData.publishingDisabled === true,
+      artistApproved: userData.artistApproved === true,
+      artistApprovedAt: timestampToIsoString(userData.artistApprovedAt),
+      artistApprovedBy:
+        typeof userData.artistApprovedBy === "string"
+          ? userData.artistApprovedBy
+          : null,
       moderationReason: userData.moderationReason ?? null,
       moderatedAt: timestampToIsoString(userData.moderatedAt),
       moderatedBy: userData.moderatedBy ?? null,
@@ -602,7 +608,13 @@ export async function updateUserModerationState(
       400
     );
   }
-  if (targetUid === moderatorUid && action !== "enable_publishing") {
+  // Approving yourself as an artist only lets you list work, so an admin may
+  // do it for their own account; every other action needs a second admin.
+  if (
+    targetUid === moderatorUid &&
+    action !== "enable_publishing" &&
+    action !== "approve_artist"
+  ) {
     throw new AdminRouteError(
       "failed-precondition",
       "You cannot moderate your own account.",
@@ -640,6 +652,16 @@ export async function updateUserModerationState(
       break;
     case "enable_publishing":
       updates.publishingDisabled = false;
+      break;
+    case "approve_artist":
+      updates.artistApproved = true;
+      updates.artistApprovedAt = Timestamp.now();
+      updates.artistApprovedBy = moderatorUid;
+      break;
+    case "revoke_artist_approval":
+      updates.artistApproved = false;
+      updates.artistApprovedAt = null;
+      updates.artistApprovedBy = null;
       break;
     default:
       throw new AdminRouteError(
