@@ -300,11 +300,16 @@ test("change password keeps what was typed on failure and closes on success", as
   await confirm.fill("lowercase1");
   await submit.click();
   await expect(
-    dialog.getByRole("listitem").filter({ hasText: "Upper and lowercase letters" })
+    dialog
+      .getByRole("listitem")
+      .filter({ hasText: "Upper and lowercase letters" })
   ).toHaveClass(/text-destructive/);
+  await expect(next).toHaveAttribute("aria-invalid", "true");
+  // The rule's message is there for screen readers only; sighted users get
+  // the red checklist row instead of the same words twice.
   await expect(
     dialog.getByText("Include one lowercase and one uppercase letter.")
-  ).toHaveCount(0);
+  ).toHaveClass(/sr-only/);
 
   // The E2E store treats "wrong-password" as an incorrect current password.
   await current.fill("wrong-password");

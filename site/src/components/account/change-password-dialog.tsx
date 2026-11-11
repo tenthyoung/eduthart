@@ -77,47 +77,66 @@ function passwordRequirements(value: string): Requirement[] {
 /**
  * The new-password field's description and, after a failed submit, its error.
  *
- * It replaces the field's FormMessage so each rule is reported once, in one
- * place. Unmet rules stay neutral until a submit fails, so an untouched form
- * doesn't open as a wall of red.
+ * It stands in for the field's FormMessage so each rule is reported once, in
+ * one place. Unmet rules stay neutral until a submit fails, so an untouched
+ * form doesn't open as a wall of red. The error text is still rendered under
+ * the message id the input points at: hidden when the red rules already say
+ * it, shown when it's something the checklist can't (a server-side error).
  */
 function PasswordRequirements({ value }: { value: string }) {
-  const { error, formDescriptionId } = useFormField();
+  const { error, formDescriptionId, formMessageId } = useFormField();
+  const requirements = passwordRequirements(value);
+  const ruleExplainsError = requirements.some(({ met }) => !met);
 
   return (
-    <ul
-      className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
-      id={formDescriptionId}
-    >
-      {passwordRequirements(value).map(({ label, met }) => {
-        const failed = !met && !!error;
+    <>
+      <ul
+        className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs"
+        id={formDescriptionId}
+      >
+        {requirements.map(({ label, met }) => {
+          const failed = !met && !!error;
 
-        return (
-          <li
-            className={cn(
-              "flex items-center gap-1.5",
-              met && "text-foreground",
-              failed && "text-destructive",
-              !met && !failed && "text-muted-foreground"
-            )}
-            key={label}
-          >
-            {met ? (
-              <Check aria-hidden="true" className="size-3.5" />
-            ) : failed ? (
-              <X aria-hidden="true" className="size-3.5" />
-            ) : (
-              <span
-                aria-hidden="true"
-                className="mx-[5px] size-1 rounded-full bg-current"
-              />
-            )}
-            {label}
-            <span className="sr-only">{met ? " (done)" : " (not yet)"}</span>
-          </li>
-        );
-      })}
-    </ul>
+          return (
+            <li
+              className={cn(
+                "flex items-center gap-1.5",
+                met && "text-foreground",
+                failed && "text-destructive",
+                !met && !failed && "text-muted-foreground"
+              )}
+              key={label}
+            >
+              {met ? (
+                <Check aria-hidden="true" className="size-3.5" />
+              ) : failed ? (
+                <X aria-hidden="true" className="size-3.5" />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="mx-[5px] size-1 rounded-full bg-current"
+                />
+              )}
+              {label}
+              <span className="sr-only">
+                {met ? " (done)" : failed ? " (missing)" : " (not yet)"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {error?.message ? (
+        <p
+          className={cn(
+            "text-destructive text-sm",
+            ruleExplainsError && "sr-only"
+          )}
+          id={formMessageId}
+        >
+          {error.message}
+        </p>
+      ) : null}
+    </>
   );
 }
 
