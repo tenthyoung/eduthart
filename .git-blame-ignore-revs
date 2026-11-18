@@ -3,3 +3,6 @@
 
 # Prettier reformat (HENDEC-101)
 0ff97a781bfeb691566d5ea06baca5bfa7ed855a
+
+# Prettier reformat fix: keep Tailwind class spaces (HENDEC-101)
+e57493a1a98b2ec4c3b3dcdeea3221bb9ec3fa9c
