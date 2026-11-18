@@ -7,6 +7,7 @@ import {
   updateE2EAccountProfile,
 } from "@/lib/auth/e2e-store";
 import { getFirebaseAdminDb } from "@/lib/firebase/admin";
+import { normalizeProfileLocation } from "@/lib/profile/location";
 
 /**
  * Single reader/writer for the `users` profile document.
@@ -41,6 +42,7 @@ export function toAccountProfile(
     lastName: readString(data.lastName),
     legal: (data.legal as AccountProfile["legal"]) ?? null,
     location: readString(data.location),
+    locationPlace: normalizeProfileLocation(data.locationPlace),
     photoURL: readString(data.photoURL),
     photoURLManagedByUser: data.photoURLManagedByUser === true,
     shippingOriginAddress: normalizeShippingOriginAddress(

@@ -18,6 +18,7 @@ import { ProfileImageField } from "@/components/account/profile-image-field";
 import { UsernameDialog } from "@/components/account/username-dialog";
 import { Button } from "@/components/ui/button";
 import { buildArtistPageHref } from "@/lib/auth/account-profile";
+import { describeProfileLocationInput } from "@/lib/profile/location";
 import type { AccountProfile } from "@/lib/auth/account-profile";
 import { BANNER_DIMENSIONS_LABEL } from "@/lib/profile/images";
 
@@ -73,7 +74,10 @@ export function ProfileSection({
       <DetailList>
         <DetailRow label="First name" value={firstName || "Not set"} />
         <DetailRow label="Last name" value={lastName || "Not set"} />
-        <DetailRow label="Location" value={location || "Not set"} />
+        <DetailRow
+          label="Location"
+          value={describeProfileLocationInput(location) || "Not set"}
+        />
         <DetailRow label="Biography" value={bio || "Not set"} />
       </DetailList>
 

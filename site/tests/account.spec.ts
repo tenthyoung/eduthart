@@ -56,7 +56,10 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await page.getByRole("button", { name: "Edit profile" }).click();
   await page.getByLabel("First name").fill("Avery");
   await page.getByLabel("Last name").fill("Curator");
-  await page.getByLabel("Location").fill("Brooklyn, New York");
+  // No Places key under test, so location is three plain inputs.
+  await page.getByLabel("City").fill("Brooklyn");
+  await page.getByLabel("State or region (optional)").fill("New York");
+  await page.getByLabel("Country").fill("United States");
   await page
     .getByLabel("Biography")
     .fill("Collecting coastal light since 2019.");
@@ -77,7 +80,9 @@ test("persists profile edits across a fresh visit", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "View your personal art page" })
   ).toHaveAttribute("href", "/artists/avery-curator");
-  await expect(page.getByText("Brooklyn, New York").first()).toBeVisible();
+  await expect(
+    page.getByText("Brooklyn, New York, United States").first()
+  ).toBeVisible();
   await expect(
     page.getByText("Collecting coastal light since 2019.")
   ).toBeVisible();

@@ -1,4 +1,5 @@
 import type { ShippingOriginAddress } from "@/lib/artists/listing-flow";
+import type { ProfileLocation } from "@/lib/profile/location";
 
 export type AccountLegalAcceptance = {
   acceptedAt: string | null;
@@ -21,7 +22,13 @@ export type AccountProfile = {
   lastLoginAt: string | null;
   lastName: string | null;
   legal: AccountLegalAcceptance | null;
+  /**
+   * Display text for where the person is based. Rebuilt from
+   * `locationPlace` on save; older profiles may hold free text here.
+   */
   location: string | null;
+  /** City, region and country. Null until the person picks a city. */
+  locationPlace: ProfileLocation | null;
   photoURL: string | null;
   /**
    * Set once a collector uploads or removes their own picture, so a later
@@ -86,6 +93,7 @@ export function buildFallbackAccountProfile(
     lastName: null,
     legal: null,
     location: null,
+    locationPlace: null,
     photoURL: user.photoURL ?? null,
     photoURLManagedByUser: false,
     shippingOriginAddress: null,
