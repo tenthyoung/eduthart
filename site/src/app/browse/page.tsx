@@ -50,7 +50,7 @@ export default async function BrowsePage({
   ].filter(Boolean);
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 pt-32 pb-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-10">
         <header className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">

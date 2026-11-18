@@ -168,7 +168,7 @@ export function EditProfileDialog({
             )}
           />
           <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
               Display name preview
             </p>
             <p className="mt-2 text-base text-foreground">

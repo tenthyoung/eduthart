@@ -117,7 +117,7 @@ export function CartDrawer() {
         >
           <ShoppingBag />
           {items.length > 0 ? (
-            <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold leading-5 text-primary-foreground">
+            <span className="absolute -top-1.5 -right-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] leading-5 font-bold text-primary-foreground">
               {items.length}
             </span>
           ) : null}

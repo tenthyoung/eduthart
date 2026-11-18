@@ -185,7 +185,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
     billingAddresses.find((address) => address.id === billingAddressId) ?? null;
 
   return (
-    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-28 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 pt-28 pb-24 sm:px-6 lg:px-8 dark:bg-background">
       <div className="mx-auto max-w-5xl">
         {checkout ? (
           <Link
@@ -220,7 +220,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">
+            <p className="text-sm font-semibold tracking-[0.22em] text-primary uppercase">
               {checkout ? "Checkout" : "Your cart"}
             </p>
             <h1 className="mt-2 text-4xl text-foreground">
@@ -328,7 +328,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                       ))}
                     </select>
                     {shippingAddress ? (
-                      <address className="text-sm not-italic leading-6 text-muted-foreground">
+                      <address className="text-sm leading-6 text-muted-foreground not-italic">
                         {formatAddressLines(shippingAddress).map((line) => (
                           <span key={line} className="block">
                             {line}
@@ -354,7 +354,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                       }}
                     />
                     <Label
-                      className="font-normal leading-6"
+                      className="leading-6 font-normal"
                       htmlFor="billing-same-as-shipping"
                     >
                       My billing address is the same as my shipping address
@@ -400,7 +400,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                         ))}
                       </select>
                       {billingAddress ? (
-                        <address className="text-sm not-italic leading-6 text-muted-foreground">
+                        <address className="text-sm leading-6 text-muted-foreground not-italic">
                           {formatAddressLines(billingAddress).map((line) => (
                             <span key={line} className="block">
                               {line}
@@ -421,7 +421,7 @@ export function CartPage({ checkout = false }: { checkout?: boolean }) {
                     }
                   />
                   <Label
-                    className="font-normal leading-6"
+                    className="leading-6 font-normal"
                     htmlFor="save-payment-method"
                   >
                     Save this card for faster checkout next time. Stripe stores

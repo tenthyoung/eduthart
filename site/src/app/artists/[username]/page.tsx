@@ -47,10 +47,10 @@ export default async function ArtistPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 pt-36 pb-24 sm:px-6 lg:px-8 dark:bg-background">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl">
-          <div className="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-6 sm:top-6">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl dark:border-border dark:bg-card/92">
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2 sm:top-6 sm:right-6">
             <ShareArtistPageButton
               artistName={displayName}
               username={profile.username}
@@ -66,7 +66,7 @@ export default async function ArtistPage({
                 className="h-full w-full object-cover"
                 src={profile.bannerURL}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-white/60 dark:from-card/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent dark:from-card/60" />
             </div>
           ) : null}
 
@@ -79,7 +79,7 @@ export default async function ArtistPage({
                 photoURL={profile.photoURL}
               />
               <div className="space-y-1">
-                <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+                <p className="text-sm font-semibold tracking-[0.26em] text-primary uppercase">
                   Artist Page
                 </p>
                 <h1 className="text-4xl text-foreground sm:text-5xl">
@@ -110,19 +110,19 @@ export default async function ArtistPage({
         </div>
 
         {profile.bio ? (
-          <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8 dark:border-border dark:bg-card/92">
+            <p className="text-sm font-semibold tracking-[0.26em] text-primary uppercase">
               About
             </p>
-            <p className="mt-3 max-w-3xl whitespace-pre-line text-base leading-8 text-muted-foreground">
+            <p className="mt-3 max-w-3xl text-base leading-8 whitespace-pre-line text-muted-foreground">
               {profile.bio}
             </p>
           </section>
         ) : null}
 
-        <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl sm:p-8 dark:border-border dark:bg-card/92">
           <div className="max-w-3xl space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-primary">
+            <p className="text-sm font-semibold tracking-[0.26em] text-primary uppercase">
               Gallery
             </p>
             <h2 className="text-3xl text-foreground">Available artwork</h2>
@@ -141,7 +141,7 @@ export default async function ArtistPage({
                     key={item.id}
                     aria-label={`View ${item.artworkDetails.title || "artwork"}`}
                     href={`/artists/${profile.username}/art/${item.id}`}
-                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white dark:bg-card shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="group block overflow-hidden rounded-[1.5rem] border border-border/70 bg-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none dark:bg-card"
                   >
                     <div className="aspect-[4/3] overflow-hidden bg-muted/30">
                       {item.media.mainImageUrl ? (
@@ -179,7 +179,7 @@ export default async function ArtistPage({
                           {item.artworkDetails.description}
                         </p>
                       ) : null}
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
                         {item.pricingInventory.availability ===
                         "original_available"
                           ? "Original available"

@@ -251,7 +251,7 @@ export function Navbar() {
       // scrollbar, which would let this fixed bar stretch into the reclaimed
       // gutter and shove its right-hand controls sideways. Inset it by the
       // width Radix removed so the bar stays put while a menu is open.
-      className="fixed top-0 left-0 right-[var(--removed-body-scroll-bar-size,0px)] z-50 border-b border-border bg-background/95 backdrop-blur-xl"
+      className="fixed top-0 right-[var(--removed-body-scroll-bar-size,0px)] left-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-6">
@@ -319,7 +319,7 @@ export function Navbar() {
                   >
                     <Bell />
                     {unreadNotifications > 0 ? (
-                      <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold leading-5 text-white">
+                      <span className="absolute -top-1.5 -right-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] leading-5 font-bold text-white">
                         {unreadNotifications}
                       </span>
                     ) : null}

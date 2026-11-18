@@ -19,7 +19,7 @@ export function ArtworkAvailability({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+        "inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-[0.16em] uppercase",
         isAvailable
           ? "bg-green-100 text-green-800"
           : "bg-muted text-muted-foreground"
@@ -102,7 +102,7 @@ export function ArtworkCard({
         {/* Every card is an original for sale unless it says otherwise, so
             only the exceptions get a label. */}
         {isAvailable ? null : (
-          <span className="absolute left-2 top-2 rounded-full bg-background/95 px-2.5 py-1 text-xs font-semibold capitalize text-foreground">
+          <span className="absolute top-2 left-2 rounded-full bg-background/95 px-2.5 py-1 text-xs font-semibold text-foreground capitalize">
             {artwork.availability.replaceAll("_", " ")}
           </span>
         )}

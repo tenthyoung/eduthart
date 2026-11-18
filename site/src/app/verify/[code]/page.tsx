@@ -51,7 +51,7 @@ export default async function VerifyCertificatePage({
   return (
     <main className="min-h-screen bg-background pt-28 pb-20 text-foreground">
       <div className="container mx-auto max-w-2xl px-4">
-        <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="flex items-center gap-2 text-sm font-semibold tracking-[0.16em] text-muted-foreground uppercase">
           <BadgeCheck className="size-4" />
           Verified certificate of authenticity
         </p>
@@ -78,7 +78,7 @@ export default async function VerifyCertificatePage({
           <dl className="grid flex-1 gap-5 sm:grid-cols-2">
             {facts.map(([label, value]) => (
               <div key={label}>
-                <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <dt className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                   {label}
                 </dt>
                 <dd className="mt-1 text-lg font-semibold">{value}</dd>

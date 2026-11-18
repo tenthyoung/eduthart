@@ -126,21 +126,21 @@ export function PaymentMethodsPage() {
           {data.paymentMethods.map((method) => (
             <li
               key={method.id}
-              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white dark:bg-card p-5"
+              className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-white p-5 dark:bg-card"
             >
               <div className="flex items-center gap-4">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <CreditCard className="size-5" />
                 </div>
                 <div>
-                  <p className="font-medium capitalize text-foreground">
+                  <p className="font-medium text-foreground capitalize">
                     {method.brand} ···· {method.last4}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Expires {formatExpiry(method)}
                   </p>
                   {method.isDefault ? (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-primary uppercase">
                       <Star className="size-3" />
                       Default
                     </span>

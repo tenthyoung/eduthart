@@ -19,10 +19,10 @@ export function AuthShell({
   title,
 }: AuthShellProps) {
   return (
-    <section className="relative overflow-hidden bg-background px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-background px-4 pt-36 pb-20 sm:px-6 lg:px-8">
       <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div className="max-w-2xl space-y-6">
-          <div className="inline-flex rounded-full border border-primary/15 bg-card/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm">
+          <div className="inline-flex rounded-full border border-primary/15 bg-card/70 px-4 py-1 text-xs font-semibold tracking-[0.3em] text-primary uppercase shadow-sm backdrop-blur-sm">
             {eyebrow}
           </div>
           <div className="space-y-4">

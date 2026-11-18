@@ -79,7 +79,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
       errorTitle="Your message wasn't sent"
       className={cn("space-y-6", className)}
     >
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
         <FormField
           control={form.control}
           name="name"
@@ -149,7 +149,7 @@ export const ContactForm = ({ className }: ContactFormProps) => {
       <FormErrorCallout />
       <SubmitButton size="lg" className="w-full" pendingLabel="Sending...">
         Send Inquiry
-        <Send className="h-4 w-4 ml-2" />
+        <Send className="ml-2 h-4 w-4" />
       </SubmitButton>
     </FormShell>
   );

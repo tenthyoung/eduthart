@@ -200,8 +200,8 @@ export function NotificationsPage() {
 
   if (loading || status === "loading") {
     return (
-      <section className="min-h-screen bg-white dark:bg-background px-4 pb-20 pt-36 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-4xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+      <section className="min-h-screen bg-white px-4 pt-36 pb-20 sm:px-6 lg:px-8 dark:bg-background">
+        <div className="mx-auto flex max-w-4xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/88">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your notifications...
@@ -216,12 +216,12 @@ export function NotificationsPage() {
   }
 
   return (
-    <section className="min-h-screen bg-white dark:bg-background px-4 pb-20 pt-36 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-white px-4 pt-36 pb-20 sm:px-6 lg:px-8 dark:bg-background">
       <div className="mx-auto max-w-5xl space-y-8">
-        <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+        <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold tracking-[0.28em] text-primary uppercase">
                 <Bell className="size-3.5" />
                 Notifications
               </div>
@@ -281,7 +281,7 @@ export function NotificationsPage() {
         ) : null}
 
         {notifications.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-border bg-white/70 dark:bg-card/70 px-6 py-16 text-center">
+          <div className="rounded-[2rem] border border-dashed border-border bg-white/70 px-6 py-16 text-center dark:bg-card/70">
             <BellOff className="mx-auto size-8 text-primary/60" />
             <p className="mt-4 text-lg text-foreground">
               You are all caught up
@@ -303,7 +303,7 @@ export function NotificationsPage() {
                 <li
                   key={notification.id}
                   className={cn(
-                    "rounded-[2rem] border bg-white/92 dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]",
+                    "rounded-[2rem] border bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:bg-card/92",
                     isRead
                       ? "border-white/70 dark:border-border"
                       : "border-primary/25"
@@ -321,7 +321,7 @@ export function NotificationsPage() {
                           </h2>
                           <span
                             className={cn(
-                              "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                              "rounded-full px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase",
                               isRead
                                 ? "bg-muted text-muted-foreground"
                                 : "bg-amber-100 text-amber-900"
@@ -330,7 +330,7 @@ export function NotificationsPage() {
                             {isRead ? "Read" : "Unread"}
                           </span>
                         </div>
-                        <p className="max-w-2xl whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                        <p className="max-w-2xl text-sm leading-6 whitespace-pre-line text-muted-foreground">
                           {notification.body}
                         </p>
                         <p className="text-xs text-muted-foreground">

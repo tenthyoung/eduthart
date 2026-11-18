@@ -106,7 +106,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
       ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-        <section className="space-y-5 rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+        <section className="space-y-5 rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
           <div className="flex items-center gap-3">
             <Receipt className="size-5 text-primary" />
             <h2 className="text-2xl text-foreground">Artwork</h2>
@@ -174,14 +174,14 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
         </section>
 
         <aside className="space-y-6">
-          <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
             <div className="flex items-center gap-3">
               <MapPin className="size-5 text-primary" />
               <h2 className="text-xl text-foreground">
                 {role === "seller" ? "Ship to" : "Delivery"}
               </h2>
             </div>
-            <address className="mt-4 text-sm not-italic leading-6 text-muted-foreground">
+            <address className="mt-4 text-sm leading-6 text-muted-foreground not-italic">
               {order.shippingAddress ? (
                 formatAddressLines(order.shippingAddress).map((line) => (
                   <span key={line} className="block">
@@ -198,7 +198,7 @@ export function OrderDetailPage({ orderId }: { orderId: string }) {
             <ShipmentPanel order={order} role={role} />
           ) : null}
 
-          <section className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+          <section className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
             <h2 className="text-xl text-foreground">Payment</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>

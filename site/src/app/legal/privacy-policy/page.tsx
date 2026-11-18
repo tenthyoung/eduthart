@@ -89,7 +89,7 @@ export default function PrivacyPolicy() {
               2. How We Use Information
             </h2>
             <p className="mb-4">We use information to:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>Create, authenticate, and secure accounts.</li>
               <li>
                 Show listings and artist profiles, and let collectors save,
@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
               information only as reasonably necessary to run EduthArt and
               comply with our obligations. Examples include:
             </p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>
                 Service providers that help with hosting, storage,
                 authentication, payment processing, shipping rates, labels and
@@ -174,7 +174,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="mb-4 text-2xl font-bold">6. Your Choices</h2>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>
                 You can update certain account and profile details in your
                 account settings.

@@ -233,7 +233,7 @@ export default async function PublicArtworkPage({
   const initial = artistName.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 lg:px-8 lg:pt-28">
+    <div className="mx-auto max-w-7xl px-4 pt-24 pb-24 sm:px-6 lg:px-8 lg:pt-28">
       <Link
         className="inline-flex h-11 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         href={`/artists/${username}`}
@@ -464,7 +464,7 @@ function Story({ children, title }: { children: string; title: string }) {
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-2xl text-foreground sm:text-3xl">{title}</h2>
-      <p className="max-w-2xl whitespace-pre-line text-lg leading-8 text-muted-foreground">
+      <p className="max-w-2xl text-lg leading-8 whitespace-pre-line text-muted-foreground">
         {children}
       </p>
     </section>

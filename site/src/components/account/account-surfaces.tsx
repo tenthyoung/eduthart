@@ -95,7 +95,7 @@ export function DetailRow({
   return (
     <div className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)] sm:items-baseline sm:gap-4">
       <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="whitespace-pre-line text-sm text-foreground">{value}</dd>
+      <dd className="text-sm whitespace-pre-line text-foreground">{value}</dd>
     </div>
   );
 }
@@ -112,7 +112,7 @@ export function ActionCard({
 }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
         {title}
       </p>
       {description ? (

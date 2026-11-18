@@ -55,7 +55,7 @@ export default function TermsOfService() {
             <h2 className="mb-4 text-2xl font-bold">
               4. Purchases, Payments, and Fees
             </h2>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>
                 Artists set the price of their work. Shipping is calculated at
                 checkout from the artist&apos;s location and the buyer&apos;s
@@ -118,7 +118,7 @@ export default function TermsOfService() {
               6. Acceptable Use and Moderation
             </h2>
             <p className="mb-4">You agree not to:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>Use the service unlawfully or in a way that harms others.</li>
               <li>
                 List work you do not have the right to sell, or misrepresent a

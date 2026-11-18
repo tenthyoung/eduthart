@@ -326,7 +326,7 @@ export default function SignupPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-border/80" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase tracking-[0.28em] text-muted-foreground">
+          <div className="relative flex justify-center text-xs tracking-[0.28em] text-muted-foreground uppercase">
             <span className="bg-background px-3">or</span>
           </div>
         </div>
@@ -344,8 +344,8 @@ export default function SignupPage() {
           verb="Sign up with"
         />
 
-        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white dark:via-card to-secondary/45 p-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-white to-secondary/45 p-5 dark:via-card">
+          <p className="text-sm font-semibold tracking-[0.2em] text-primary/80 uppercase">
             For Artists
           </p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">

@@ -70,7 +70,7 @@ function describeModeration(detail: ArtworkModerationDetail) {
 function ReportCard({ report }: { report: ArtworkReportRecord }) {
   return (
     <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-4">
-      <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="flex flex-wrap gap-2 text-xs tracking-[0.14em] text-muted-foreground uppercase">
         <span>{report.reportType}</span>
         {report.reportSubcategory ? (
           <span>{report.reportSubcategory}</span>
@@ -85,7 +85,7 @@ function ReportCard({ report }: { report: ArtworkReportRecord }) {
       </div>
       <p className="mt-3 font-medium">{report.reason}</p>
       {report.details ? (
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 text-sm leading-6 whitespace-pre-wrap text-muted-foreground">
           {report.details}
         </p>
       ) : null}

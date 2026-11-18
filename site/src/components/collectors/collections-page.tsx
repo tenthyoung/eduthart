@@ -169,7 +169,7 @@ export function CollectionsPage() {
           data.map((collection) => (
             <section
               key={collection.id}
-              className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]"
+              className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 space-y-2">
@@ -225,7 +225,7 @@ export function CollectionsPage() {
                       <h2 className="text-2xl text-foreground">
                         {collection.name}
                       </h2>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                         {collection.isPublic ? (
                           <Globe className="size-3" />
                         ) : (
@@ -240,7 +240,7 @@ export function CollectionsPage() {
                     {collection.artworks.length === 1 ? "artwork" : "artworks"}
                   </p>
                   {collection.isPublic && collection.shareId ? (
-                    <p className="break-all text-sm text-muted-foreground">
+                    <p className="text-sm break-all text-muted-foreground">
                       Share link:{" "}
                       <Link
                         className="text-primary underline decoration-primary/30 underline-offset-4"

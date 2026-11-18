@@ -55,7 +55,7 @@ export function ArtistAvatar({
     <>
       <button
         aria-label="Change your profile picture"
-        className="group relative cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="group relative cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >
