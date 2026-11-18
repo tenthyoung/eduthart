@@ -129,7 +129,7 @@ export default function AdminUserDetailPage() {
           <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <AdminCard className="space-y-5">
               <div>
-                <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
+                <p className="font-mono text-xs tracking-[0.24em] text-primary uppercase">
                   Account
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">

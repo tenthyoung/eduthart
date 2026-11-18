@@ -74,7 +74,7 @@ function StageBadge({ stage }: { stage: SaleStage }) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+        "inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-[0.16em] uppercase",
         STAGE_STYLES[stage]
       )}
     >
@@ -268,7 +268,7 @@ export function ArtistSalesPage({ username }: { username: string }) {
   return (
     <section className="mx-auto max-w-6xl space-y-8 pb-10">
       <header className={PANEL}>
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+        <p className="text-xs font-semibold tracking-[0.28em] text-primary uppercase">
           Artist workspace
         </p>
         <h1 className="mt-3 text-4xl text-foreground sm:text-5xl">
@@ -440,7 +440,7 @@ export function ArtistSalesPage({ username }: { username: string }) {
                     <p className="text-xs text-muted-foreground">Sold</p>
                   ) : null}
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-sm tabular-nums text-foreground">
+                <span className="inline-flex items-center gap-1.5 text-sm text-foreground tabular-nums">
                   <Bookmark className="size-4 text-muted-foreground" />
                   {artwork.saveCount}
                 </span>

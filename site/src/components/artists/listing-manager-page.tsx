@@ -368,8 +368,8 @@ export function ListingManagerPage({ username }: { username: string }) {
 
   if (loading || status === "loading") {
     return (
-      <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
-        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+      <section className="min-h-screen bg-transparent px-0 pt-0 pb-10">
+        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/88">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your listings...
@@ -384,12 +384,12 @@ export function ListingManagerPage({ username }: { username: string }) {
   }
 
   return (
-    <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
+    <section className="min-h-screen bg-transparent px-0 pt-0 pb-10">
       <div className="mx-auto max-w-7xl space-y-8">
-        <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+        <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+              <p className="text-xs font-semibold tracking-[0.28em] text-primary uppercase">
                 Listings Manager
               </p>
               <h1 className="text-4xl text-foreground sm:text-5xl">
@@ -419,7 +419,7 @@ export function ListingManagerPage({ username }: { username: string }) {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="pl-9"
                 onChange={(event) => setSearch(event.target.value)}
@@ -546,7 +546,7 @@ export function ListingManagerPage({ username }: { username: string }) {
             return (
               <button
                 key={item.id}
-                className="group rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-5 text-left shadow-[0_30px_80px_-50px_rgba(47,36,28,0.35)] transition-transform hover:-translate-y-0.5 hover:border-primary/20"
+                className="group rounded-[2rem] border border-white/70 bg-white/92 p-5 text-left shadow-[0_30px_80px_-50px_rgba(47,36,28,0.35)] transition-transform hover:-translate-y-0.5 hover:border-primary/20 dark:border-border dark:bg-card/92"
                 onClick={() =>
                   router.push(`/artists/${username}/listings/${item.id}`)
                 }
@@ -576,7 +576,7 @@ export function ListingManagerPage({ username }: { username: string }) {
                       </div>
                       <span
                         className={[
-                          "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                          "rounded-full px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase",
                           visibility === "Public"
                             ? "bg-green-100 text-green-800"
                             : visibility === "Draft"
@@ -590,7 +590,7 @@ export function ListingManagerPage({ username }: { username: string }) {
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                           Availability
                         </p>
                         <p className="mt-1 text-sm text-foreground">
@@ -601,7 +601,7 @@ export function ListingManagerPage({ username }: { username: string }) {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                           Price
                         </p>
                         <p className="mt-1 text-sm text-foreground">

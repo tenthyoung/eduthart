@@ -404,7 +404,7 @@ function HelpLabel({
       <Label htmlFor={htmlFor}>{label}</Label>
       <button
         aria-label={`Learn more about ${label}`}
-        className="inline-flex size-6 items-center justify-center rounded-full border border-border/80 bg-white dark:bg-card text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        className="inline-flex size-6 items-center justify-center rounded-full border border-border/80 bg-white text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary dark:bg-card"
         onClick={() => onOpen(helpKey)}
         type="button"
       >
@@ -420,7 +420,7 @@ function ValidationText({ message }: { message: string | null }) {
   }
 
   return (
-    <p className="text-base font-medium leading-6 text-amber-700">{message}</p>
+    <p className="text-base leading-6 font-medium text-amber-700">{message}</p>
   );
 }
 
@@ -456,7 +456,7 @@ function FileButton({
       <div className="flex items-start gap-3">
         <ImagePlus className="mt-0.5 size-5 text-primary" />
         <div className="space-y-1">
-          <p className="text-base font-medium leading-6 text-foreground">
+          <p className="text-base leading-6 font-medium text-foreground">
             {label}
           </p>
           <p className="text-base leading-6 text-muted-foreground">{helper}</p>
@@ -487,7 +487,7 @@ function MultiToggle({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-base font-medium leading-6 text-foreground">{label}</p>
+      <p className="text-base leading-6 font-medium text-foreground">{label}</p>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const checked = selected.includes(option);
@@ -498,7 +498,7 @@ function MultiToggle({
                 "rounded-full border px-3 py-1.5 text-base transition-colors",
                 checked
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/80 bg-white dark:bg-card text-muted-foreground hover:border-primary/30",
+                  : "border-border/80 bg-white text-muted-foreground hover:border-primary/30 dark:bg-card",
               ].join(" ")}
               onClick={() =>
                 onChange(
@@ -619,7 +619,7 @@ function SidebarChecklist({
       {groups.map((group) => (
         <div key={group.key} className="space-y-3">
           <div>
-            <p className="font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <p className="font-semibold tracking-[0.14em] text-muted-foreground uppercase">
               {group.label}
             </p>
             <p className="mt-1 text-muted-foreground">{group.hint}</p>
@@ -1449,8 +1449,8 @@ export function ListingFlowPage({
 
   if (loading || status === "loading") {
     return (
-      <section className="min-h-screen bg-transparent px-0 pb-10 pt-0">
-        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 dark:border-border dark:bg-card/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+      <section className="min-h-screen bg-transparent px-0 pt-0 pb-10">
+        <div className="mx-auto flex max-w-5xl items-center justify-center rounded-[2rem] border border-white/70 bg-white/88 p-12 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/88">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
             Loading your listing studio...
@@ -1467,17 +1467,17 @@ export function ListingFlowPage({
   return (
     <section
       className={cn(
-        "min-h-screen bg-transparent px-0 pb-12 pt-0 font-sans text-base",
+        "min-h-screen bg-transparent px-0 pt-0 pb-12 font-sans text-base",
         listingsTypographyClassName,
         standaloneTypographyClassName
       )}
     >
       <div className="mx-auto max-w-7xl space-y-8">
         {!isStandaloneEditor ? (
-          <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+          <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1 text-xs font-semibold tracking-[0.28em] text-primary uppercase">
                   <Sparkles className="size-3.5" />
                   Listing Studio
                 </div>
@@ -1524,7 +1524,7 @@ export function ListingFlowPage({
         ) : null}
 
         {!isStandaloneEditor ? (
-          <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+          <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="space-y-2">
                 <h2 className="text-2xl text-foreground">Your listing items</h2>
@@ -1665,12 +1665,12 @@ export function ListingFlowPage({
           <div className="space-y-6">
             {isStandaloneEditor ? (
               <div
-                className="rounded-[2rem] border border-white/70 bg-white/95 dark:border-border dark:bg-card/95 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]"
+                className="rounded-[2rem] border border-white/70 bg-white/95 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/95"
                 id="listing-preview"
               >
                 <div className="border-b border-border/70 pb-5">
                   <div className="space-y-2">
-                    <p className="text-base font-medium uppercase tracking-[0.22em] text-primary">
+                    <p className="text-base font-medium tracking-[0.22em] text-primary uppercase">
                       Edit listing
                     </p>
                     <Input
@@ -1725,7 +1725,7 @@ export function ListingFlowPage({
                                 <button
                                   aria-label={`Show image ${index + 1}`}
                                   className={cn(
-                                    "block overflow-hidden rounded-xl border-2 bg-white dark:bg-card transition-all",
+                                    "block overflow-hidden rounded-xl border-2 bg-white transition-all dark:bg-card",
                                     index === safeActivePreviewImageIndex
                                       ? "border-primary shadow-sm"
                                       : "border-transparent hover:border-primary/30"
@@ -1742,7 +1742,7 @@ export function ListingFlowPage({
                                     src={image}
                                   />
                                 </button>
-                                <GripVertical className="pointer-events-none absolute right-1 top-1 size-4 rounded bg-white/90 text-neutral-600 dark:bg-neutral-900/80 dark:text-neutral-300 opacity-0 shadow-sm transition-opacity group-hover:opacity-100" />
+                                <GripVertical className="pointer-events-none absolute top-1 right-1 size-4 rounded bg-white/90 text-neutral-600 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 dark:bg-neutral-900/80 dark:text-neutral-300" />
                                 {index === 0 ? (
                                   <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
                                     Cover
@@ -1751,7 +1751,7 @@ export function ListingFlowPage({
                                 <div className="mt-1 flex justify-center gap-1">
                                   <button
                                     aria-label={`Move image ${index + 1} earlier`}
-                                    className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white dark:hover:bg-accent hover:text-primary disabled:opacity-30"
+                                    className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white hover:text-primary disabled:opacity-30 dark:hover:bg-accent"
                                     disabled={index === 0}
                                     onClick={() =>
                                       reorderListingImages(index, index - 1)
@@ -1762,7 +1762,7 @@ export function ListingFlowPage({
                                   </button>
                                   <button
                                     aria-label={`Move image ${index + 1} later`}
-                                    className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white dark:hover:bg-accent hover:text-primary disabled:opacity-30"
+                                    className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white hover:text-primary disabled:opacity-30 dark:hover:bg-accent"
                                     disabled={
                                       index === previewImages.length - 1
                                     }
@@ -1792,7 +1792,7 @@ export function ListingFlowPage({
                                 <>
                                   <Button
                                     aria-label="Previous image"
-                                    className="absolute left-3 top-1/2 size-10 -translate-y-1/2 rounded-full bg-white/90 dark:bg-neutral-900/80 p-0 text-foreground shadow-md hover:bg-white dark:hover:bg-neutral-900"
+                                    className="absolute top-1/2 left-3 size-10 -translate-y-1/2 rounded-full bg-white/90 p-0 text-foreground shadow-md hover:bg-white dark:bg-neutral-900/80 dark:hover:bg-neutral-900"
                                     onClick={() =>
                                       setActivePreviewImageIndex(
                                         (safeActivePreviewImageIndex -
@@ -1808,7 +1808,7 @@ export function ListingFlowPage({
                                   </Button>
                                   <Button
                                     aria-label="Next image"
-                                    className="absolute right-3 top-1/2 size-10 -translate-y-1/2 rounded-full bg-white/90 dark:bg-neutral-900/80 p-0 text-foreground shadow-md hover:bg-white dark:hover:bg-neutral-900"
+                                    className="absolute top-1/2 right-3 size-10 -translate-y-1/2 rounded-full bg-white/90 p-0 text-foreground shadow-md hover:bg-white dark:bg-neutral-900/80 dark:hover:bg-neutral-900"
                                     onClick={() =>
                                       setActivePreviewImageIndex(
                                         (safeActivePreviewImageIndex + 1) %
@@ -1862,7 +1862,7 @@ export function ListingFlowPage({
                             type="file"
                           />
                         </label>
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white dark:bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary dark:bg-card">
                           <ImagePlus className="size-4" />
                           Add detail photos
                           <input
@@ -1879,7 +1879,7 @@ export function ListingFlowPage({
                             type="file"
                           />
                         </label>
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white dark:bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary dark:bg-card">
                           <Upload className="size-4" />
                           {activeItem.media.videoUrl
                             ? "Replace video"
@@ -2143,10 +2143,10 @@ export function ListingFlowPage({
               </div>
             ) : null}
 
-            <div className="rounded-[2rem] border border-white/70 bg-white/92 dark:border-border dark:bg-card/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
+            <div className="rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/92">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                  <p className="text-xs font-semibold tracking-[0.24em] text-primary uppercase">
                     {isStandaloneEditor ? "More listing details" : "Editing"}
                   </p>
                   <h2 className="mt-2 text-2xl text-foreground">
@@ -2943,7 +2943,7 @@ export function ListingFlowPage({
                       </div>
 
                       <div className="rounded-[1.5rem] border border-primary/15 bg-primary/5 p-5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+                        <p className="text-xs font-semibold tracking-[0.22em] text-primary uppercase">
                           Payout preview
                         </p>
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -3304,7 +3304,7 @@ export function ListingFlowPage({
                       </div>
 
                       <div className="rounded-[1.5rem] border border-primary/15 bg-primary/5 p-5">
-                        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">
+                        <p className="text-sm font-semibold tracking-[0.22em] text-primary uppercase">
                           Required legal confirmations
                         </p>
                         <div className="mt-4 grid gap-3">
@@ -3338,7 +3338,7 @@ export function ListingFlowPage({
                           ].map(([label, key]) => (
                             <label
                               key={key}
-                              className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 dark:border-border dark:bg-card/80 p-4 text-sm text-foreground"
+                              className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm text-foreground dark:border-border dark:bg-card/80"
                             >
                               <Checkbox
                                 checked={
@@ -3369,8 +3369,8 @@ export function ListingFlowPage({
           </div>
 
           <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
-            <div className="rounded-[2rem] border border-white/70 bg-white/94 dark:border-border dark:bg-card/94 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+            <div className="rounded-[2rem] border border-white/70 bg-white/94 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] dark:border-border dark:bg-card/94">
+              <p className="text-xs font-semibold tracking-[0.24em] text-primary uppercase">
                 Listing status
               </p>
               <div className="mt-3 flex items-center justify-between">
@@ -3383,7 +3383,7 @@ export function ListingFlowPage({
                 </h3>
                 <span
                   className={[
-                    "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
+                    "rounded-full px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase",
                     isPublished
                       ? "bg-emerald-600 text-white"
                       : publishReady
@@ -3552,7 +3552,7 @@ export function ListingFlowPage({
               </SheetHeader>
               <div className="space-y-6 p-4">
                 <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+                  <p className="text-xs font-semibold tracking-[0.22em] text-primary uppercase">
                     Why this field matters
                   </p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">

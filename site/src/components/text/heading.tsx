@@ -13,7 +13,7 @@ export const Heading = ({
     return (
       <h1
         className={cn(
-          "mb-3 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-primary sm:text-5xl lg:text-6xl",
+          "mb-3 text-4xl leading-[1.05] font-semibold tracking-[-0.04em] text-primary sm:text-5xl lg:text-6xl",
           className
         )}
       >
@@ -25,7 +25,7 @@ export const Heading = ({
     return (
       <h2
         className={cn(
-          "mb-6 text-3xl font-semibold leading-[1.1] tracking-[-0.035em] text-primary md:text-4xl",
+          "mb-6 text-3xl leading-[1.1] font-semibold tracking-[-0.035em] text-primary md:text-4xl",
           className
         )}
       >
@@ -37,7 +37,7 @@ export const Heading = ({
     return (
       <h3
         className={cn(
-          "mb-5 text-2xl font-semibold leading-[1.14] tracking-[-0.025em] text-primary md:text-3xl",
+          "mb-5 text-2xl leading-[1.14] font-semibold tracking-[-0.025em] text-primary md:text-3xl",
           className
         )}
       >
@@ -48,7 +48,7 @@ export const Heading = ({
   return (
     <h2
       className={cn(
-        "mb-6 text-3xl font-semibold leading-[1.1] tracking-[-0.035em] text-primary md:text-4xl",
+        "mb-6 text-3xl leading-[1.1] font-semibold tracking-[-0.035em] text-primary md:text-4xl",
         className
       )}
     >

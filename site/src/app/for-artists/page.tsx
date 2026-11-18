@@ -52,7 +52,7 @@ export default function ForArtistsPage() {
         <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <MotionStaggerFade className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.32em] text-primary/80">
+              <p className="mb-4 text-xs font-semibold tracking-[0.32em] text-primary/80 uppercase">
                 Exhibit at EduthArt
               </p>
               <Heading variant="h1" className="max-w-3xl text-foreground">
@@ -76,8 +76,8 @@ export default function ForArtistsPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-white/80 bg-white/90 dark:border-border dark:bg-card/90 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-md sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/80">
+            <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-md sm:p-8 dark:border-border dark:bg-card/90">
+              <p className="text-xs font-semibold tracking-[0.28em] text-primary/80 uppercase">
                 We value your privacy
               </p>
               <div className="mt-4 space-y-4 text-sm leading-6 text-muted-foreground">
@@ -168,7 +168,7 @@ export default function ForArtistsPage() {
           </MotionFade>
 
           <MotionFade delay={0.45}>
-            <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8">
+            <div className="rounded-[2rem] border border-primary/15 bg-white p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8 dark:bg-card">
               <Heading variant="h3" className="mb-3 text-foreground">
                 What you should have prepared
               </Heading>
@@ -204,7 +204,7 @@ export default function ForArtistsPage() {
       <section className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <MotionStaggerFade className="grid gap-8 rounded-[2rem] border border-border/70 bg-gradient-to-r from-primary to-primary-light p-8 text-primary-foreground shadow-[0_30px_90px_-48px_rgba(47,36,28,0.45)] lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
+            <p className="text-xs font-semibold tracking-[0.28em] text-white/80 uppercase">
               You&apos;re Invited
             </p>
             <h2 className="mt-3 text-4xl font-semibold tracking-[-0.035em]">

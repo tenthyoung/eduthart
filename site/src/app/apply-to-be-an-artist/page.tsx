@@ -97,7 +97,7 @@ export default function ApplyToBeAnArtistPage() {
           <MotionFade>
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.32em] text-primary/80">
+                <p className="mb-4 text-xs font-semibold tracking-[0.32em] text-primary/80 uppercase">
                   Artist Application
                 </p>
                 <Heading variant="h1" className="max-w-3xl text-foreground">
@@ -126,7 +126,7 @@ export default function ApplyToBeAnArtistPage() {
           <div className="rounded-[2rem] border border-border/70 bg-card p-6 shadow-[0_24px_70px_-46px_rgba(47,36,28,0.4)] sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary/80">
+                <p className="text-sm font-semibold tracking-[0.18em] text-primary/80 uppercase">
                   Progress
                 </p>
                 <h2
@@ -190,7 +190,7 @@ export default function ApplyToBeAnArtistPage() {
                         {index + 1}
                       </span>
                       <span>
-                        <span className="block text-sm font-medium leading-6 text-foreground">
+                        <span className="block text-sm leading-6 font-medium text-foreground">
                           {step.title}
                         </span>
                         <span className="block text-xs leading-5 text-muted-foreground">
@@ -208,7 +208,7 @@ export default function ApplyToBeAnArtistPage() {
 
       <section className="container mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <MotionFade delay={0.1}>
-          <div className="rounded-[2rem] border border-primary/15 bg-white dark:bg-card p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8 lg:p-10">
+          <div className="rounded-[2rem] border border-primary/15 bg-white p-6 shadow-[0_30px_70px_-44px_rgba(47,36,28,0.38)] sm:p-8 lg:p-10 dark:bg-card">
             {/* Panels stay mounted and are hidden instead, so anything typed
                 survives going Back and Next. */}
             <div hidden={stepIndex !== 0}>
@@ -227,7 +227,7 @@ export default function ApplyToBeAnArtistPage() {
                     <div key={item} className="flex items-center gap-3">
                       <Checkbox checked id={item} />
                       <Label
-                        className="block font-normal leading-6"
+                        className="block leading-6 font-normal"
                         htmlFor={item}
                       >
                         {item}

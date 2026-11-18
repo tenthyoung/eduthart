@@ -137,7 +137,7 @@ export function DmcaReportForm({ initialUrl }: { initialUrl?: string | null }) {
               <FormControl>
                 <select
                   {...field}
-                  className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 >
                   <option value="">Select one</option>
                   <option value="owner">I am the copyright owner</option>

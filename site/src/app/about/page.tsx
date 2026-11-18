@@ -11,10 +11,10 @@ import { StorySection } from "./story/StorySection";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground pt-24">
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
+    <div className="min-h-screen bg-background pt-24 text-foreground">
+      <div className="container mx-auto max-w-4xl px-4 py-16">
         {/* Hero Section */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Heading variant="h1" className="text-center">
             <span className="text-primary">About</span> EduthArt
           </Heading>
@@ -46,14 +46,14 @@ export default function AboutPage() {
         </div>
 
         {/* Call to Action */}
-        <div className="text-center bg-gradient-to-r from-primary/10 to-transparent p-8 rounded-lg border border-primary/20">
+        <div className="rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-8 text-center">
           <MotionStaggerFade>
-            <h3 className="text-2xl font-bold mb-4">Find a piece you love</h3>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <h3 className="mb-4 text-2xl font-bold">Find a piece you love</h3>
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
               Browse original work from independent artists, or apply to sell
               your own on EduthArt.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Button size="lg" asChild>
                 <Link href="/browse">Browse art</Link>
               </Button>

@@ -219,7 +219,7 @@ export function AddressesPage() {
                   {addresses.map((address) => (
                     <li
                       key={address.id}
-                      className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white dark:bg-card p-5"
+                      className="flex flex-col gap-4 rounded-[1.5rem] border border-border/70 bg-white p-5 dark:bg-card"
                     >
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -227,13 +227,13 @@ export function AddressesPage() {
                             {address.label || address.name}
                           </p>
                           {address.isDefault ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-primary uppercase">
                               <Star className="size-3" />
                               Default
                             </span>
                           ) : null}
                         </div>
-                        <address className="text-sm not-italic leading-6 text-muted-foreground">
+                        <address className="text-sm leading-6 text-muted-foreground not-italic">
                           {formatAddressLines(address).map((line) => (
                             <span key={line} className="block">
                               {line}

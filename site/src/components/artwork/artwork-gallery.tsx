@@ -34,7 +34,7 @@ export function ArtworkGallery({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt={selected === 0 ? title : `${title}, view ${selected + 1}`}
-          className="max-h-full max-w-full object-contain shadow-[0_24px_48px_-28px_rgba(31,31,31,0.55)] animate-in fade-in-0 duration-500 motion-reduce:animate-none"
+          className="max-h-full max-w-full animate-in object-contain shadow-[0_24px_48px_-28px_rgba(31,31,31,0.55)] duration-500 fade-in-0 motion-reduce:animate-none"
           key={current}
           src={current}
         />

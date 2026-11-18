@@ -22,9 +22,9 @@ export function ErrorPage({
   footnote?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4 pb-16 pt-32 text-foreground">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 pt-32 pb-16 text-foreground">
       <div className="mx-auto max-w-xl text-center">
-        <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-brass">
+        <p className="mb-4 text-sm font-medium tracking-[0.2em] text-brass uppercase">
           {eyebrow}
         </p>
         <Heading variant="h1">{title}</Heading>

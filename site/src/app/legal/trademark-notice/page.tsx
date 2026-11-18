@@ -1,9 +1,9 @@
 export default function TrademarkNotice() {
   return (
     <div className="min-h-screen bg-background py-30 lg:py-40">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-2">Trademark Notice</h1>
-        <p className="text-muted-foreground mb-8">Last Updated: July 1, 2026</p>
+      <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <h1 className="mb-2 text-4xl font-bold">Trademark Notice</h1>
+        <p className="mb-8 text-muted-foreground">Last Updated: July 1, 2026</p>
 
         <div className="prose prose-invert max-w-none space-y-8">
           <section>

@@ -33,7 +33,7 @@ export function AccountHeader({
 }) {
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm backdrop-blur-sm dark:bg-card/80">
+      <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold tracking-[0.3em] text-primary uppercase shadow-sm backdrop-blur-sm dark:bg-card/80">
         Account Settings
       </div>
       <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_36px_90px_-48px_rgba(47,36,28,0.45)] backdrop-blur-xl dark:border-border dark:bg-card/88">
@@ -54,7 +54,7 @@ export function AccountHeader({
             <button
               aria-label="Change profile picture"
               className={cn(
-                "group relative shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                "group relative shrink-0 cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
                 profile?.bannerURL && "-mt-16 self-start"
               )}
               onClick={onEditPicture}
@@ -90,7 +90,7 @@ export function AccountHeader({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
                 Account email
               </p>
               <p className="mt-2 text-sm text-foreground">
@@ -98,7 +98,7 @@ export function AccountHeader({
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
                 Sign-in method
               </p>
               <p className="mt-2 text-sm text-foreground">{providerLabel}</p>

@@ -95,11 +95,11 @@ export function ComparePage() {
   }, [load]);
 
   return (
-    <main className="min-h-screen bg-white dark:bg-background px-4 pb-24 pt-36 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 pt-36 pb-24 sm:px-6 lg:px-8 dark:bg-background">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1 text-xs font-semibold tracking-[0.28em] text-primary uppercase">
               <Scale className="size-3.5" />
               Compare
             </div>
@@ -137,7 +137,7 @@ export function ComparePage() {
             <table className="w-full min-w-max border-collapse bg-white dark:bg-card">
               <thead>
                 <tr>
-                  <th className="w-40 border-b border-border/70 p-4 text-left align-bottom text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <th className="w-40 border-b border-border/70 p-4 text-left align-bottom text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                     Artwork
                   </th>
                   {artworks.map((artwork) => (
@@ -186,7 +186,7 @@ export function ComparePage() {
               <tbody>
                 {ROWS.map((row) => (
                   <tr key={row.label} className="even:bg-muted/25">
-                    <th className="p-4 text-left align-top text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    <th className="p-4 text-left align-top text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                       {row.label}
                     </th>
                     {artworks.map((artwork) => (

@@ -86,7 +86,7 @@ export function ProfileImageField({
     >
       {hideHeader ? null : (
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-xs font-semibold tracking-[0.22em] text-muted-foreground uppercase">
             {title}
           </p>
           <p className="text-sm text-muted-foreground">{description}</p>

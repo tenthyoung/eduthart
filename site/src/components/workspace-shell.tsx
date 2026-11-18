@@ -109,7 +109,7 @@ export function WorkspaceShell({
           </div>
 
           <div className={cn("px-4 py-5", isSidebarCollapsed && "lg:hidden")}>
-            <p className="mb-3 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="mb-3 px-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
               {navLabel}
             </p>
             <WorkspaceSidebarNav items={navItems} pathname={pathname} />
@@ -175,7 +175,7 @@ export function WorkspaceShell({
                     >
                       {item.label}
                       {item.badge ? (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]">
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold tracking-[0.16em] uppercase">
                           {item.badge}
                         </span>
                       ) : null}
@@ -233,7 +233,7 @@ function WorkspaceSidebarNav({
                 {label}
               </span>
               {badge ? (
-                <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]">
+                <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase">
                   {badge}
                 </span>
               ) : null}

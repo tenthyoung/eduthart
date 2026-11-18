@@ -37,7 +37,7 @@ export default function AdminDocumentationPage() {
       description="Internal operating and implementation guide for artwork discovery, saves, carts, checkout, artist payouts, and fulfillment. Admin access is enforced by the surrounding admin route guard."
     >
       <AdminCard className="border-amber-200 bg-amber-50/90">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-amber-800">
+        <p className="font-mono text-xs font-semibold tracking-[0.24em] text-amber-800 uppercase">
           Implementation status
         </p>
         <p className="mt-3 text-sm leading-6 text-amber-950">

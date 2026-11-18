@@ -41,7 +41,7 @@ export function StatTile({
     >
       <div
         className={cn(
-          "flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]",
+          "flex items-center gap-2 text-xs font-semibold tracking-[0.16em] uppercase",
           tone === "emphasis"
             ? "text-primary-foreground/80"
             : "text-muted-foreground"

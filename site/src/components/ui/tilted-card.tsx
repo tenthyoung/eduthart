@@ -74,7 +74,7 @@ export default function TiltedCard({
     <div
       ref={ref}
       className={cn(
-        "relative w-full h-full transform-gpu transition-transform will-change-transform",
+        "relative h-full w-full transform-gpu transition-transform will-change-transform",
         !isEffectDisabled && "[perspective:800px]",
         className
       )}
@@ -88,13 +88,13 @@ export default function TiltedCard({
       {...props}
     >
       {showMobileWarning && isMobile && (
-        <div className="absolute top-4 text-center text-sm z-10">
+        <div className="absolute top-4 z-10 text-center text-sm">
           This effect is not optimized for mobile. Check on desktop.
         </div>
       )}
 
       <motion.div
-        className="relative w-full h-full [transform-style:preserve-3d]"
+        className="relative h-full w-full [transform-style:preserve-3d]"
         style={{
           rotateX: isEffectDisabled ? 0 : rotateX,
           rotateY: isEffectDisabled ? 0 : rotateY,

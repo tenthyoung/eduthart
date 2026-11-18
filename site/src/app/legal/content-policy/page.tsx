@@ -23,7 +23,7 @@ export default function ContentPolicy() {
               2. What You May List and Share
             </h2>
             <p className="mb-4">You may list and share work that:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>
                 You created yourself, or hold the rights to sell and show.
               </li>
@@ -39,7 +39,7 @@ export default function ContentPolicy() {
 
           <section>
             <h2 className="mb-4 text-2xl font-bold">3. What Is Not Allowed</h2>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>Harassment, threats, hate, or abusive conduct.</li>
               <li>Impersonation, deception, or fraudulent activity.</li>
               <li>
@@ -101,7 +101,7 @@ export default function ContentPolicy() {
               investigate reports, abuse, fraud, or safety concerns.
             </p>
             <p className="mb-4">Possible enforcement actions include:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc space-y-2 pl-6">
               <li>Warnings or requests to correct a listing.</li>
               <li>Taking a listing down or removing it.</li>
               <li>Disabling selling for an account.</li>

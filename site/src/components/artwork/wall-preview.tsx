@@ -249,7 +249,7 @@ export function WallPreview({
     <section
       aria-label="See it on your wall"
       className={cn(
-        "relative flex flex-col gap-5 rounded-2xl border bg-background p-4 animate-in fade-in-0 duration-300 motion-reduce:animate-none sm:p-6",
+        "relative flex animate-in flex-col gap-5 rounded-2xl border bg-background p-4 duration-300 fade-in-0 motion-reduce:animate-none sm:p-6",
         dropping
           ? "border-foreground ring-4 ring-highlight/40"
           : "border-border"
@@ -372,7 +372,7 @@ export function WallPreview({
               <span className="h-0.5 flex-1 bg-highlight" />
               <span className="h-5 w-0.5 bg-highlight" />
             </span>
-            <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-9 rounded-full bg-highlight px-3 py-1 text-sm font-semibold text-highlight-foreground">
+            <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-9 rounded-full bg-highlight px-3 py-1 text-sm font-semibold text-highlight-foreground">
               {wallIsValid ? `${wall} ${unit}` : `? ${unit}`}
             </span>
           </div>
@@ -400,7 +400,7 @@ export function WallPreview({
                   type="number"
                   value={wallWidth}
                 />
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
                   {unit}
                 </span>
               </div>
