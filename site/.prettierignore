@@ -2,3 +2,24 @@
 node_modules
 playwright-report
 test-results
+
+# Generated, vendored or native: never format. (.gitignore is honoured too.)
+package-lock.json
+.next
+.next-e2e
+out
+dist
+build
+coverage
+.wrangler
+.open-next
+.vercel
+.firebase
+next-env.d.ts
+*.min.js
+*.min.css
+ios
+android
+src-tauri/target
+src-tauri/gen
+*.html
