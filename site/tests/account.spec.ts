@@ -278,6 +278,57 @@ test("shows provider-aware security messaging for google-only users", async ({
   ).toHaveCount(0);
 });
 
+test("change password keeps what was typed on failure and closes on success", async ({
+  page,
+}) => {
+  await seedAccount(page, {
+    uid: "change-password-user",
+    email: "change.password@example.com",
+  });
+
+  await page.goto("/account");
+  await page.getByRole("button", { name: "Change password" }).click();
+  const dialog = page.getByRole("dialog", { name: "Change password" });
+  const current = dialog.getByLabel("Current password");
+  const next = dialog.getByLabel("New password", { exact: true });
+  const confirm = dialog.getByLabel("Confirm new password");
+  const submit = dialog.getByRole("button", { name: "Update password" });
+
+  // A weak password is flagged once, in the checklist under the field.
+  await current.fill("OldPassword1!");
+  await next.fill("lowercase1");
+  await confirm.fill("lowercase1");
+  await submit.click();
+  await expect(
+    dialog
+      .getByRole("listitem")
+      .filter({ hasText: "Upper and lowercase letters" })
+  ).toHaveClass(/text-destructive/);
+  await expect(next).toHaveAttribute("aria-invalid", "true");
+  // The rule's message is there for screen readers only; sighted users get
+  // the red checklist row instead of the same words twice.
+  await expect(
+    dialog.getByText("Include one lowercase and one uppercase letter.")
+  ).toHaveClass(/sr-only/);
+
+  // The E2E store treats "wrong-password" as an incorrect current password.
+  await current.fill("wrong-password");
+  await next.fill("NewPassword1!");
+  await confirm.fill("NewPassword1!");
+  await submit.click();
+  await expect(dialog.getByText("Your password wasn't changed")).toBeVisible();
+  await expect(
+    dialog.getByText("That current password is not correct.")
+  ).toBeVisible();
+  await expect(current).toHaveValue("wrong-password");
+  await expect(next).toHaveValue("NewPassword1!");
+  await expect(confirm).toHaveValue("NewPassword1!");
+
+  await current.fill("OldPassword1!");
+  await submit.click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test("updates the account email from account settings and persists it across reload", async ({
   page,
 }) => {
