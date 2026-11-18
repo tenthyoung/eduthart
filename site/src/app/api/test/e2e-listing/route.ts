@@ -11,7 +11,11 @@ import {
   buildProfileDisplayName,
   loadAccountProfile,
 } from "@/lib/auth/profile-store";
-import { isE2EAuthEnabled, updateE2EListingFlow } from "@/lib/auth/e2e-store";
+import {
+  isE2EAuthEnabled,
+  updateE2EAccountProfile,
+  updateE2EListingFlow,
+} from "@/lib/auth/e2e-store";
 
 type SeedListingBody = {
   category?: string;
@@ -68,6 +72,12 @@ export async function POST(request: Request) {
       },
       { status: 404 }
     );
+  }
+
+  // An artist with a live listing is, by definition, one we let sell, the
+  // same as the grandfathering script does for real accounts.
+  if (!profile.artistApproved) {
+    await updateE2EAccountProfile(body.uid, { artistApproved: true });
   }
 
   const item = createEmptyListingItem(

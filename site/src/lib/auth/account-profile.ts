@@ -11,6 +11,11 @@ export type AccountLegalAcceptance = {
 };
 
 export type AccountProfile = {
+  /**
+   * Set by an admin (or the grandfathering script) once an artist is accepted.
+   * Only approved artists can list artwork; see lib/artists/artist-approval.
+   */
+  artistApproved: boolean;
   authProviders: string[];
   bannerURL: string | null;
   bio: string | null;
@@ -75,6 +80,7 @@ export function buildFallbackAccountProfile(
   username: string | null = null
 ): AccountProfile {
   return {
+    artistApproved: false,
     authProviders: user.providerIds,
     bannerURL: null,
     bio: null,

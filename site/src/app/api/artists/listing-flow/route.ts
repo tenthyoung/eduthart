@@ -6,6 +6,10 @@ import {
   type ListingStudioDraft,
   type ShippingOriginAddress,
 } from "@/lib/artists/listing-flow";
+import {
+  artistNotApprovedBody,
+  isApprovedArtist,
+} from "@/lib/artists/artist-approval";
 import { syncArtworkIndex } from "@/lib/artists/artwork-index";
 import { notifyFollowersOfListingChanges } from "@/lib/artists/listing-notifications";
 import { loadListingStudio } from "@/lib/artists/listing-store";
@@ -122,6 +126,12 @@ export async function GET(request: Request) {
       );
     }
 
+    // Checked after ownership so a stranger's request still reads as "not
+    // yours" rather than revealing whether this artist is approved.
+    if (!isApprovedArtist(profile)) {
+      return NextResponse.json(artistNotApprovedBody(), { status: 403 });
+    }
+
     const flow = await loadFlow(
       session.uid,
       session.authType === "e2e",
@@ -159,6 +169,12 @@ export async function PATCH(request: Request) {
         },
         { status: 403 }
       );
+    }
+
+    // Checked after ownership so a stranger's request still reads as "not
+    // yours" rather than revealing whether this artist is approved.
+    if (!isApprovedArtist(profile)) {
+      return NextResponse.json(artistNotApprovedBody(), { status: 403 });
     }
 
     const body = (await request.json()) as ListingFlowBody;

@@ -420,6 +420,7 @@ export async function POST() {
 
   for (const artist of DEMO_ARTISTS) {
     const profile = await seedE2EAccountProfile({
+      artistApproved: true,
       bio: artist.bio,
       email: `${artist.username}@example.com`,
       firstName: artist.firstName,

@@ -127,6 +127,7 @@ function buildEmptyProfile(
   session: Awaited<ReturnType<typeof getAuthenticatedSession>>
 ): AccountProfile {
   return {
+    artistApproved: false,
     authProviders: session.user.providerData
       .map((provider) => provider.providerId)
       .filter(Boolean),

@@ -142,6 +142,12 @@ export default function AdminUserDetailPage() {
                       ? "Publishing disabled"
                       : "Publishing enabled"}
                   </span>
+                  <span>•</span>
+                  <span>
+                    {detail.user.artistApproved
+                      ? "Approved artist"
+                      : "Not an approved artist"}
+                  </span>
                 </div>
               </div>
 
@@ -230,6 +236,17 @@ export default function AdminUserDetailPage() {
                       ? "Enable publishing"
                       : "Disable publishing"}
                 </Button>
+                {detail.user.artistApproved ? null : (
+                  <Button
+                    variant="outline"
+                    disabled={submittingAction !== null}
+                    onClick={() => void handleAction("approve_artist")}
+                  >
+                    {submittingAction === "approve_artist"
+                      ? "Saving..."
+                      : "Approve as artist"}
+                  </Button>
+                )}
               </div>
             </AdminCard>
           </div>

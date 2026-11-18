@@ -50,6 +50,9 @@ export type AdminUserDetail = {
     updatedAt: string | null;
     accountStatus: string;
     publishingDisabled: boolean;
+    artistApproved: boolean;
+    artistApprovedAt: string | null;
+    artistApprovedBy: string | null;
     moderationReason: string | null;
     moderatedAt: string | null;
     moderatedBy: string | null;

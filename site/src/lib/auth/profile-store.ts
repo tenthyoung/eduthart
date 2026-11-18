@@ -26,6 +26,7 @@ export function toAccountProfile(
   fallbackUid = ""
 ): AccountProfile {
   return {
+    artistApproved: data.artistApproved === true,
     authProviders: Array.isArray(data.authProviders)
       ? data.authProviders.filter(
           (value): value is string => typeof value === "string"

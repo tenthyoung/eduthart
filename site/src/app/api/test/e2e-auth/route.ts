@@ -12,6 +12,8 @@ import {
 } from "@/lib/store/document-store";
 
 type SeedBody = {
+  /** Seed an artist already accepted, so they can list artwork. */
+  artistApproved?: boolean;
   authProviders?: string[];
   bannerURL?: string | null;
   createdAt?: string | null;
@@ -68,6 +70,7 @@ export async function POST(request: Request) {
   await clearUserDocuments(body.uid.trim());
 
   const profile = await seedE2EAccountProfile({
+    artistApproved: body.artistApproved === true,
     authProviders: body.authProviders,
     bannerURL: body.bannerURL,
     createdAt: body.createdAt,

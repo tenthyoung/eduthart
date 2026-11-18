@@ -22,6 +22,7 @@ type SeedProfileArgs = {
   firstName?: string | null;
   lastLoginAt?: string | null;
   lastName?: string | null;
+  artistApproved?: boolean;
   legal?: AccountProfile["legal"];
   location?: string | null;
   photoURL?: string | null;
@@ -49,6 +50,7 @@ async function ensureStoreDir() {
 }
 
 export async function seedE2EAccountProfile({
+  artistApproved,
   authProviders,
   bannerURL,
   bio,
@@ -71,6 +73,7 @@ export async function seedE2EAccountProfile({
   const normalizedLastName = lastName?.trim() || null;
 
   const profile: AccountProfile = {
+    artistApproved: artistApproved === true,
     authProviders: authProviders?.length ? authProviders : ["password"],
     bannerURL: bannerURL ?? null,
     bio: bio?.trim() || null,
